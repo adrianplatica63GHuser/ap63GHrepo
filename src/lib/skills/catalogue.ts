@@ -1073,6 +1073,9 @@ export const SKILLS_UNCOVERED_CASES: Readonly<Record<string, string>> = {
   "TC-VL-12":
     "Slice 41.51: „Țara adresei” and the note a save in it or in „Cetățenie” shows. Its skill comes with the next Help " +
     "and learning update (due 2026-11-05), which covers 41.46–41.62 together.",
+  "TC-TILES-29":
+    "Slice 41.91: the X in every tile's corner. Its skill comes with the Help and learning update of 2026-11-05 (41.93), " +
+    "which covers 41.13–41.92 together.",
   "TC-TILES-28":
     "Slice 41.46: every hover text in the icon buttons' bubble. Its skill comes with the next Help and learning update " +
     "(due 2026-11-05), which covers 41.46–41.62 together.",

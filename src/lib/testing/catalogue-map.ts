@@ -40,7 +40,7 @@ export type CatalogueCaseId = string;
  * document screen, so `/documents/[id]` carries several.
  */
 export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCaseId[]>> = {
-  "/":                                     ["TC-AUTH-01", "TC-AUTH-02", "TC-LAYOUT-01", "TC-NAV-01", "TC-LAYOUT-07"],
+  "/":                                     ["TC-AUTH-01", "TC-AUTH-02", "TC-LAYOUT-01", "TC-NAV-01", "TC-LAYOUT-07", "TC-TILES-29"],
   "/login":                                ["TC-AUTH-01"],
   "/properties":                           ["TC-PROP-01", "TC-PROP-03", "TC-TILES-06", "TC-SYSID-01", "TC-PROP-06", "TC-TILES-11", "TC-LAYOUT-02", "TC-PROP-10", "TC-LAYOUT-03", "TC-TILES-19", "TC-LAYOUT-04", "TC-LAYOUT-05", "TC-PROP-14", "TC-PROP-15", "TC-LAYOUT-07", "TC-LAYOUT-08", "TC-LAYOUT-09", "TC-LAYOUT-10"],
   "/properties/new":                       ["TC-PROP-01", "TC-PROP-05", "TC-PROP-16"],
@@ -53,7 +53,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   // Slice #37.42: the list's icon buttons — tooltips by mouse and keyboard, an inactive one too.
   "/natural-persons":                      ["TC-PERS-01", "TC-VER-01", "TC-TILES-06", "TC-ICON-01", "TC-SYSID-01", "TC-PERS-04", "TC-TILES-11", "TC-LAYOUT-02", "TC-LAYOUT-03", "TC-LAYOUT-05", "TC-PERS-11", "TC-PERS-12", "TC-LAYOUT-07", "TC-SET-05", "TC-LAYOUT-09", "TC-LAYOUT-10"],
   "/natural-persons/new":                  ["TC-PERS-01", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01", "TC-PERS-08", "TC-SET-06"],
-  "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03", "TC-ASSOC-04", "TC-ASSOC-09", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01", "TC-TILES-01", "TC-FOLD-01", "TC-ICON-07", "TC-PERS-03", "TC-SYSID-01", "TC-TILES-08", "TC-TILES-09", "TC-PERS-05", "TC-TILES-10", "TC-TILES-12", "TC-TILES-13", "TC-TILES-16", "TC-TILES-17", "TC-TILES-18", "TC-PERS-07", "TC-TILES-20", "TC-TILES-21", "TC-TILES-22", "TC-SET-03", "TC-TILES-23", "TC-INT-06", "TC-INHER-02", "TC-PERS-11", "TC-INT-07", "TC-TILES-24", "TC-TILES-25", "TC-ASSOC-15", "TC-PERS-15", "TC-PERS-16", "TC-TILES-27", "TC-TILES-28"],
+  "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03", "TC-ASSOC-04", "TC-ASSOC-09", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01", "TC-TILES-01", "TC-FOLD-01", "TC-ICON-07", "TC-PERS-03", "TC-SYSID-01", "TC-TILES-08", "TC-TILES-09", "TC-PERS-05", "TC-TILES-10", "TC-TILES-12", "TC-TILES-13", "TC-TILES-16", "TC-TILES-17", "TC-TILES-18", "TC-PERS-07", "TC-TILES-20", "TC-TILES-21", "TC-TILES-22", "TC-SET-03", "TC-TILES-23", "TC-INT-06", "TC-INHER-02", "TC-PERS-11", "TC-INT-07", "TC-TILES-24", "TC-TILES-25", "TC-ASSOC-15", "TC-PERS-15", "TC-PERS-16", "TC-TILES-27", "TC-TILES-28", "TC-TILES-29"],
   "/documents":                            ["TC-DOC-01", "TC-VER-02", "TC-TILES-06", "TC-SYSID-01", "TC-DOC-08", "TC-TILES-11", "TC-LAYOUT-02", "TC-LAYOUT-03", "TC-DOC-15", "TC-DOC-16", "TC-DOC-21", "TC-LAYOUT-05", "TC-DOC-23", "TC-DOC-27", "TC-LAYOUT-06", "TC-LAYOUT-07", "TC-LAYOUT-08", "TC-LAYOUT-09", "TC-LAYOUT-10"],
   // Slice #38.84: „Interacțiuni".
   "/interactions":                         ["TC-INT-01", "TC-NAV-01", "TC-INT-02", "TC-INT-03", "TC-INT-04", "TC-INT-05", "TC-INT-06"],
@@ -73,7 +73,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/properties/[id]/associate-document":   ["TC-ASSOC-05", "TC-LAYOUT-01"],
   "/judicial-persons/[id]/associate-property": ["TC-ASSOC-06", "TC-LAYOUT-01"],
   "/documents/[id]/associate-reference":   ["TC-ASSOC-07", "TC-LAYOUT-01", "TC-DOC-20"],
-  "/admin/groups":                         ["TC-GRP-01", "TC-CALC-01", "TC-LAYOUT-01", "TC-MAP-07", "TC-LAYOUT-06", "TC-LAYOUT-07"],
+  "/admin/groups":                         ["TC-GRP-01", "TC-CALC-01", "TC-LAYOUT-01", "TC-MAP-07", "TC-LAYOUT-06", "TC-LAYOUT-07", "TC-TILES-29"],
   "/admin/groups/[id]":                    ["TC-GRP-01", "TC-LAYOUT-01", "TC-GRP-04", "TC-TILES-24"],
   "/admin/tags":                           ["TC-TAG-01", "TC-HELP-01", "TC-LAYOUT-01", "TC-ICON-05", "TC-TAG-02", "TC-TAG-03", "TC-AUTH-02"],
   "/properties/[id]/associate-reference":  ["TC-ASSOC-08", "TC-LAYOUT-01"],
@@ -183,6 +183,10 @@ export const PROMOTED_WITHOUT_DRIVING: Readonly<Record<CatalogueCaseId, string>>
     "Slice 41.51: the slice's header asks for this case in the slice itself — the new list's place and seed, and the " +
     "notice a save shows; an invented country added and deleted through the screen. Its green run on the test runner " +
     "is the case's proof.",
+  "TC-TILES-29":
+    "Slice 41.91: the slice's header asks for this case in the slice itself — the X's place to the pixel, the tile gone " +
+    "and unticked, none in edit or on the last tile, on an invented person, the dashboard and „Grupuri”. Its green run on " +
+    "the test runner is the case's proof.",
   "TC-TILES-28":
     "Slice 41.46: the slice's header asks for this step in the slice itself — a bubble's computed font size, weight and " +
     "wrap, compared with an icon button's, which a hand run reads no better than the spec. Its green run on the test " +
