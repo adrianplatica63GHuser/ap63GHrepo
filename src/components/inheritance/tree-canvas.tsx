@@ -20,8 +20,9 @@
  * documents both are on, which opens the same list for the pair.
  */
 import Link from "next/link";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { treeOpeningView } from "@/lib/inheritance/tile-size";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { treeOpeningView, type TreeView } from "@/lib/inheritance/tile-size";
+import { FOCUS_SCALE } from "@/lib/inheritance/expand-tree-animation";
 import { useTranslations } from "next-intl";
 import { ArrowRight, FileText, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
@@ -63,7 +64,16 @@ import { DECEASED_MARK } from "@/lib/persons/person-age";
 export type TreeData = { persons: TreePerson[]; ties: TreeTie[]; documents?: TreeDocument[]; appearances?: TreeAppearance[] };
 /** Centre on a person: a new `n` asks again for the same person. */
 export type TreeFocus = { id: string; n: number } | null;
-type View = { scale: number; tx: number; ty: number };
+type View = TreeView;
+/**
+ * 41.87: the drawing driven from outside, frame by frame — „Deschide arborele întreg"'s opening and way back read
+ * the view, set it, and find where a person stands in the drawing.
+ */
+export type TreeControl = {
+  view: () => View | null;
+  setView: (v: View) => void;
+  nodeAt: (id: string) => { x: number; y: number } | null;
+};
 /** Whose documents are listed: one person's, or the ones a related pair shares. */
 type DocsOpen = { kind: "person"; id: string } | { kind: "pair"; a: string; b: string } | null;
 
@@ -87,6 +97,8 @@ export function TreeCanvas({
   shared = false,
   openingScale,
   openingCentre = null,
+  initialView = null,
+  controlRef,
   // Positions the canvas: `relative` on its own, `absolute inset-0` to fill a frame. Never both — `relative` wins
   // in the stylesheet, the box falls to 0 px high and the side card is clipped under its parent (#39.12).
   className = "relative",
@@ -111,6 +123,10 @@ export function TreeCanvas({
   openingScale?: (fit: number) => number;
   /** 41.79: the person the first view is centred on — the tile's own person. The whole tree's screen passes none. */
   openingCentre?: string | null;
+  /** 41.87: the first view, given — the opening's first frame — instead of the fit. */
+  initialView?: View | null;
+  /** 41.87: filled with the drawing's controls while it is mounted. */
+  controlRef?: RefObject<TreeControl | null>;
   className?: string;
 }) {
   const t = useTranslations("inheritance");
@@ -120,13 +136,34 @@ export function TreeCanvas({
   const at = useMemo(() => new Map(layout.nodes.map((n) => [n.id, n])), [layout]);
 
   const boxRef = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState<View | null>(null);
+  const [view, setView] = useState<View | null>(initialView);
   const [hover, setHover] = useState<string | null>(null);
   const [chosen, setChosen] = useState<string | null>(null);
   const [found, setFound] = useState<string | null>(null);
   const [docsOpen, setDocsOpen] = useState<DocsOpen>(null);
   const level: TreeLevel = levelAt(view?.scale ?? 1);
   useEffect(() => onLevel?.(level), [level, onLevel]);
+  const viewRef = useRef<View | null>(view);
+  useEffect(() => {
+    viewRef.current = view;
+  }, [view]);
+  useEffect(() => {
+    if (!controlRef) return;
+    controlRef.current = {
+      view: () => viewRef.current,
+      setView: (v) => {
+        viewRef.current = v;
+        setView(v);
+      },
+      nodeAt: (id) => {
+        const n = at.get(id);
+        return n ? { x: n.x, y: n.y } : null;
+      },
+    };
+    return () => {
+      controlRef.current = null;
+    };
+  }, [controlRef, at]);
 
   // ── The first view: the whole drawing, fitted ──────────────────────────────
   useLayoutEffect(() => {
@@ -192,7 +229,7 @@ export function TreeCanvas({
     if (!n) return;
     lastFocus.current = focus;
     const { width: W, height: H } = box.getBoundingClientRect();
-    setView({ scale: 1.3, tx: W / 2 - n.x * 1.3, ty: H / 2 - n.y * 1.3 });
+    setView({ scale: FOCUS_SCALE, tx: W / 2 - n.x * FOCUS_SCALE, ty: H / 2 - n.y * FOCUS_SCALE });
     setFound(focus.id);
     if (withCard) setChosen(focus.id);
   }, [focus, view, at, withCard]);

@@ -30,11 +30,26 @@
  * Pure: no Google object, no DOM. The overlay (property-form.tsx) and its animator (expand-map-animator.tsx) draw it.
  */
 import { cameraAt, flightMs as flightLength, flightPeak } from "@/lib/geo/map-search";
+// 41.87: the parts every tile's opening shares — the rectangles, the easing, the tolerance — are one module's.
+import {
+  COLLAPSE_RETURN_TOLERANCE,
+  EXPAND_INSET_PX,
+  centreOf,
+  easeInOut,
+  expandedRect,
+  growProgress as growShare,
+  lerp,
+  lerpRect,
+  openingClockBack,
+  panelOverTile,
+  type Rect,
+} from "@/lib/ui/expand-animation";
+
+export { COLLAPSE_RETURN_TOLERANCE, EXPAND_INSET_PX, easeInOut, type Rect };
 
 
 export type LatLng = { lat: number; lng: number };
 export type Corner = { lat: number; lon: number };
-export type Rect = { x: number; y: number; w: number; h: number };
 export type Camera = { center: LatLng; zoom: number };
 
 /** The two settings, in milliseconds (time_frame_setting, migration_127). */
@@ -50,8 +65,6 @@ export const EXPAND_HEIGHT_FRACTION = 0.1;
 export const EXPAND_WIDTH_LIMIT = 0.9;
 /** Closer than this, in zoom levels, the zoom-out is skipped. */
 export const EXPAND_SKIP_ZOOM = 0.5;
-/** The expanded map's margin to the window: the panel's `inset-4`. */
-export const EXPAND_INSET_PX = 16;
 /** The highest zoom the maps offer here (map-focus.ts's MAX_FOCUS_ZOOM). */
 export const EXPAND_MAX_ZOOM = 21;
 
@@ -70,15 +83,6 @@ function fromWorld(w: { x: number; y: number }, zoom: number): LatLng {
   return { lat: (Math.atan(Math.sinh(n)) * 180) / Math.PI, lng: (w.x / size) * 360 - 180 };
 }
 
-/** Ease-in-out (cubic): slow at both ends. */
-export function easeInOut(s: number): number {
-  const x = Math.min(1, Math.max(0, s));
-  return x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2;
-}
-
-const lerp = (a: number, b: number, s: number) => a + (b - a) * s;
-const lerpRect = (a: Rect, b: Rect, s: number): Rect => ({ x: lerp(a.x, b.x, s), y: lerp(a.y, b.y, s), w: lerp(a.w, b.w, s), h: lerp(a.h, b.h, s) });
-const centreOf = (r: Rect) => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
 
 /** The centre of the corners' box (map-focus.ts's `cornersBoundsCenter`), or null with no corners. */
 export function cornersCentre(corners: readonly Corner[]): LatLng | null {
@@ -149,14 +153,9 @@ export function usableExpandMs(value: unknown): number {
 }
 
 export function planExpand(i: ExpandInput): ExpandPlan {
-  const to: Rect = {
-    x: EXPAND_INSET_PX,
-    y: EXPAND_INSET_PX,
-    w: Math.max(1, i.viewport.w - 2 * EXPAND_INSET_PX),
-    h: Math.max(1, i.viewport.h - 2 * EXPAND_INSET_PX),
-  };
+  const to: Rect = expandedRect(i.viewport);
   // The panel's map starts exactly on the tile's map; its header just above it.
-  const from: Rect = { x: i.tileMap.x, y: i.tileMap.y - i.headerPx, w: i.tileMap.w, h: i.tileMap.h + i.headerPx };
+  const from: Rect = panelOverTile(i.tileMap, i.headerPx);
   const target = cornersCentre(i.corners) ?? i.tileCenter;
   const fit = zoomForHeightFraction(i.corners, to.w, to.h - i.headerPx);
   const endZoom = fit === null || Math.abs(fit - i.zoom) < EXPAND_SKIP_ZOOM ? i.zoom : fit;
@@ -181,7 +180,7 @@ export function expandTotalMs(p: ExpandPlan): number {
 
 /** Part 1's progress at `t`, eased: 0 at the start, 1 once the panel has arrived. */
 function growProgress(t: number, p: ExpandPlan): number {
-  return p.growMs <= 0 || t >= p.growMs ? 1 : easeInOut(Math.max(0, t) / p.growMs);
+  return growShare(t, p.growMs);
 }
 
 /** The panel's rectangle at `t` ms. */
@@ -228,8 +227,6 @@ export function expandStartView(p: ExpandPlan): Camera {
 // Slice 41.77 — the way back
 // ---------------------------------------------------------------------------
 
-/** How far the camera may be from the opening's end, as a share of the map's width or height, before it flies back. */
-export const COLLAPSE_RETURN_TOLERANCE = 0.02;
 
 export type CollapseInput = Omit<ExpandInput, "tileMap"> & {
   /** The tile's map on screen now; null when it cannot be measured (hidden through „Panouri", off the screen). */
@@ -266,12 +263,7 @@ export function atOpeningEnd(current: Camera, end: Camera, mapW: number, mapH: n
 
 export function planCollapse(i: CollapseInput, current: Camera): CollapsePlan {
   const measured = i.tileMap !== null;
-  const panel = {
-    x: EXPAND_INSET_PX,
-    y: EXPAND_INSET_PX,
-    w: Math.max(1, i.viewport.w - 2 * EXPAND_INSET_PX),
-    h: Math.max(1, i.viewport.h - 2 * EXPAND_INSET_PX),
-  };
+  const panel = expandedRect(i.viewport);
   // A tile not measured: the panel stays where it is, and only the return plays.
   const tileMap = i.tileMap ?? { x: panel.x, y: panel.y + i.headerPx, w: panel.w, h: panel.h - i.headerPx };
   const expand = planExpand({
@@ -303,11 +295,7 @@ export function collapseTotalMs(c: CollapsePlan): number {
 
 /** Where in the opening the way back stands at `t` — the opening's own clock, running backwards — or null in the return. */
 function openingClock(t: number, c: CollapsePlan): number | null {
-  const u = t - c.returnMs;
-  if (u < 0) return null;
-  const p = c.expand;
-  if (u < c.zoomMs) return p.growMs + p.zoomMs - u;
-  return Math.max(0, p.growMs - (u - c.zoomMs));
+  return openingClockBack(t, c.returnMs, c.expand.growMs, c.zoomMs);
 }
 
 /** The camera at `t` ms into the way back. */

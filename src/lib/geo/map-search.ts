@@ -253,8 +253,16 @@ export function cameraAt(tMs: number, from: Camera, to: Camera, peak: number, du
     lat: latOfMercatorY(lerp(mercatorY(from.center.lat), mercatorY(to.center.lat), x)),
     lng: lerp(from.center.lng, to.center.lng, x),
   };
-  const rise = Math.max(0, arc) * flightRise(from, to, peak) * 4 * x * (1 - x);
-  return { center, zoom: Math.max(0, lerp(from.zoom, to.zoom, x) - rise) };
+  return { center, zoom: Math.max(0, parabolaZoom(x, from.zoom, to.zoom, flightRise(from, to, peak), arc)) };
+}
+
+/**
+ * 41.87: the observer's height on 41.76's parabola, shared by every flight that is not a map's (the whole tree's
+ * return, 41.87; the big page's, 41.88): the straight line from `z0` to `z1` less a · R · 4x(1 − x), x the eased
+ * share of the way. Unclamped — a map's zoom stops at 0, a drawing's scale below 1 is a negative level.
+ */
+export function parabolaZoom(x: number, z0: number, z1: number, rise: number, arc = FLIGHT_ARC): number {
+  return lerp(z0, z1, x) - Math.max(0, arc) * rise * 4 * x * (1 - x);
 }
 
 /** „Căutare globală" with the typed text, which it reads from `?search=` (global-search-view.tsx). */

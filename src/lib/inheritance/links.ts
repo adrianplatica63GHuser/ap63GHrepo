@@ -8,6 +8,8 @@
  */
 export const TREE_PARAM = "tree";
 export const TREE_OPEN = "open";
+/** 41.87: the whole tree open over the person's screen — „Deschide arborele întreg" pushes it, Back takes it away. */
+export const TREE_WHOLE = "whole";
 
 /** The person's screen with the tree's C expanded — 39.11's name links. */
 export function personTreeHref(personId: string): string {
@@ -22,4 +24,9 @@ export function readTree(value: string | null): boolean {
 /** The whole tree, centred on a person — the tile's „Deschide arborele întreg". */
 export function wholeTreeHref(focusId?: string): string {
   return focusId ? `/inheritance-tree?focus=${encodeURIComponent(focusId)}` : "/inheritance-tree";
+}
+
+/** 41.87: does the address ask for the whole tree over the person's screen? */
+export function readWholeTree(value: string | null): boolean {
+  return value === TREE_WHOLE;
 }

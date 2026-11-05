@@ -12,7 +12,8 @@
  * B is the whole tree's drawing (`TreeCanvas`, #39.11) over `personSubtree` — up to great-grandparents, down to
  * great-grandchildren, the siblings and every spouse — the person ringed in amber, in a square as wide as the tile:
  * 2 units for one or two persons, 3 for more (41.71, tile-size.ts; it was „Identitate"'s width). „Deschide arborele
- * întreg" opens A centred on the person. #39.13: each person's documents badge, as
+ * întreg" opens A centred on the person — since 41.87 over this screen, grown out of the tile and back into it, as
+ * „Hartă extinsă" is (whole-tree-overlay.tsx). #39.13: each person's documents badge, as
  * in A; the year slider and „Acte comune" are A's alone — the tile stays the person's family at a glance.
  *
  * C, the same A/B/C pattern as „Interacțiuni" (#39.05). 41.72 split it in two, each behind its own button: „Adaugă o
@@ -23,7 +24,7 @@
  * the association route that exists (POST/DELETE /api/people/<id>/references, „Asociază persoană"'s), offering only
  * the roles with a kinship (#39.10). An add half typed into is the screen's unsaved change.
  */
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -36,9 +37,10 @@ import { layoutTree, type TreePerson } from "@/lib/inheritance/layout";
 import { familyRoles, personSubtree } from "@/lib/inheritance/subtree";
 import { treeTileOpeningScale, treeTileUnits } from "@/lib/inheritance/tile-size";
 import { indexDocuments } from "@/lib/inheritance/documents";
-import { TREE_PARAM, readTree, wholeTreeHref } from "@/lib/inheritance/links";
+import { TREE_PARAM, readTree } from "@/lib/inheritance/links";
 import { roleHeldBy, personRoleShown } from "@/lib/persons/relation-roles";
-import { TreeCanvas } from "@/components/inheritance/tree-canvas";
+import { TreeCanvas, type TreeControl } from "@/components/inheritance/tree-canvas";
+import { useWholeTree } from "./whole-tree-overlay";
 import { fetchTree } from "@/app/inheritance-tree/_components/inheritance-tree-screen";
 import { unitStyle } from "@/lib/ui/field-widths";
 import { TileTitle } from "@/components/tiles/tile-title";
@@ -85,6 +87,11 @@ export function PersonTreeTile({
   const count = layout ? layout.nodes.length : null;
   const units = treeTileUnits(count);
   const opening = useCallback((fit: number) => treeTileOpeningScale(count ?? 0, fit), [count]);
+  // 41.87: the whole tree grows out of this drawing and back into it.
+  const canvasBox = useRef<HTMLDivElement>(null);
+  const canvasControl = useRef<TreeControl | null>(null);
+  const wholeButton = useRef<HTMLButtonElement>(null);
+  const whole = useWholeTree({ personId, tileBox: canvasBox, tileControl: canvasControl, button: wholeButton });
 
   return (
     <section data-tile="inheritanceTree" aria-label={title} className={`max-w-full ${surface}`} style={unitStyle(units)} data-tree-tile-units={units}>
@@ -92,16 +99,17 @@ export function PersonTreeTile({
           stays at the right of the title's line, beside the heading rather than inside it. */}
       <div className="mb-2 flex items-start justify-between gap-2">
         <TileTitle title={title} subtitle={subtitle} className="flex-1" />
-        <IconButton href={wholeTreeHref(personId)} icon={Maximize2} label={t("wholeTree")} variant="secondary" size="sm" data-tree-whole="" />
+        {/* 41.87: a button now — the whole tree opens over this screen (it was a link to /inheritance-tree?focus=). */}
+        <IconButton ref={wholeButton} icon={Maximize2} label={t("wholeTree")} variant="secondary" size="sm" aria-expanded={whole.shown} data-tree-whole="" onClick={whole.open} />
       </div>
-      <div className="relative aspect-square w-full overflow-hidden rounded-md border border-card-pinned-rim bg-white/70 dark:border-card-pinned-rim-dark dark:bg-zinc-950" data-tree-tile-canvas="">
+      <div ref={canvasBox} className="relative aspect-square w-full overflow-hidden rounded-md border border-card-pinned-rim bg-white/70 dark:border-card-pinned-rim-dark dark:bg-zinc-950" data-tree-tile-canvas="">
         {q.isLoading && <p className="p-3 text-xs text-fade">{t("loading")}</p>}
         {q.isError && <p role="alert" className="p-3 text-xs text-red-600">{t("error")}</p>}
         {layout && layout.nodes.length === 0 && <p className="p-3 text-xs text-fade">{t("empty")}</p>}
         {sub && layout && layout.nodes.length > 0 && (
           // A new width is a new first view: keyed on the units, the drawing fits its new square again — 41.79: centred
           // on the screen's own person (Ask firsts 3, 4).
-          <TreeCanvas key={units} data={sub} layout={layout} mark={personId} linkOf={plainHref} docs={docs} openingScale={opening} openingCentre={personId} className="absolute inset-0" />
+          <TreeCanvas key={units} data={sub} layout={layout} mark={personId} linkOf={plainHref} docs={docs} openingScale={opening} openingCentre={personId} controlRef={canvasControl} className="absolute inset-0" />
         )}
       </div>
       {/* 41.72 (Adrian: „This button should be replaced with two buttons"): where the one button stood (40.34), side by
@@ -138,6 +146,7 @@ export function PersonTreeTile({
           <AddHalf personId={personId} personName={personName} lined={removeOpen} onCollapse={() => guardedAction(() => setAddOpen(false))} />
         )}
       </div>
+      {whole.overlay}
     </section>
   );
 }
