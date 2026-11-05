@@ -24,14 +24,14 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 // A 1366 × 768 window: the tile's viewer 616 × 420 at the right, the page 300 × 400 in it; the big viewer's fit
-// 530 × 706 in the middle of a 1310 × 663 viewer (the body less its 12-px padding).
+// 495 × 660 — the same 3 : 4 — in the middle of a 1310 × 663 viewer (the body less its 12-px padding).
 const input = (over: Partial<PageExpandInput> = {}): PageExpandInput => ({
   tileBox: { x: 700, y: 300, w: 616, h: 420 },
   tilePage: { x: 858, y: 310, w: 300, h: 400 },
   viewport: { w: 1366, h: 768 },
   headerPx: 49,
   padPx: 12,
-  fit: { x: 418, y: 77, w: 530, h: 663 },
+  fit: { x: 435, y: 78, w: 495, h: 660 },
   growMs: 3000,
   zoomMs: 3000,
   reducedMotion: false,
@@ -67,12 +67,12 @@ describe("41.88 — the opening, part 2: the page from its tile size to its fit"
   it("ends at the fit — the viewer's rest", () => {
     const p = planPageExpand(input());
     expect(pageScaleAt(6000, p)).toBeCloseTo(1, 9);
-    expect(pageRectAt(6000, p)).toEqual(expect.objectContaining({ w: expect.closeTo(530, 6), h: expect.closeTo(663, 6) }));
+    expect(pageRectAt(6000, p)).toEqual(expect.objectContaining({ w: expect.closeTo(495, 6), h: expect.closeTo(660, 6) }));
     expect(pageExpandTotalMs(p)).toBe(6000);
   });
   it("half way, the geometric middle of the two sizes", () => {
     const p = planPageExpand(input());
-    expect(pageScaleAt(4500, p)).toBeCloseTo(Math.sqrt(300 / 530), 6);
+    expect(pageScaleAt(4500, p)).toBeCloseTo(Math.sqrt(300 / 495), 6);
   });
   it("a PDF or a download prompt has no page to move and no part 2: its box grows with the panel", () => {
     const p = planPageExpand(input({ tilePage: null, fit: null }));
@@ -96,7 +96,7 @@ describe("41.88 — the way back", () => {
     const c = planPageCollapse(collapse());
     expect(c.returnMs).toBe(0);
     expect(pageCollapseTotalMs(c)).toBe(6000);
-    expect(pageCollapseViewAt(3000, c).scale).toBeCloseTo(300 / 530, 9);
+    expect(pageCollapseViewAt(3000, c).scale).toBeCloseTo(300 / 495, 9);
     expect(pageCollapsePanelAt(6000, c)).toEqual(pagePanelAt(0, c.expand));
     expect([pageCollapseBackdropAt(0, c), pageCollapseBackdropAt(6000, c)]).toEqual([1, 0]);
   });
