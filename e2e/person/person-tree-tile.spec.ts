@@ -12,6 +12,10 @@
  *
  * Slice 41.71 adds a second test: the tile as wide as its family — two persons 254 px at level 2, more 389 px at
  * level 1 — over its own invented persons.
+ *
+ * Slice 41.87 adds a third: „Deschide arborele întreg" opens the whole tree OVER the person's screen, grown out of the
+ * tile (`?tree=whole`), and „Restrânge", a search followed by „Restrânge", and Back each take it back into the tile.
+ * The lengths are the map's settings as they stand (3 s + 3 s, the return 4 s by default), so the waits allow 20 s.
  */
 
 import { showTile } from "../helpers/tiles";
@@ -244,6 +248,94 @@ test.describe("TC-INHER-02 — arborele persoanei", () => {
       const manyBox = (await tile(page).locator("[data-tree-tile-canvas]").boundingBox())!;
       expect(Math.abs(manyBox.width - manyBox.height), `the drawing ${manyBox.width} × ${manyBox.height}`).toBeLessThanOrEqual(2);
       await expect.poll(() => centred(maria), { timeout: 10_000 }).toBe("centred");
+    } finally {
+      for (const id of ids) await removeRecord(page.request, "person", id);
+    }
+  });
+  // Slice 41.87 — Adrian: „when I want to expand the Inheritance tree tile to the „full screen" (or when I want to collapse
+  // it to the current tile) the animation should happen similarly to what is currently happening for the Map tile".
+  test("41.87 — the whole tree grows out of the tile over the person's screen; „Restrânge”, a search, Back take it back", async ({ page }) => {
+    test.setTimeout(240_000);
+    const mark = `${MARK}-X`;
+    await removeLeftovers(page.request, mark);
+    await page.setViewportSize({ width: 1366, height: 900 });
+    const ids: string[] = [];
+    try {
+      const make = async (firstName: string, gender: "MALE" | "FEMALE", dateOfBirth: string) => {
+        const id = await createNaturalPerson(page.request, { lastName: mark, firstName, gender, dateOfBirth });
+        ids.push(id);
+        return id;
+      };
+      const tie = async (holder: string, role: string, other: string) => {
+        const res = await page.request.post(`/api/people/${other}/references`, { data: { personIds: [holder], relationshipRoleId: role } });
+        expect(res.ok(), `POST references failed (${res.status()})`).toBeTruthy();
+      };
+      const ion = await make("Ion", "MALE", "1940-02-02");
+      const elena = await make("Elena", "FEMALE", "1965-05-05");
+      const radu = await make("Radu", "MALE", "1990-09-09");
+      await tie(ion, await roleId(page.request, "Tată"), elena);
+      await tie(elena, await roleId(page.request, "Mamă"), radu);
+
+      await page.goto(`/natural-persons/${elena}`);
+      await expect(node(page, radu)).toBeAttached({ timeout: 30_000 });
+      const button = tile(page).locator("[data-tree-whole]");
+      await expect(button).toHaveAccessibleName("Deschide arborele întreg");
+      const tileView = async () => {
+        const b = (await node(page, elena).boundingBox())!;
+        return [Math.round(b.x), Math.round(b.y), Math.round(b.width)];
+      };
+      const before = await tileView();
+      const dialog = page.getByRole("dialog", { name: "Arbori de moștenire" });
+      const panel = dialog.locator("[data-tree-panel-box]");
+      const body = dialog.locator("[data-tree-panel-body]");
+      const opened = async () => {
+        await button.click();
+        await expect(page).toHaveURL(new RegExp(`/natural-persons/${elena}\\?tree=whole$`));
+        await expect(dialog).toHaveAttribute("data-expand", "done", { timeout: 20_000 });
+      };
+
+      // Step 1 — open from the tile: the overlay ends at inset-4, Elena in the middle and her card open; her screen
+      // is still under it (the tile is there, the address the person's own).
+      await opened();
+      const box = (await panel.boundingBox())!;
+      expect([Math.round(box.x), Math.round(box.y), Math.round(box.width), Math.round(box.height)]).toEqual([16, 16, 1366 - 32, 900 - 32]);
+      await expect(dialog.locator("[data-tree-card]")).toContainText(`Elena ${mark}`);
+      const centred = async () => {
+        const b = (await body.boundingBox())!;
+        const n = (await body.locator(`[data-tree-node="${elena}"]`).boundingBox())!;
+        // The node's own origin is its box's middle at the near level (a card centred on it).
+        const dx = Math.abs(n.x + n.width / 2 - (b.x + b.width / 2)) / b.width;
+        const dy = Math.abs(n.y + n.height / 2 - (b.y + b.height / 2)) / b.height;
+        return dx <= 0.05 && dy <= 0.05 ? "centred" : JSON.stringify({ dx, dy });
+      };
+      await expect.poll(centred, { timeout: 10_000 }).toBe("centred");
+      await expect(tile(page)).toBeAttached();
+
+      // Step 2 — „Restrânge": no return (nothing moved), the overlay goes, the tile shows its view of before, focus on
+      // „Deschide arborele întreg", the address without the mark.
+      await dialog.getByRole("button", { name: "Restrânge", exact: true }).click();
+      await expect(dialog).toHaveAttribute("data-collapse-return", "skipped");
+      await expect(dialog).toHaveCount(0, { timeout: 20_000 });
+      await expect(page).toHaveURL(new RegExp(`/natural-persons/${elena}$`));
+      await expect(button).toBeFocused();
+      expect(await tileView()).toEqual(before);
+
+      // Step 3 — open, search another person, „Restrânge": the return plays first.
+      await opened();
+      await dialog.getByRole("searchbox", { name: "Caută o persoană…" }).fill(`Ion ${mark}`);
+      await dialog.getByRole("button", { name: "Caută", exact: true }).click();
+      await expect(dialog.locator("[data-tree-card]")).toContainText(`Ion ${mark}`);
+      await dialog.getByRole("button", { name: "Restrânge", exact: true }).click();
+      await expect(dialog).toHaveAttribute("data-collapse-return", "flies");
+      await expect(dialog).toHaveCount(0, { timeout: 25_000 });
+      await expect(button).toBeFocused();
+
+      // Step 4 — open, then the browser's Back: the way back, and the address loses its mark.
+      await opened();
+      await page.goBack();
+      await expect(dialog).toHaveCount(0, { timeout: 20_000 });
+      await expect(page).toHaveURL(new RegExp(`/natural-persons/${elena}$`));
+      await expect(tile(page)).toBeVisible();
     } finally {
       for (const id of ids) await removeRecord(page.request, "person", id);
     }
