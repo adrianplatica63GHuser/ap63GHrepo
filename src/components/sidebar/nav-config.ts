@@ -204,6 +204,19 @@ export const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
+/** Slice 41.92: the Administrare items whose screens are headed with their icon. */
+export type AdminNavKey = "referenceData" | "groups" | "stamps" | "tags" | "settings";
+
+/**
+ * Slice 41.92: an Administrare screen's icon — the one its item draws in the side panel, read from NAV_SECTIONS so
+ * the heading and the side panel cannot drift apart (Ask first 2), as `domainIcon` does for the lists.
+ */
+export function adminIcon(key: AdminNavKey): LucideIcon {
+  const item = NAV_SECTIONS.find((s) => s.key === "administration")?.items.find((i) => i.key === key);
+  if (!item) throw new Error(`nav-config: no „Administrare" item ${key}`);
+  return item.icon;
+}
+
 /** Slice 40.37: the four principal lists, by their „Domeniu" item's key. */
 export type DomainListKey = "naturalPeople" | "judicialPeople" | "propertyList" | "document";
 

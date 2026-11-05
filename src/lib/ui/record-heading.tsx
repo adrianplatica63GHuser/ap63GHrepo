@@ -73,9 +73,26 @@ export function RecordHeading({ icon: Icon, name, truncate = false, className, t
  *
  * The heading's accessible name stays the title, so every `getByRole("heading", { name })` keeps passing (Ask first 3).
  */
-export function ListHeading({ icon: Icon, title }: { icon: ComponentType<LucideProps>; title: string }) {
+export function ListHeading({
+  icon: Icon,
+  title,
+  admin = false,
+  className = "",
+}: {
+  icon: ComponentType<LucideProps>;
+  title: string;
+  /**
+   * Slice 41.92 — Adrian: „When I click on reference data the title should have the same size as when I click on the
+   * natural persons and it should also have the icon in front of it (The Open book) Please apply the same to groups
+   * stamps Tags and Settings screens under administration". The same heading in Administrare's red (41.83's #C00000,
+   * `text-admin-title`); the icon is drawn in the heading's colour.
+   */
+  admin?: boolean;
+  /** Extra classes for the heading — a margin, `whitespace-nowrap`. */
+  className?: string;
+}) {
   return (
-    <h1 className="flex min-w-0 items-center text-2xl font-semibold tracking-tight">
+    <h1 className={`flex min-w-0 items-center text-2xl font-semibold tracking-tight${admin ? " text-admin-title" : ""}${className ? ` ${className}` : ""}`} data-list-heading={admin ? "admin" : undefined}>
       <Icon aria-hidden="true" focusable="false" data-list-icon="" className="mr-[0.55em] h-[1.25em] w-[1.25em] shrink-0" />
       <span className="min-w-0">{title}</span>
     </h1>

@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { WIDTH_UNIT_COOKIE_NAME, widthUnitOf } from "@/lib/ui/width-unit";
 import { SettingsView } from "./_components/settings-view";
 import { isUatNoAuth } from "@/lib/auth/current-user";
+import { ListHeading } from "@/lib/ui/record-heading";
+import { adminIcon } from "@/components/sidebar/nav-config";
 
 export default async function SettingsPage() {
   // ⚠️ **Slice #32.19 removed the `if (!isDevToolsEnabled()) redirect("/")`
@@ -22,9 +24,8 @@ export default async function SettingsPage() {
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
       <main className="w-full px-6 py-8 flex flex-col gap-6">
         <header>
-          <h1 className="text-base font-semibold tracking-tight text-admin-title">
-            {t("pageTitle")}
-          </h1>
+          {/* 41.92: „Persoane fizice"'s heading, in Administrare's red, after the side panel's icon (it was 16 px). */}
+          <ListHeading icon={adminIcon("settings")} title={t("pageTitle")} admin />
         </header>
 
         {/* Slice #38.41: UAT has no accounts, so „Contul meu" says so instead of a password form. */}

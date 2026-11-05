@@ -418,7 +418,17 @@ test.describe("TC-LAYOUT-01 — o fereastră îngustă (40.69)", () => {
       await page.goto(url);
       const h1 = page.locator("h1").first();
       await expect(h1, url).toBeVisible({ timeout: 30_000 });
-      expect(await look(h1), url).toBe(`16px ${RED}`);
+      // 41.92 rewrote this in place: the five screens Adrian named are headed at „Persoane fizice"'s size, 24 px, in red,
+      // after their side-panel icon; „Utilizatori & Acces" keeps 41.83's 16 px (it read 16 px for every screen).
+      if (url === "/admin/users") {
+        expect(await look(h1), url).toBe(`16px ${RED}`);
+      } else {
+        expect(await look(h1), url).toBe(`24px ${RED}`);
+        const icon = h1.locator("svg[data-list-icon]");
+        await expect(icon, url).toHaveCount(1);
+        expect(await icon.evaluate((e) => getComputedStyle(e).color), url).toBe(RED);
+        expect((await icon.boundingBox())!.x, url).toBeLessThan((await h1.locator("span").first().boundingBox())!.x);
+      }
       expect(await groundOf(h1), url).toBe(OFF_WHITE);
       // Every tile shown: the record tile's grey; every tile title red.
       // „Utilizatori & Acces" has no tile of the screen's registry, only its panel; the others' tiles come with their data.

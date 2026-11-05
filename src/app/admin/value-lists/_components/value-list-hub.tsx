@@ -35,6 +35,8 @@ import { RelationshipTriangle } from "./relationship-triangle";
 import { REFERENCE_NAV_REM, rem, unitsCss } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 import { ADMIN_PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
+import { ListHeading } from "@/lib/ui/record-heading";
+import { adminIcon } from "@/components/sidebar/nav-config";
 
 /**
  * The categories' column: as wide as its longest name, the gap after it equal to the gap before it — 16rem
@@ -184,7 +186,8 @@ export function ValueListHub({
       {/* Slice #38.65: the title and the column, one above the other; the list's side beside both, from the top. */}
       <div className="flex flex-col gap-6" data-value-list-column="">
         <header>
-          <h1 className="whitespace-nowrap text-base font-semibold tracking-tight text-admin-title">{t("pageTitle")}</h1>
+          {/* 41.92: „Persoane fizice"'s heading, in Administrare's red, after the side panel's open book (it was 16 px). */}
+          <ListHeading icon={adminIcon("referenceData")} title={t("pageTitle")} admin className="whitespace-nowrap" />
         </header>
         <nav
           ref={navRef}

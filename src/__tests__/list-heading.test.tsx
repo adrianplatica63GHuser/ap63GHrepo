@@ -18,6 +18,29 @@ const ROOT = join(__dirname, "..", "..");
 const read = (...p: string[]) => readFileSync(join(ROOT, ...p), "utf8");
 
 describe("ListHeading (40.38)", () => {
+  it("41.92: under Administrare, the same heading in the red, its icon in the heading's colour", () => {
+    render(<ListHeading icon={User} title="Grupuri" admin className="mb-2" />);
+    const h = screen.getByRole("heading", { level: 1, name: "Grupuri" });
+    for (const c of ["text-2xl", "font-semibold", "tracking-tight", "text-admin-title", "mb-2"]) expect(h.className.split(" ")).toContain(c);
+    expect(h.getAttribute("data-list-heading")).toBe("admin");
+    expect(h.firstElementChild!.hasAttribute("data-list-icon")).toBe(true);
+  });
+
+  it("41.92: the five Administrare screens take it with the side panel's own icon", () => {
+    for (const [file, key] of [
+      [["src", "app", "admin", "value-lists", "_components", "value-list-hub.tsx"], "referenceData"],
+      [["src", "app", "admin", "groups", "page.tsx"], "groups"],
+      [["src", "app", "admin", "stamps", "page.tsx"], "stamps"],
+      [["src", "app", "admin", "tags", "page.tsx"], "tags"],
+      [["src", "app", "admin", "settings", "page.tsx"], "settings"],
+    ] as const) {
+      expect([file.join("/"), read(...file).includes(`<ListHeading icon={adminIcon("${key}")} title={t("pageTitle")} admin`)]).toEqual([file.join("/"), true]);
+    }
+    const nav = read("src", "components", "sidebar", "nav-config.ts");
+    expect(nav).toMatch(/\{ key: "referenceData", href: "\/admin\/value-lists", icon: BookOpen \}/);
+    expect(nav).toContain('NAV_SECTIONS.find((s) => s.key === "administration")');
+  });
+
   it("names the heading with the title alone — the icon is aria-hidden and comes first", () => {
     render(<ListHeading icon={PeopleGroupIcon} title="Persoane fizice" />);
     const h = screen.getByRole("heading", { level: 1, name: "Persoane fizice" });
