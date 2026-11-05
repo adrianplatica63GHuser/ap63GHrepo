@@ -26,7 +26,8 @@ const BLUE = "rgb(223, 240, 251) / rgb(169, 207, 230)";
 const CARD = "rgb(238, 244, 250) / rgb(198, 212, 232)";
 // Slice #37.88: „Clasificări" is the yellow group's, „Corelate" the green one's (TC-TILES-18).
 // 41.82: salmon #FFB48F / rim #E39A74 on the record screens (it read "rgb(248, 243, 229) / rgb(221, 211, 174)").
-const META = "rgb(255, 180, 143) / rgb(227, 154, 116)";
+// 41.86: Blush rose #FFEEF0 / rim #F1C5CB (it read "rgb(255, 180, 143) / rgb(227, 154, 116)").
+const META = "rgb(255, 238, 240) / rgb(241, 197, 203)";
 
 /** „Its colour": the computed background and top border colour. */
 const colour = (l: Locator) =>

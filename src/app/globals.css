@@ -75,12 +75,14 @@
   --color-card-related-row-dark: #101711;  /* dark:bg-card-related-row-dark  */
   --color-card-row:              #F7FAFD;  /* bg-card-row — 41.68: „Legături"'s rows, a lighter row of the card */
   --color-card-row-dark:         #111114;  /* dark:bg-card-row-dark — nearer zinc-950 than the card's zinc-900 */
-  /* Slice 41.82 (Adrian: „use this colour for the background of the tiles: #FFB48F"): „Clasificare" and „Etichete și
-     grupuri" on the record screens — salmon, the rim the same hue darker, dark at the dark tiles' lightness. */
-  --color-card-meta:             #FFB48F;  /* bg-card-meta                   */
-  --color-card-meta-rim:         #E39A74;  /* border-card-meta-rim           */
-  --color-card-meta-dark:        #2B1A10;  /* dark:bg-card-meta-dark         */
-  --color-card-meta-rim-dark:    #45291A;  /* dark:border-card-meta-rim-dark */
+  /* Slice 41.82 put „Clasificare" and „Etichete și grupuri" on the record screens on salmon #FFB48F. Slice 41.86 (Adrian:
+     „Blush rose · lighter · L 0.964 #FFEEF0"): blush rose at the purple's lightness and strength (L 0.963 C 0.019 h 9),
+     the rim the fill's hue one step darker as the purple's is (L 0.863 C 0.050), the dark pair the study's Blush rose
+     pair. It read #FFB48F / #E39A74 / #2B1A10 / #45291A. */
+  --color-card-meta:             #FFEEF0;  /* bg-card-meta                   */
+  --color-card-meta-rim:         #F1C5CB;  /* border-card-meta-rim           */
+  --color-card-meta-dark:        #2B181A;  /* dark:bg-card-meta-dark         */
+  --color-card-meta-rim-dark:    #3F2528;  /* dark:border-card-meta-rim-dark */
   /* 41.82: the light yellow the meta group wore until then, kept where no record screen is named (Setări's cost tile). */
   --color-card-yellow:           #F8F3E5;  /* bg-card-yellow                   */
   --color-card-yellow-rim:       #DDD3AE;  /* border-card-yellow-rim           */

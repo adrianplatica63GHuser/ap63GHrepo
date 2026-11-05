@@ -86,7 +86,7 @@ describe("the four groups' colours (#37.88)", () => {
     expect(groupSurface("record")).toBe(TILE_SURFACE);
     expect(groupSurface("related")).toBe(RELATED_TILE_SURFACE);
     // 41.82 rewrote these in place: with no screen named the meta group is the yellow under its own tokens (it read
-    // `toBe(META_TILE_SURFACE)` and `[META_TILE_SURFACE, "meta"]` → `bg-card-meta`); card-meta is the record screens' salmon.
+    // `toBe(META_TILE_SURFACE)` and `[META_TILE_SURFACE, "meta"]` → `bg-card-meta`); card-meta is the record screens' blush rose (41.86; salmon in 41.82).
     expect(groupSurface("meta")).toBe(YELLOW_TILE_SURFACE);
     expect(groupSurface("fixed")).toBe(PINNED_TILE_SURFACE);
     for (const [surface, token, group] of [[RELATED_TILE_SURFACE, "related", "related"], [YELLOW_TILE_SURFACE, "yellow", "meta"], [META_TILE_SURFACE, "meta", null]] as const) {
@@ -96,7 +96,7 @@ describe("the four groups' colours (#37.88)", () => {
   });
 
   it("the fills share one lightness, and the rims another, in light and dark (OKLCH L within 0.002) — all but „Corelate” since #38.15", () => {
-    // 41.82: the yellow's lightness lives on under card-yellow; card-meta is now #FFB48F, Adrian's own value (it read
+    // 41.82: the yellow's lightness lives on under card-yellow; card-meta is now #FFEEF0 (41.86; #FFB48F in 41.82), Adrian's own value (it read
     // `["card-pinned", "card-meta"]`) — its text contrast is held below instead.
     for (const name of ["card-pinned", "card-yellow"]) {
       expect(Math.abs(lightness(token(name)) - lightness(token("card")))).toBeLessThan(0.002);
@@ -198,16 +198,16 @@ describe("41.68 — the tiles' colours switched round to follow the kinds", () =
     ["property", tileGroupOf(PROP_TILE_REGISTRY, "map"), "green", RELATED_TILE_SURFACE],
     ["property", tileGroupOf(PROP_TILE_REGISTRY, "corners"), "green", RELATED_TILE_SURFACE],
     ["property", tileGroupOf(PROP_TILE_REGISTRY, "streetView"), "green", RELATED_TILE_SURFACE],
-    ["property", tileGroupOf(PROP_TILE_REGISTRY, "classification"), "salmon", META_TILE_SURFACE],
+    ["property", tileGroupOf(PROP_TILE_REGISTRY, "classification"), "rose", META_TILE_SURFACE],
     ["natural-person", tileGroupOf(NP_TILE_REGISTRY, "related"), "card", TILE_SURFACE],
     ["natural-person", tileGroupOf(NP_TILE_REGISTRY, "interactions"), "purple", PINNED_TILE_SURFACE],
     ["natural-person", tileGroupOf(NP_TILE_REGISTRY, "inheritanceTree"), "purple", PINNED_TILE_SURFACE],
-    ["natural-person", tileGroupOf(NP_TILE_REGISTRY, "connections"), "salmon", META_TILE_SURFACE],
+    ["natural-person", tileGroupOf(NP_TILE_REGISTRY, "connections"), "rose", META_TILE_SURFACE],
     ["judicial-person", tileGroupOf(JP_TILE_REGISTRY, "related"), "card", TILE_SURFACE],
     ["judicial-person", tileGroupOf(JP_TILE_REGISTRY, "interactions"), "purple", PINNED_TILE_SURFACE],
     [SAVED_DOCUMENT_ENTITY, "related", "card", TILE_SURFACE],
     [SAVED_DOCUMENT_ENTITY, "fixed", "blue", FAMILY_TILE_SURFACE],
-    [SAVED_DOCUMENT_ENTITY, "meta", "salmon", META_TILE_SURFACE],
+    [SAVED_DOCUMENT_ENTITY, "meta", "rose", META_TILE_SURFACE],
   ] as const)("%s, group %s → %s", (entity, group, hue, surface) => {
     expect(tileHue(group, entity)).toBe(hue);
     expect(groupSurface(group, entity)).toBe(surface);
@@ -248,20 +248,25 @@ describe("41.68 — the tiles' colours switched round to follow the kinds", () =
   });
 });
 
-describe("41.82 — „Clasificare” and „Etichete și grupuri” on #FFB48F on the record screens", () => {
-  it("the tokens: #FFB48F, its rim the same hue darker, the dark ones at the dark tiles' depth; the yellow kept apart", () => {
-    expect(token("card-meta")).toBe("#FFB48F");
-    expect(token("card-meta-rim")).toBe("#E39A74");
-    expect(token("card-meta-dark")).toBe("#2B1A10");
-    expect(token("card-meta-rim-dark")).toBe("#45291A");
+// 41.86 rewrote this block in place: 41.82's #FFB48F / #E39A74 / #2B1A10 / #45291A and the hue `salmon` became Blush rose.
+describe("41.86 — „Clasificare” and „Etichete și grupuri” on Blush rose #FFEEF0 on the record screens", () => {
+  it("the tokens: #FFEEF0, its rim the same hue a step darker, the study's dark pair; the yellow kept apart", () => {
+    expect(token("card-meta")).toBe("#FFEEF0");
+    expect(token("card-meta-rim")).toBe("#F1C5CB");
+    expect(token("card-meta-dark")).toBe("#2B181A");
+    expect(token("card-meta-rim-dark")).toBe("#3F2528");
     expect(token("card-yellow")).toBe("#F8F3E5");
   });
-  it("the ink and the navy titles read on it (at least 4.5 : 1)", () => {
-    expect(contrast("#3C4149", "#FFB48F")).toBeGreaterThanOrEqual(4.5);
-    expect(contrast("#1E3A8A", "#FFB48F")).toBeGreaterThanOrEqual(4.5);
+  it("the fill at the purple's lightness, the rim at the purple rim's (OKLCH L within 0.002)", () => {
+    expect(Math.abs(lightness(token("card-meta")) - lightness(token("card-pinned")))).toBeLessThan(0.002);
+    expect(Math.abs(lightness(token("card-meta-rim")) - lightness(token("card-pinned-rim")))).toBeLessThan(0.003);
   });
-  it.each(["property", "natural-person", "judicial-person", "document-CONTRACT_VANZARE"])("%s: the meta group salmon, its strip and its rectangle too", (entity) => {
-    expect(tileHue("meta", entity)).toBe("salmon");
+  it("the ink and the navy titles read on it (at least 4.5 : 1)", () => {
+    expect(contrast("#3C4149", "#FFEEF0")).toBeGreaterThanOrEqual(4.5);
+    expect(contrast("#1E3A8A", "#FFEEF0")).toBeGreaterThanOrEqual(4.5);
+  });
+  it.each(["property", "natural-person", "judicial-person", "document-CONTRACT_VANZARE"])("%s: the meta group blush rose, its strip and its rectangle too", (entity) => {
+    expect(tileHue("meta", entity)).toBe("rose");
     expect(groupSurface("meta", entity)).toBe(META_TILE_SURFACE);
     expect(groupColours("meta", entity)).toContain("bg-card-meta");
   });
