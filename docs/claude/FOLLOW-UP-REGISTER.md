@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-11-05 — 390 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84, FU-366–369 by 40.85, FU-370–371 by 40.86, FU-372 by 40.87, FU-373 by 40.88, FU-374 by 40.90, FU-375 by 40.92, FU-376 by 40.96, 40.98, FU-381 by 41.01, FU-382 by 41.03, FU-383–384 by 41.10, FU-385 by 41.13, FU-386–387 by 41.16, FU-388 by 41.22, FU-389 by 41.81, FU-390 by 41.82). Rows are status, columns are impact.
+As of 2026-11-05 — 391 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84, FU-366–369 by 40.85, FU-370–371 by 40.86, FU-372 by 40.87, FU-373 by 40.88, FU-374 by 40.90, FU-375 by 40.92, FU-376 by 40.96, 40.98, FU-381 by 41.01, FU-382 by 41.03, FU-383–384 by 41.10, FU-385 by 41.13, FU-386–387 by 41.16, FU-388 by 41.22, FU-389 by 41.81, FU-390 by 41.82, FU-391 by 41.83). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 20 | 93 | 85 | 32 | 230 |
+| open | 20 | 93 | 85 | 33 | 231 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 41 | 63 | 32 | 3 | 139 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 65 | 165 | 123 | 37 | 390 |
+| **total** | 65 | 165 | 123 | 38 | 391 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -474,3 +474,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-388 | 2026-10-31 41.22 Handover.41.22.md | debt | UI shell | judicial-person-form.tsx and property-form.tsx still write raw palette classes and `dark:` (37 + 45 and 28 + 41 at 41.22), so they are not in colour-tokens' CONVERTED; 41.22 touched both (the system ID's portal) and converted only the files it reshaped (system-id-corner.tsx and the three detail tiles). | src/app/judicial-persons/_components/judicial-person-form.tsx; src/app/properties/_components/property-form.tsx; src/__tests__/colour-tokens.test.ts (CONVERTED) | cosmetic | S | open | Convert each to the role tokens (as 40.85 did natural-person-form.tsx) and add it to CONVERTED. | 2026-10-31 |
 | FU-389 | 2026-11-04 41.81 Handover.41.81.md | defect | UI shell | „Înapoi" from „Calcul drum lateral" landed on the big map for Adrian (2026-11-04); not reproduced in Chrome from the dashboard, a typed address, the persons' list or the properties' list. 41.81 added a guard (the record wins when the browser's previous entry is another screen), so the route he took is still unknown and the guard is unproven against it. | src/lib/ui/back-stack.ts backTarget; TC-NAV-01 steps 10a–10b | user | XS | open | Ask Adrian which screen he was on before „Instrumente" → „Calcul drum lateral"; reproduce that route and add it to TC-NAV-01 after step 10b. | 2026-11-04 |
 | FU-390 | 2026-11-05 41.82 Handover.41.82.md | tooling | UI shell | A change to src/app/globals.css is not compiled by a `next dev` that starts on a warm Turbopack cache: the runner's `.next/runner/dev` still served the 05:08 stylesheet (old `--color-card-meta`, no `bg-card-yellow`) on two runs after 41.82's commit, and Adrian's server on 3000 served it too. TSX and JSON changes were picked up. 41.82 cleared `.next/runner/dev` by hand while the runner was idle. | .next/runner/dev/static/chunks/src_app_globals_css_*.css dated 2026-11-04 05:08 at 2026-11-05 00:05; runner results 20261104T235858Z-4656, 20261105T000445Z-26925 | dev | S | open | Have the runner compare globals.css's mtime with its compiled stylesheet's before starting e2e and clear `.next/runner/dev` when the source is newer (a recovery like its others); say so in a note. | 2026-11-05 |
+| FU-391 | 2026-11-05 41.83 Handover.41.83.md | recommendation | UI shell | A natural person's own screen stands on the canvas's beige (bg-canvas, #F3F1ED), while the other record screens and, since 41.83, every Administrare screen stand on the off-white (bg-zinc-50). | src/app/natural-persons — the screen's wrapper draws bg-canvas (41.83's header, TODAY) | cosmetic | XS | open | Give the person's screen the off-white wrapper the property, juridical person and document screens have. | 2026-11-05 |
