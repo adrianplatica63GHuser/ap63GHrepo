@@ -421,7 +421,8 @@ test.describe("TC-LAYOUT-01 — o fereastră îngustă (40.69)", () => {
       expect(await look(h1), url).toBe(`16px ${RED}`);
       expect(await groundOf(h1), url).toBe(OFF_WHITE);
       // Every tile shown: the record tile's grey; every tile title red.
-      await expect.poll(() => page.locator("[data-tile]").count(), { timeout: 15_000 }).toBeGreaterThan(0);
+      // „Utilizatori & Acces" has no tile of the screen's registry, only its panel; the others' tiles come with their data.
+      await page.waitForLoadState("networkidle");
       const tiles = await page.locator("[data-tile]").evaluateAll((els) =>
         els.filter((e) => (e as HTMLElement).offsetParent !== null).map((e) => `${e.getAttribute("data-tile")} ${getComputedStyle(e).backgroundColor}`),
       );
