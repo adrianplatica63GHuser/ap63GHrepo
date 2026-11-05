@@ -424,7 +424,17 @@ test.describe("TC-LAYOUT-01 — o fereastră îngustă (40.69)", () => {
       // „Utilizatori & Acces" has no tile of the screen's registry, only its panel; the others' tiles come with their data.
       await page.waitForLoadState("networkidle");
       const tiles = await page.locator("[data-tile]").evaluateAll((els) =>
-        els.filter((e) => (e as HTMLElement).offsetParent !== null).map((e) => `${e.getAttribute("data-tile")} ${getComputedStyle(e).backgroundColor}`),
+        els
+          .filter((e) => (e as HTMLElement).offsetParent !== null)
+          .map((e) => {
+            // A reference list's tile is a frame round its card (ReferenceTiles): the colour is the first box that paints.
+            let paint = getComputedStyle(e).backgroundColor;
+            if (paint === "rgba(0, 0, 0, 0)") {
+              const inner = [...e.querySelectorAll("*")].find((c) => getComputedStyle(c).backgroundColor !== "rgba(0, 0, 0, 0)");
+              if (inner) paint = getComputedStyle(inner).backgroundColor;
+            }
+            return `${e.getAttribute("data-tile")} ${paint}`;
+          }),
       );
       for (const t of tiles) expect(`${url} ${t}`).toBe(`${url} ${t.split(" ")[0]} ${CARD}`);
       for (const title of await page.locator("[data-tile] [data-tile-title] h2").all()) expect(await look(title), url).toBe(`16px ${RED}`);
