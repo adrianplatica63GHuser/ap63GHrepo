@@ -9,6 +9,7 @@
  * (Ask first 4).
  */
 import { Check } from "lucide-react";
+import { useId } from "react";
 import { useTranslations } from "next-intl";
 import { IconButton } from "@/lib/ui/icon-button";
 import { TileTitle } from "@/components/tiles/tile-title";
@@ -16,9 +17,10 @@ import { screenPanel } from "@/lib/ui/field-widths";
 
 export function GroupAboutTile({ onUnderstood }: { onUnderstood: () => void }) {
   const t = useTranslations("group.infoPanel");
+  const titleId = useId();
   return (
-    <section {...screenPanel("about-groups", 7 /* 40.98: re-pinned, 6 of 148 px */)} data-tile="about" className="rounded-lg border border-card-rim bg-card px-5 py-4 text-admin-title">
-      <TileTitle title={t("title")} className="mb-3" admin />
+    <section {...screenPanel("about-groups", 7 /* 40.98: re-pinned, 6 of 148 px */)} data-tile="about" aria-labelledby={titleId} className="rounded-lg border border-card-rim bg-card px-5 py-4 text-admin-title">
+      <TileTitle id={titleId} title={t("title")} className="mb-3" admin />
       <div className="flex flex-col gap-2 text-sm">
         <p>{t("body1")}</p>
         <p>{t("body2")}</p>

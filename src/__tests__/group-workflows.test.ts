@@ -61,13 +61,13 @@ describe.each(["ro-RO", "en-GB"])("its words in %s", (locale) => {
       }
     }
   });
-  it("„Am înțeles\" and the question in Adrian's words", () => {
+  it("„Am înțeles” and the question in Adrian's words", () => {
     if (locale === "ro-RO") {
       expect(at(m, "group.infoPanel.understood")).toBe("Am înțeles");
       expect(at(m, "group.workflows.wizard.question")).toBe("Ce vrei să faci?");
     }
   });
-  it("the members' note names a record's „Etichete și grupuri\", the map's steps the map's groups button", () => {
+  it("the members' note names a record's „Etichete și grupuri”, the map's steps the map's groups button", () => {
     const note = at(m, "group.workflows.steps.record.title") as string;
     expect(note).toContain(locale === "ro-RO" ? "„Etichete și grupuri”" : "„Tags and groups”");
     expect(at(m, "group.workflows.wizard.steps.mapShow.body")).toContain(locale === "ro-RO" ? "„Grupuri”" : "„Groups”");
@@ -75,12 +75,12 @@ describe.each(["ro-RO", "en-GB"])("its words in %s", (locale) => {
 });
 
 describe("the wiring", () => {
-  it("the group's workflows tile is the wizard; „Ștampile" keeps its list (Ask first 5)", () => {
+  it("the group's workflows tile is the wizard; „Ștampile” keeps its list (Ask first 5)", () => {
     const src = read("src", "components", "screen", "workflows-tile.tsx");
     expect(src).toContain('if (kind === "group") return <GroupWorkflowsWizard units={WORKFLOWS_UNITS} hidden={hidden} />;');
     expect(src).toContain("WORKFLOW_STEPS.map((key)");
   });
-  it("„Ce este un Grup?\" unticks itself in „Panouri\" with „Am înțeles\" (Ask first 1)", () => {
+  it("„Ce este un Grup?” unticks itself in „Panouri” with „Am înțeles” (Ask first 1)", () => {
     expect(read("src", "app", "admin", "groups", "_components", "groups-list-view.tsx")).toContain('<GroupAboutTile onUnderstood={() => tiles.choice.toggle("about")} />');
     expect(read("src", "app", "admin", "groups", "_components", "group-about-tile.tsx")).toContain('label={t("understood")}');
   });

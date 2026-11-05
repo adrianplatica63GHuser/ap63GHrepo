@@ -9,7 +9,7 @@
  * „Etichete și grupuri". The choice is remembered per browser. All its text is #C00000 (Ask first 4, 41.83's token).
  * The same tile stands on „Grupuri" and on a group's screen; „Ștampile" keeps 41.44's list (workflows-tile.tsx).
  */
-import { useEffect, useId, useState } from "react";
+import { useId, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { TileTitle } from "@/components/tiles/tile-title";
 import { screenPanel } from "@/lib/ui/field-widths";
@@ -24,28 +24,44 @@ import {
   type GroupWizardStep,
 } from "@/lib/ui/group-workflows";
 
+// ── The choice made, per browser ─────────────────────────────────────────────
+const listeners = new Set<() => void>();
+/** A private window, where storage throws: the choice holds for this visit. */
+let memory: GroupWizardChoice | null = null;
+function subscribeChoice(l: () => void): () => void {
+  listeners.add(l);
+  window.addEventListener("storage", l);
+  return () => {
+    listeners.delete(l);
+    window.removeEventListener("storage", l);
+  };
+}
+function readChoice(): GroupWizardChoice | null {
+  try {
+    return readGroupWizardChoice(localStorage.getItem(GROUP_WIZARD_KEY));
+  } catch {
+    return memory;
+  }
+}
+const noChoice = (): GroupWizardChoice | null => null;
+function writeChoice(c: GroupWizardChoice): void {
+  memory = c;
+  try {
+    localStorage.setItem(GROUP_WIZARD_KEY, c);
+  } catch {
+    // As above.
+  }
+  for (const l of listeners) l();
+}
+
 export function GroupWorkflowsWizard({ units, hidden = false }: { units: number; hidden?: boolean }) {
   const t = useTranslations("group.workflows");
   const titleId = useId();
   const name = useId();
-  const [choice, setChoice] = useState<GroupWizardChoice | null>(null);
-  // Read after the first render, so the server's page and the browser's first one agree.
-  useEffect(() => {
-    try {
-      const stored = readGroupWizardChoice(localStorage.getItem(GROUP_WIZARD_KEY));
-      if (stored) setChoice(stored);
-    } catch {
-      // A private window: the choice holds for this visit.
-    }
-  }, []);
-  const choose = (c: GroupWizardChoice) => {
-    setChoice(c);
-    try {
-      localStorage.setItem(GROUP_WIZARD_KEY, c);
-    } catch {
-      // As above.
-    }
-  };
+  // The browser's stored choice, read as an external store: none on the server and on the first render, so the two
+  // agree; the browser's afterwards (Ask first 3).
+  const choice = useSyncExternalStore(subscribeChoice, readChoice, noChoice);
+  const choose = (c: GroupWizardChoice) => writeChoice(c);
   const stepText = (s: GroupWizardStep, part: "title" | "body") =>
     GROUP_STEPS_OF_41_44.includes(s) ? t(`steps.${s}.${part}`) : t(`wizard.steps.${s}.${part}`);
   const note = choice ? GROUP_WIZARD_NOTE[choice] : undefined;
