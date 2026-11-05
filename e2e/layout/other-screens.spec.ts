@@ -389,4 +389,53 @@ test.describe("TC-LAYOUT-01 — o fereastră îngustă (40.69)", () => {
       await removeRecord(page.request, "property", propertyId);
     }
   });
+
+  // Step 10 (Slice 41.83) — Adrian: „screen backgrounds for all screens under administration should be the off-white …
+  // all tiles under Administration should be the grey that Principal Objects tile have … all titles under Administration
+  // should have the size that Principal Objects tile titles have [and] the color #C00000".
+  test("41.83 — Administrare: off-white screens, the record tiles' grey, titles 16 px in #C00000", async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1366, height: 768 });
+    const RED = "rgb(192, 0, 0)";
+    const OFF_WHITE = "rgb(250, 250, 250)";
+    const CARD = "rgb(238, 244, 250)";
+    const look = (l: Locator) => l.evaluate((e) => `${getComputedStyle(e).fontSize} ${getComputedStyle(e).color}`);
+    for (const url of ["/admin/users", "/admin/groups", "/admin/stamps", "/admin/tags", "/admin/settings", "/admin/value-lists?list=tarla"]) {
+      await page.goto(url);
+      const h1 = page.locator("h1").first();
+      await expect(h1, url).toBeVisible({ timeout: 30_000 });
+      expect(await look(h1), url).toBe(`16px ${RED}`);
+      // The screen's background: the nearest box under the heading that paints one.
+      const ground = await h1.evaluate((e) => {
+        for (let p = e.parentElement; p; p = p.parentElement) {
+          const c = getComputedStyle(p).backgroundColor;
+          if (c !== "rgba(0, 0, 0, 0)") return c;
+        }
+        return null;
+      });
+      expect(ground, url).toBe(OFF_WHITE);
+      // Every tile shown: the record tile's grey; every tile title red.
+      await expect.poll(() => page.locator("[data-tile]").count(), { timeout: 15_000 }).toBeGreaterThan(0);
+      const tiles = await page.locator("[data-tile]").evaluateAll((els) =>
+        els.filter((e) => (e as HTMLElement).offsetParent !== null).map((e) => `${e.getAttribute("data-tile")} ${getComputedStyle(e).backgroundColor}`),
+      );
+      for (const t of tiles) expect(`${url} ${t}`).toBe(`${url} ${t.split(" ")[0]} ${CARD}`);
+      for (const title of await page.locator("[data-tile] [data-tile-title] h2").all()) expect(await look(title), url).toBe(`16px ${RED}`);
+    }
+
+    // „Date de referință": the three section names red at 16 px; a „Liste de valori" item's tile title red …
+    await page.goto("/admin/value-lists?list=tarla");
+    const sections = page.locator('[data-panel="value-lists-nav"] [data-category] > h2');
+    await expect(sections.first()).toBeVisible({ timeout: 30_000 });
+    for (const h of await sections.all()) expect(await look(h)).toBe(`16px ${RED}`);
+    const card = page.locator("[data-value-list-card] [data-value-list-head] h2").first();
+    await expect(card).toBeVisible({ timeout: 30_000 });
+    expect(await look(card)).toBe(`16px ${RED}`);
+    // … and a „Roluri și legături" one's not.
+    await page.goto("/admin/value-lists?list=person-roles");
+    const roleCard = page.locator("[data-value-list-card] [data-value-list-head] h2").first();
+    await expect(roleCard).toBeVisible({ timeout: 30_000 });
+    expect(await look(roleCard)).not.toContain(RED);
+  });
 });
+

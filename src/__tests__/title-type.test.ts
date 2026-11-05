@@ -95,11 +95,12 @@ describe("every place that draws a kind reads its constant", () => {
     "src/app/admin/value-lists/_components/document-type-form-editor.tsx": ["COLUMN_NAMES_TYPE"],
     "src/app/admin/value-lists/_components/document-type-page.tsx": ["COLUMN_NAMES_FACE"],
     "src/app/admin/value-lists/_components/property-type-uses.tsx": ["COLUMN_NAMES_FACE"],
-    "src/app/admin/value-lists/_components/value-list-hub.tsx": ["PANEL_TITLE_TYPE"],
+    // 41.83: Administrare's titles read their #C00000 twins (these read PANEL_TITLE_TYPE until then).
+    "src/app/admin/value-lists/_components/value-list-hub.tsx": ["ADMIN_PANEL_TITLE_TYPE"],
     "src/app/admin/value-lists/_components/role-doc-types.tsx": ["PANEL_TITLE_TYPE"],
-    "src/app/admin/settings/_components/settings-view.tsx": ["PANEL_TITLE_TYPE"],
-    "src/app/admin/settings/_components/cost-tiles.tsx": ["PANEL_TITLE_TYPE"],
-    "src/app/admin/settings/_components/my-tile-defaults.tsx": ["PANEL_TITLE_TYPE"],
+    "src/app/admin/settings/_components/settings-view.tsx": ["ADMIN_PANEL_TITLE_TYPE"],
+    "src/app/admin/settings/_components/cost-tiles.tsx": ["ADMIN_PANEL_TITLE_TYPE"],
+    "src/app/admin/settings/_components/my-tile-defaults.tsx": ["ADMIN_PANEL_TITLE_TYPE"],
     // 41.41 — was: Grupuri's and Ștampile's pages read PAGE_HEADING_TYPE for their „Ce este …?" panel. That panel is a
     // tile now, chosen with „Panouri", so its heading is TileTitle's (tile-heading-one-piece) and kind 7a has no reader.
     "src/components/screen/tile-title.tsx": ["SCREEN_TILE_TITLE_TYPE"],
@@ -132,5 +133,44 @@ describe("every place that draws a kind reads its constant", () => {
       return OLD.filter((o) => src.includes(o)).map((o) => `${rel}: ${o}`);
     });
     expect(hits).toEqual([]);
+  });
+});
+
+describe("41.83 — every title under Administrare: a tile title's size, in #C00000", () => {
+  const TT = read("src/lib/ui/title-type.ts");
+  const constant = (name: string) => new RegExp(`export const ${name} = "([^"]+)"`).exec(TT)![1];
+  it("each Administrare twin is its kind with the size 16 px (text-base) and text-admin-title, nothing else changed", () => {
+    for (const [admin, kind] of [
+      ["ADMIN_TILE_TITLE_TYPE", "TILE_TITLE_TYPE"],
+      ["ADMIN_PANEL_TITLE_TYPE", "PANEL_TITLE_TYPE"],
+      ["ADMIN_SCREEN_TILE_TITLE_TYPE", "SCREEN_TILE_TITLE_TYPE"],
+    ]) {
+      const a = tokens(constant(admin));
+      const k = tokens(constant(kind)).filter((c) => !/^text-(navy|\[13px\]|base)$|^leading-|^dark:text-/.test(c));
+      expect(a).toContain("text-base");
+      expect(a).toContain("text-admin-title");
+      for (const c of k) expect(a).toContain(c);
+    }
+    expect(constant("ADMIN_TITLE")).toBe("text-base text-admin-title");
+  });
+  it("the token is #C00000, and #F87171 in dark", () => {
+    const css = read("src/app/globals.css");
+    expect(css).toMatch(/--color-admin-title:\s*#C00000;/);
+    expect(css).toMatch(/\.dark \{[\s\S]*--color-admin-title:\s*#F87171;/);
+  });
+  it("every Administrare page heading is 16 px and red", () => {
+    for (const rel of [
+      "src/app/admin/users/page.tsx", "src/app/admin/tags/page.tsx", "src/app/admin/groups/page.tsx", "src/app/admin/groups/[id]/page.tsx",
+      "src/app/admin/stamps/page.tsx", "src/app/admin/stamps/[id]/page.tsx", "src/app/admin/settings/page.tsx",
+      "src/app/admin/value-lists/_components/value-list-hub.tsx", "src/app/admin/value-lists/_components/document-type-page.tsx",
+    ]) {
+      const h1s = [...read(rel).matchAll(/<h1[^>]*className="([^"]+)"/g)].map((m) => tokens(m[1]));
+      expect([rel, h1s.length > 0]).toEqual([rel, true]);
+      for (const h of h1s) expect([rel, h.includes("text-base") && h.includes("text-admin-title") && !h.includes("text-2xl")]).toEqual([rel, true]);
+    }
+  });
+  it("„Roluri și legături\" keeps its titles: the list card is red only outside it", () => {
+    expect(read("src/app/admin/value-lists/_components/value-list-hub.tsx")).toContain('adminTitle={categoryOfList(key) !== "rolesLinks"}');
+    expect(read("src/app/admin/value-lists/_components/relationship-triangle.tsx")).not.toContain("text-admin-title");
   });
 });

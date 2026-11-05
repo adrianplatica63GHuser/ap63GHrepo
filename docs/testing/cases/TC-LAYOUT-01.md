@@ -59,6 +59,7 @@ editor, and saves nothing.
 | 7 | (Slice 40.69) At 700 × 900, opens the dashboard, then an invented person and an invented property | Nothing scrolls sideways; on the two records every tile stands in one column, one under another |
 | 8 | Opens the person, whose name is too long for one line | (Slice 41.08; was: the versions and „Panouri" on the line under the name) The versions and „Panouri" are in the page bar, left of „?", none in the record's header; the bar stays one line |
 | 9 | (Slice 41.08) At 1024 × 600, opens an invented property, scrolls to the bottom, opens „Panouri", scrolls back to the top | In the bar, left to right: the versions, „Panouri", „?"; scrolled to the bottom the bar is still at the top of the content, „?" and „Panouri" in view; the panel opens under the bar, its right edge at the button's, and stays where it opened while the page scrolls; Esc closes it |
+| 10 | (Slice 41.83) At 1366 × 768 opens „Utilizatori & Acces", „Grupuri", „Ștampile", „Etichete", „Setări" and „Date de referință" (the list „Tarla"), then „Roluri Persoane" | Each screen on the record screens' off-white `rgb(250, 250, 250)`; every tile on the record tiles' grey `rgb(238, 244, 250)`; every heading and tile title 16 px in `rgb(192, 0, 0)`. In „Date de referință" the three section names in the side panel and „Tarla"'s tile title red; „Roluri Persoane"'s tile title not |
 
 ## Notes from the runs
 
