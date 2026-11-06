@@ -280,18 +280,18 @@
           "section": "reports-inheritance-levels",
           "ro": {
             "question": "Ciprian este pe ecranul lui Andrei Munteanu, în fișa „Arbore de moștenire”, și vrea să vadă familia pe toată pagina, centrată pe Andrei. Ce apasă?",
-            "explanation": "Din fișa „Arbore de moștenire” a unei persoane, „Deschide arborele întreg” deschide ecranul „Arbori de moștenire” centrat pe ea."
+            "explanation": "Din fișa „Arbore de moștenire” a unei persoane, „Deschide arborele întreg” deschide arborele întreg chiar peste ecranul ei, cu persoana la mijloc."
           },
           "en": {
             "question": "Ciprian is on Andrei Munteanu's screen, in the „Arbore de moștenire” tile, and wants to see the family over the whole page, centred on Andrei. What does he press?",
-            "explanation": "From a person's „Arbore de moștenire” tile, „Deschide arborele întreg” (open the whole tree) opens the „Arbori de moștenire” screen centred on them."
+            "explanation": "From a person's „Arbore de moștenire” tile, „Deschide arborele întreg” (open the whole tree) opens the whole tree right over their screen, with the person in the middle."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "„Adaugă sau scoate o rudă”, care mărește desenul.",
-              "en": "„Adaugă sau scoate o rudă” (add or remove a relative), which enlarges the drawing."
+              "ro": "„Adaugă o rudă”, care mărește desenul.",
+              "en": "„Adaugă o rudă” (add a relative), which enlarges the drawing."
             },
             {
               "id": "o2",
@@ -475,11 +475,11 @@
           "section": "persons-relatives-tree",
           "ro": {
             "question": "În arbore, Ciprian apasă pe numele Mariei Stan, pentru că vrea să-i lege fiul, care lipsește. Ce găsește când se deschide ecranul ei?",
-            "explanation": "Când ajungeți la persoană din „Rapoarte” → „Arbori de moștenire”, cu un clic pe numele ei, panoul legăturilor de familie din fișa „Arbore de moștenire” este deja deschis."
+            "explanation": "Când ajungeți la persoană din „Rapoarte” → „Arbori de moștenire”, cu un clic pe numele ei, „Adaugă o rudă” din fișa „Arbore de moștenire” este deja deschisă."
           },
           "en": {
             "question": "In the tree, Ciprian clicks Maria Stan's name, because he wants to link her son, who is missing. What does he find when her screen opens?",
-            "explanation": "When you reach the person from „Rapoarte” → „Arbori de moștenire”, with a click on their name, the panel of family ties in the „Arbore de moștenire” tile is already open."
+            "explanation": "When you reach the person from „Rapoarte” → „Arbori de moștenire”, with a click on their name, „Adaugă o rudă” (add a relative) in the „Arbore de moștenire” tile is already open."
           },
           "options": [
             {
@@ -491,8 +491,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "Panoul legăturilor de familie din „Arbore de moștenire”, deja deschis.",
-              "en": "The panel of family ties in „Arbore de moștenire”, already open."
+              "ro": "„Adaugă o rudă” din „Arbore de moștenire”, deja deschisă.",
+              "en": "„Adaugă o rudă” in „Arbore de moștenire”, already open."
             },
             {
               "id": "o3",

@@ -298,8 +298,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Fișa „Arbore de moștenire” a cărții, cu „Adaugă sau scoate o rudă”.",
-              "en": "The card's „Arbore de moștenire” tile, with „Adaugă sau scoate o rudă”."
+              "ro": "Fișa „Arbore de moștenire” a cărții, cu „Adaugă o rudă”.",
+              "en": "The card's „Arbore de moștenire” tile, with „Adaugă o rudă”."
             },
             {
               "id": "o4",
@@ -395,11 +395,11 @@
           "section": "persons-example-tree",
           "ro": {
             "question": "Ciprian a apăsat „Omite” la tatăl lui Andrei Munteanu, nefiind sigur. Apoi află că tatăl este deja în arhivă. Cum îl leagă acum de Andrei, ca tată?",
-            "explanation": "Două persoane din arhivă se leagă ca rude de pe ecranul fiului: în „Arbore de moștenire”, „Adaugă sau scoate o rudă”, la „Ruda” alegeți tatăl, la „Ce este pentru …” „Tată”, apoi „Adaugă legătura”."
+            "explanation": "Două persoane din arhivă se leagă ca rude de pe ecranul fiului: în „Arbore de moștenire”, „Adaugă o rudă”, la „Ruda” alegeți tatăl, la „Ce este pentru …” „Tată”, apoi „Adaugă legătura”."
           },
           "en": {
             "question": "Ciprian pressed „Omite” for Andrei Munteanu's father, not being sure. Then he learns that the father is already in the archive. How does he now link him to Andrei, as father?",
-            "explanation": "Two persons in the archive are linked as relatives from the son's screen: in „Arbore de moștenire”, „Adaugă sau scoate o rudă” (add or remove a relative), under „Ruda” choose the father, under „Ce este pentru …” „Tată”, then „Adaugă legătura” (add the tie)."
+            "explanation": "Two persons in the archive are linked as relatives from the son's screen: in „Arbore de moștenire”, „Adaugă o rudă” (add a relative), under „Ruda” choose the father, under „Ce este pentru …” „Tată”, then „Adaugă legătura” (add the tie)."
           },
           "options": [
             {

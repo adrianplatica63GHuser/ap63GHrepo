@@ -379,8 +379,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Nicăieri încă: legăturile din carte trebuie refăcute din „Adaugă sau scoate o rudă”.",
-              "en": "Nowhere yet: the links from the card must be made again from „Adaugă sau scoate o rudă”."
+              "ro": "Nicăieri încă: legăturile din carte trebuie refăcute din „Adaugă o rudă”.",
+              "en": "Nowhere yet: the links from the card must be made again from „Adaugă o rudă”."
             },
             {
               "id": "o4",
@@ -742,11 +742,11 @@
           "section": "persons-relatives-tree",
           "ro": {
             "question": "Citirea nu a găsit părinții Ioanei Dumitru, iar Ciprian i-a lăsat necreați. Află apoi că tatăl ei, Vasile Dumitru, este deja persoană în arhivă. Cum îi leagă?",
-            "explanation": "Pe ecranul Ioanei, „Adaugă sau scoate o rudă” din fișa „Arbore de moștenire” deschide panoul legăturilor de familie: la „Ruda” alegeți tatăl, la „Ce este pentru …” alegeți „Tată” și apăsați „Adaugă legătura”."
+            "explanation": "Pe ecranul Ioanei, „Adaugă o rudă” din fișa „Arbore de moștenire” deschide jumătatea în care legați o rudă nouă: la „Ruda” alegeți tatăl, la „Ce este pentru …” alegeți „Tată” și apăsați „Adaugă legătura”."
           },
           "en": {
             "question": "The reading did not find Ioana Dumitru's parents, and Ciprian left them uncreated. He then learns that her father, Vasile Dumitru, is already a person in the archive. How does he link them?",
-            "explanation": "On Ioana's screen, „Adaugă sau scoate o rudă” (add or remove a relative) in the „Arbore de moștenire” tile opens the panel of family ties: under „Ruda” choose the father, under „Ce este pentru …” choose „Tată”, and press „Adaugă legătura” (add the tie)."
+            "explanation": "On Ioana's screen, „Adaugă o rudă” (add a relative) in the „Arbore de moștenire” tile opens the half where you tie in a new relative: under „Ruda” choose the father, under „Ce este pentru …” choose „Tată”, and press „Adaugă legătura” (add the tie)."
           },
           "options": [
             {
@@ -758,8 +758,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "Pe ecranul Ioanei, „Adaugă sau scoate o rudă”, cu Vasile ca „Tată”.",
-              "en": "On Ioana's screen, „Adaugă sau scoate o rudă”, with Vasile as „Tată”."
+              "ro": "Pe ecranul Ioanei, „Adaugă o rudă”, cu Vasile ca „Tată”.",
+              "en": "On Ioana's screen, „Adaugă o rudă”, with Vasile as „Tată”."
             },
             {
               "id": "o3",

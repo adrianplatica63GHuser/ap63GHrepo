@@ -26,7 +26,7 @@ The search box at the top of the list („search by ID, Name, Nickname, Registra
 
 The button shows how many fields you chose, for instance „Choose fields 1/4”. The CUI column does not appear until you tick it, but searching by CUI works regardless. Under „Contact” you see the firm's first contact person; if the first slot is empty, you see the second (section [[companies-people-contact]]).
 
-On each row the firm's name is a link that opens it, and beside it stand, faded until the mouse passes over the row, „Preview”, „Peek inside” and „Links”. A firm's preview shows its name, then its nickname. „Peek inside” shows the firm's „Interactions” tile beside the list, and „Links” shows, also beside it, whom the firm is linked to, without opening it.
+On each row the firm's name is a link that opens it, and beside it stand, faded until the mouse passes over the row, „Preview”, „Peek inside” and „Links”. A firm's preview shows its name, then its nickname and its CUI, then the firm's phone and e-mail. „Peek inside” shows the firm's „Interactions” tile beside the list, and „Links” shows, also beside it, whom the firm is linked to, without opening it.
 
 A firm added recently stands at the top of the list, marked „New!”.
 
@@ -73,7 +73,9 @@ The first tile holds the firm's details:
 - „Registration No. (CUI)” — the unique registration code.
 - „Trade Register No.” — the Trade Register number.
 
-The firm's system ID, which begins with JPERS, stands in the top right-hand corner of this tile. It is not a field and is not typed by hand.
+„Name” and „Nickname” each take the tile's whole width; „Type” stands alone on its row, under „Nickname”, and the CUI and the Trade Register number stand side by side below it.
+
+The firm's system ID, which begins with JPERS, is not on the tile but in the top bar, left of the version (section [[start-breadcrumb]]). It is not a field and is not typed by hand.
 
 The application does not check the shape of the CUI: it accepts whatever you type. So check it against the document before you save. Once saved, the rule appears under the CUI: „CUI cannot be changed once set — delete and recreate to change”. A wrong CUI is therefore put right by deleting the firm and creating it again.
 
@@ -85,7 +87,9 @@ An e-mail that does not have the shape of an address is not saved: under the fie
 
 ### 4.2.3 The addresses {#companies-add-addresses}
 
-The „Addresses” tile holds „Registered Address” and „Correspondence Address”. When the firm receives its post at its office, tick „Same as registered address” and do not type the address a second time.
+The addresses are two tiles, „Registered Address” and „Correspondence Address”, with the fields of any address (section [[persons-add-tiles]]); „Country” is chosen from the „Address country” list. In „Panels” they have a single tick, „Addresses”. On a saved firm each is edited on its own, with its own „Edit”, „Save” and „Cancel”.
+
+When the firm receives its post at its office, tick „Same as registered address” and do not type the address a second time. The tick stands at the foot of „Correspondence Address” while you edit it; on „New Juridical Person”, under „Registered Address”. With the tick set, „Correspondence Address” is a single line, „same as registered office”, and „Add” on it opens it.
 
 ### 4.2.4 Editing and the history {#companies-add-edit}
 
@@ -138,6 +142,8 @@ The bodies that issue documents — a notary's office, a court, a town hall, the
 In „Type” they stand after the company forms, with „Altele” last. Each has a tax code in ANAF's register, so „Fill in from ANAF” fills them in like any firm (section [[companies-add-anaf]]).
 
 A document's issuer — the field of its form whose label changes with its type — is chosen among them: its list holds the juridical persons of a public-body type, and its search finds any juridical person (section [[documents-identification]]). Which types count as public bodies is a tick in Reference Data (section [[admin-reference-data-public-bodies]]).
+
+On a notarial document — a certificate of inheritance, a sale contract, an addendum, a deed of gift or a will —, the notary's office chosen as issuer also appears in „Links”, with the role „Notar” (notary), on the document and on the office's screen. The link follows the issuer: another office moves it, an emptied issuer removes it. „Dissociate” does not remove it, but answers „The notary office is changed on „Document identification”.”.
 
 The archive's former list of institutions became juridical persons of these types, each with a JPERS code. Those that named no particular body — the generic notary's office, court or town hall — carry the note „generic — de înlocuit cu instituția exactă” (generic — to be replaced with the exact institution). Open one, put the exact body's name and CUI in place of the generic ones, and save: every document it issued then names the exact body.
 

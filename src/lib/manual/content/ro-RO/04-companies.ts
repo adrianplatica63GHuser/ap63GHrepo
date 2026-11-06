@@ -26,7 +26,7 @@ Caseta de căutare din capul listei („caută după ID, Denumire, Poreclă, Nr.
 
 Butonul arată câte câmpuri ați ales, de exemplu „Câmpuri afișate 1/4”. Coloana CUI nu apare până nu o bifați, dar căutarea după CUI merge oricum. La „Contact” se vede prima persoană de contact a firmei; dacă primul loc e gol, se vede a doua (secțiunea [[companies-people-contact]]).
 
-Pe fiecare rând, denumirea firmei este un link care o deschide, iar lângă ea stau, estompate până treceți cu mouse-ul peste rând, „Previzualizare”, „Incursiune” și „Legături”. Previzualizarea unei firme arată denumirea ei, apoi porecla. „Incursiune” arată, alături de listă, fișa „Interacțiuni” a firmei, iar „Legături” arată, tot alături, cu cine este legată firma, fără să o deschideți.
+Pe fiecare rând, denumirea firmei este un link care o deschide, iar lângă ea stau, estompate până treceți cu mouse-ul peste rând, „Previzualizare”, „Incursiune” și „Legături”. Previzualizarea unei firme arată denumirea ei, apoi porecla și CUI-ul, apoi telefonul și e-mailul firmei. „Incursiune” arată, alături de listă, fișa „Interacțiuni” a firmei, iar „Legături” arată, tot alături, cu cine este legată firma, fără să o deschideți.
 
 O firmă adăugată de curând apare în capul listei, marcată „Nou!”.
 
@@ -73,7 +73,9 @@ Prima fișă ține datele firmei:
 - „Nr. înregistrare (CUI)” — codul unic de înregistrare.
 - „Nr. registru comerțului” — numărul de la Registrul Comerțului.
 
-ID-ul de sistem al firmei, care începe cu JPERS, stă în colțul din dreapta-sus al acestei fișe. Nu este un câmp și nu se scrie de mână.
+„Denumire” și „Poreclă” țin fiecare toată lățimea fișei; „Tip” stă singur pe rândul lui, sub „Poreclă”, iar CUI-ul și numărul de la Registrul Comerțului stau alături, dedesubt.
+
+ID-ul de sistem al firmei, care începe cu JPERS, nu stă în fișă, ci în bara de sus, la stânga versiunii (secțiunea [[start-breadcrumb]]). Nu este un câmp și nu se scrie de mână.
 
 Aplicația nu verifică forma CUI-ului: primește orice scrieți. Verificați-l deci pe act înainte să salvați. Odată salvat, sub CUI apare regula: „CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba”. Un CUI greșit se îndreaptă, așadar, ștergând firma și creând-o din nou.
 
@@ -85,7 +87,9 @@ Un e-mail care nu are forma unei adrese nu se salvează: sub câmp apare „Adre
 
 ### 4.2.3 Adresele {#companies-add-addresses}
 
-Fișa „Adrese” ține „Adresă sediu social” și „Adresă corespondență”. Când firma primește corespondența la sediu, bifați „Aceeași cu adresa sediului social” și nu mai scrieți adresa a doua oară.
+Adresele sunt două fișe, „Adresă sediu social” și „Adresă corespondență”, cu câmpurile oricărei adrese (secțiunea [[persons-add-tiles]]); „Țară” se alege din lista „Țara adresei”. În „Panouri” au o singură bifă, „Adrese”. Pe o firmă salvată, fiecare se modifică singură, cu „Editează”, „Salvează” și „Renunță” ale ei.
+
+Când firma primește corespondența la sediu, bifați „Aceeași cu adresa sediului social” și nu mai scrieți adresa a doua oară. Bifa stă jos în „Adresă corespondență” cât timp o modificați; pe „Persoană juridică nouă”, sub „Adresă sediu social”. Cu bifa pusă, „Adresă corespondență” stă pe un singur rând, „aceeași cu sediul social”, iar „Adaugă” de pe el o deschide.
 
 ### 4.2.4 Modificarea și istoricul {#companies-add-edit}
 
@@ -138,6 +142,8 @@ Instituțiile care emit acte — un birou notarial, o instanță, o primărie, o
 La „Tip” stau după formele de firmă, cu „Altele” la urmă. Fiecare are cod fiscal în registrul ANAF, așa că „Completează din ANAF” le completează ca pe orice firmă (secțiunea [[companies-add-anaf]]).
 
 Emitentul unui act — câmpul din formularul actului a cărui etichetă se schimbă după tip — se alege dintre ele: lista lui ține persoanele juridice de un tip de autoritate publică, iar căutarea lui găsește orice persoană juridică (secțiunea [[documents-identification]]). Ce tipuri sunt autorități publice se bifează în „Date de referință” (secțiunea [[admin-reference-data-public-bodies]]).
+
+Pe un act notarial — un certificat de moștenitor, un contract de vânzare, un act adițional, un act de donație sau un testament —, biroul notarial ales ca emitent apare și în „Legături”, cu rolul „Notar”, pe act și pe ecranul biroului. Legătura urmează emitentul: alt birou o mută, un emitent golit o scoate. „Dezasociază” nu o scoate, ci răspunde „Biroul notarial se schimbă din „Identificarea actului”.”.
 
 Fosta listă de instituții a arhivei a devenit persoane juridice de aceste tipuri, fiecare cu cod JPERS. Cele care nu numeau o instituție anume — biroul notarial, instanța sau primăria generice — au nota „generic — de înlocuit cu instituția exactă”. Deschideți-o, puneți numele și CUI-ul instituției exacte în locul celor generice și salvați: toate actele emise de ea numesc atunci instituția exactă.
 

@@ -31,7 +31,7 @@ A few marks on the rows:
 
 - „New!” stands beside a person added or changed recently.
 - „†” after the name means the person has died; if you move the mouse over it, it reads „Deceased” (section [[persons-identity]]).
-- The person's system ID does not appear in the list; you see it on their screen, in the corner of the „Identity” tile.
+- The person's system ID does not appear in the list; you see it on their screen, in the top bar, left of the version (section [[start-breadcrumb]]).
 
 Each row has four buttons:
 
@@ -72,9 +72,13 @@ On the list of natural persons, press „Add new Person” — the button on the
 | „Identity” | In rows: „Last Name” and „First Name”; „Nickname”, alone; „CNP” and „Citizenship”; „Date of Birth”, „Age” and „Gender”; „Deceased” and „Date of death”; „Place of Birth”, as wide as the tile; „Professional type”; „Notes”. |
 | „Identity documents” | On a saved person: their identity cards and passports, each a document of its own (section [[persons-identity-documents]]). It does not appear on „New Natural Person”: there is no person yet to hold them. |
 | „Contact” | The telephone numbers and e-mail addresses. |
-| „Addresses” | „Home Address” and „Correspondence Address”. |
+| „Addresses” | Two tiles, „Home Address” and „Correspondence Address”. Each has „Street, No., Floor, Apt”, then „Postal Code” beside „Locality” and „County / Sector” beside „Country”, then „Notes”. „Country” is chosen from a list, „Address country” in „Reference Data” (section [[admin-reference-data]]). |
 
-„Gender” is written as one letter: „M” or „F” — on the form, on the person's screen, in the list's „Gender” column and in the ID card's window. Under the mouse it shows the whole word, „Male” or „Female”. „Relationship to the business” takes the whole of its row in „Identity”, its ticks one after another. „Citizenship” sits beside „Place of Birth”.
+„Gender” is written as one letter: „M” or „F” — on the form, on the person's screen, in the list's „Gender” column and in the ID card's window. Under the mouse it shows the whole word, „Male” or „Female”. „Relationship to the business” takes the whole of its row in „Identity”, its ticks one after another. „Citizenship” sits beside „CNP”.
+
+On a saved person, while „Identity” is being read, „Age” has no field of its own: the age stands after the date of birth, in brackets — for instance „(41 y)”. The „Age” field appears after „Edit”.
+
+On a saved person, each address is edited on its own: „Edit” on „Home Address” or on „Correspondence Address”, then that tile's „Save” or „Cancel”. In „Panels”, the two have a single tick, „Addresses”. When the post goes to the home address, „Correspondence Address” is a single line, „same as home address”, and „Add” on that line opens it so you can type its address. The tick „Correspondence address same as home address” stands at the foot of „Correspondence Address” while you edit it; on „New Natural Person”, under „Home Address”.
 
 The ticks in „Panels” show or hide tiles, as on any object (section [[start-tiles]]). A hidden tile does not lose its data: what you typed in it is saved all the same.
 
@@ -120,10 +124,14 @@ At the end you return to the list of persons. On the holder's screen, in „Link
 When the identity card is already a document in the archive, with its scan as a page, the persons are created from the document's screen.
 
 1. Open the identity document: a „Carte de Identitate (tip nou)”, a „Carte de Identitate (tip vechi)”, a „Pașaport” or a „Pașaport CRDS”.
-2. Press „Create people from the ID card”, beside „Modify”. The application reads the card from the first page and opens the window „Create person from ID card”.
+2. Press „Create people from the ID card” — a person with a +, no words —, beside „Modify”. The application reads the card from the first page and opens the window „Create person from ID card”.
 3. Check the holder and press „Create and link”. If the holder is already in the archive, the application finds them by CNP and does not make a second person.
 4. In „The holder's parents”, the father and mother read from the card are already ticked, with the holder's surname, marked as assumed. Check them, then press „Create and link” for each.
 5. Under the button, the application writes what it did: „The holder was created and linked to the document.”, „Father: created and linked”, „Mother: created and linked”.
+
+„Create people from the ID card” cannot be pressed while the document already has a holder — whether created this way or added from the person's „Identity documents” tile: under the mouse the button says „This document already has a holder: …”, with their name.
+
+In the window, under „Citizenship”, it also shows what the document printed: „On the document: …”, followed by the citizenship exactly as the card prints it. The person receives the citizenship chosen from the list, and the document keeps the printed text.
 
 The holder is linked to the document as „Titular act de identitate” (identity-document holder), and the parents are linked to the holder as „Tată” and „Mamă”. What the document printed is written on the document, in its „Official document” tile; the names, the CNP, the gender, the birth and the citizenship go onto the person, and a person who already existed receives only the fields they had empty. If the reading does not find the parents' first names, the two rows appear empty and unticked, with the note „The card does not print the parents' first names, or the read did not find them…”: you can type them yourself.
 
@@ -176,7 +184,7 @@ In the „Identity” tile, under „Date of Birth”, is the „Deceased” tic
 2. Type „Date of death”, if you know it.
 3. Press „Save”.
 
-After the death, „Age” no longer grows: it shows the age at death, followed by „†” — for instance „76 †”. A person ticked „Deceased” but with no date has „Age” „—”. In the lists, „†” appears after their name.
+After the death, „Age” no longer grows: it shows the age at death, followed by „†” — for instance „76 †”; when the tile is read, the date of birth too is followed by the age at death, with „†” after it. A person ticked „Deceased” but with no date has „Age” „—”. In the lists, „†” appears after their name.
 
 The application refuses a date of death that makes no sense and writes under the field why:
 
@@ -204,13 +212,15 @@ A link is removed from „Links”: choose the row and press „Dissociate”.
 
 The „Inheritance tree” tile, light purple, draws the person's family: parents and grandparents up to great-grandparents, children down to great-grandchildren, siblings and the husband or wife (Figure [[fig-persons-tree]]). If you do not see it, tick „Inheritance tree” in „Panels”.
 
+The tile is as wide as the family: with the person alone or with a single relative it is 2 units wide, with more relatives 3 (section [[start-tiles]]). The drawing opens centred on the person, even if part of the tree is then outside the tile. A width dragged by hand is kept.
+
 „Open the whole tree” opens the whole tree right over the person's screen. The tile grows until it fills the window, and the person travels from where they stand on the tile to the middle, at the same size; then the tree comes closer until the details can be read, and the person's card opens. „Collapse”, Esc, a click outside the tree or the browser's back button take it back into the tile the same way. If you moved it, zoomed it or searched for another person meanwhile, it first returns, on an arc, to where the opening ended. How long each part lasts is set in „Settings”, under „Time thresholds” (section [[admin-settings-thresholds]]) — the same values as „Map — expanded”.
 
 ![3.3 A person's „Inheritance tree” tile](persons-tree.png){#fig-persons-tree}
 
 Only links with a kinship role go into the tree — the roles marked „Kinship” in „Person Roles”. A person with no such links shows „No family ties yet.”
 
-Under the drawing stand two buttons: „Add a relative” (a person with a chain link) opens the half where you tie in a new relative, and „Remove a relative” (a person with a bin) the one with the person's family ties; each collapses from its own button. When you reach the person from „Reporting” → „Inheritance trees”, with a click on their name (section [[reports-inheritance]]), „Add a relative” is already open.
+Under the drawing stand two buttons, drawn like „Associate person” in „Links”: „Add a relative” — the person, then the chain link — opens the half „A new relative of …”, where you tie in a new relative, and „Remove a relative” — the person, then a bin — the one with the person's family ties. Both can be open at once; each collapses from its own button or from its arrow. When you reach the person from „Reporting” → „Inheritance trees”, with a click on their name (section [[reports-inheritance]]), „Add a relative” is already open.
 
 - „The person's family ties” shows their relatives, each with the role.
 - To add a relative: under „Relative”, type the name and choose the person; under „What they are to …”, choose the kinship; press „Add the tie”. The relative appears in the drawing.

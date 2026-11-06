@@ -31,7 +31,7 @@ Câteva semne de pe rânduri:
 
 - „Nou!” stă lângă o persoană adăugată sau schimbată de curând.
 - „†” după nume înseamnă că persoana a murit; dacă treceți cu mouse-ul peste el, scrie „Decedat” (secțiunea [[persons-identity]]).
-- ID-ul de sistem al persoanei nu apare în listă; îl vedeți pe ecranul ei, în colțul fișei „Identitate”.
+- ID-ul de sistem al persoanei nu apare în listă; îl vedeți pe ecranul ei, în bara de sus, la stânga versiunii (secțiunea [[start-breadcrumb]]).
 
 Fiecare rând are patru butoane:
 
@@ -72,9 +72,13 @@ Pe lista persoanelor fizice, apăsați „Adaugă persoană” — butonul din d
 | „Identitate” | Pe rânduri: „Nume” și „Prenume”; „Poreclă”, singură; „CNP” și „Cetățenie”; „Data nașterii”, „Vârstă” și „Gen”; „Decedat” și „Data decesului”; „Locul nașterii”, cât fișa de lată; „Tip profesional”; „Note”. |
 | „Acte de identitate” | Pe o persoană salvată: cărțile ei de identitate și pașapoartele, fiecare un act al ei (secțiunea [[persons-identity-documents]]). Pe „Persoană fizică nouă” nu apare: nu există încă persoana care să le dețină. |
 | „Contact” | Telefoanele și adresele de e-mail. |
-| „Adrese” | „Adresă domiciliu” și „Adresă corespondență”. |
+| „Adrese” | Două fișe, „Adresă domiciliu” și „Adresă corespondență”. Fiecare are „Stradă, Nr., etaj, ap”, apoi „Cod poștal” lângă „Localitate” și „Județ / Sector” lângă „Țară”, apoi „Note”. „Țară” se alege dintr-o listă, „Țara adresei” din „Date de referință” (secțiunea [[admin-reference-data]]). |
 
-„Gen” se scrie cu o literă: „M” sau „F” — în formular, pe ecranul persoanei, în coloana „Gen” a listei și în fereastra cărții de identitate. Ținut sub mouse, arată cuvântul întreg, „Masculin” sau „Feminin”. „Relația cu firma” ține tot rândul ei din „Identitate”, cu bifele una după alta. „Cetățenie” stă lângă „Locul nașterii”.
+„Gen” se scrie cu o literă: „M” sau „F” — în formular, pe ecranul persoanei, în coloana „Gen” a listei și în fereastra cărții de identitate. Ținut sub mouse, arată cuvântul întreg, „Masculin” sau „Feminin”. „Relația cu firma” ține tot rândul ei din „Identitate”, cu bifele una după alta. „Cetățenie” stă lângă „CNP”.
+
+Pe o persoană salvată, cât timp „Identitate” se citește, „Vârstă” nu are un câmp al ei: vârsta stă după data nașterii, între paranteze — de exemplu „(41 a)”. Câmpul „Vârstă” apare după „Editează”.
+
+Pe o persoană salvată, fiecare adresă se modifică singură: „Editează” pe „Adresă domiciliu” sau pe „Adresă corespondență”, apoi „Salvează” sau „Renunță” al fișei aceleia. În „Panouri”, amândouă au o singură bifă, „Adrese”. Când corespondența vine la domiciliu, „Adresă corespondență” stă pe un singur rând, „aceeași cu domiciliul”, iar „Adaugă” de pe rândul acela o deschide ca să-i scrieți adresa. Bifa „Adresa de corespondență aceeași cu domiciliul” stă jos în „Adresă corespondență” cât timp o modificați; pe „Persoană fizică nouă”, sub „Adresă domiciliu”.
 
 Bifele din „Panouri” arată sau ascund fișe, ca pe orice obiect (secțiunea [[start-tiles]]). O fișă ascunsă nu își pierde datele: ce ați scris în ea se salvează la fel.
 
@@ -120,10 +124,14 @@ La sfârșit vă întoarceți la lista persoanelor. Pe ecranul titularului, în 
 Când cartea de identitate este deja un act în arhivă, cu scanarea ei ca pagină, persoanele se creează de pe ecranul actului.
 
 1. Deschideți actul de identitate: o „Carte de Identitate (tip nou)”, o „Carte de Identitate (tip vechi)”, un „Pașaport” sau un „Pașaport CRDS”.
-2. Apăsați „Creează persoane din CI”, lângă „Modifică”. Aplicația citește cartea de pe prima pagină și deschide fereastra „Creează persoană din cartea de identitate”.
+2. Apăsați „Creează persoane din CI” — persoana cu un +, fără cuvinte —, lângă „Modifică”. Aplicația citește cartea de pe prima pagină și deschide fereastra „Creează persoană din cartea de identitate”.
 3. Verificați titularul și apăsați „Creează și leagă”. Dacă titularul există deja în arhivă, aplicația îl găsește după CNP și nu face o a doua persoană.
 4. În „Părinții titularului”, tatăl și mama citiți de pe carte sunt deja bifați, cu numele de familie al titularului, marcat ca presupus. Verificați-i, apoi apăsați „Creează și leagă” pentru fiecare.
 5. Sub buton, aplicația scrie ce a făcut: „Titularul a fost creat și legat de act.”, „Tatăl: creat(ă) și legat(ă)”, „Mama: creat(ă) și legat(ă)”.
+
+„Creează persoane din CI” nu se poate apăsa cât timp actul are deja un titular — fie creat așa, fie adăugat din fișa „Acte de identitate” a persoanei: ținut sub mouse, butonul spune „Actul are deja un titular: …”, cu numele lui.
+
+În fereastră, sub „Cetățenie”, scrie și ce a tipărit actul: „Pe act: …”, de exemplu cu cetățenia Română / ROU. Persoana primește cetățenia aleasă din listă, iar actul păstrează textul tipărit.
 
 Titularul este legat de act ca „Titular act de identitate”, iar părinții sunt legați de titular ca „Tată” și „Mamă”. Ce a tipărit actul se scrie pe act, în fișa lui „Actul oficial”; pe persoană ajung numele, CNP-ul, genul, nașterea și cetățenia, iar o persoană care exista deja primește doar câmpurile pe care nu le avea completate. Dacă citirea nu găsește prenumele părinților, cele două rânduri apar goale și nebifate, cu nota „Cartea nu tipărește prenumele părinților, sau citirea nu le-a găsit…”: le puteți scrie voi.
 
@@ -176,7 +184,7 @@ Un CNP greșit se îndreaptă așa: ștergeți persoana și adăugați-o din nou
 2. Scrieți „Data decesului”, dacă o știți.
 3. Apăsați „Salvează”, sub câmpurile fișei.
 
-După deces, „Vârstă” nu mai crește: arată vârsta la moarte, urmată de „†” — de exemplu „76 †”. O persoană bifată „Decedat”, dar fără dată, are „Vârstă” „—”. În liste, „†” apare după numele ei.
+După deces, „Vârstă” nu mai crește: arată vârsta la moarte, urmată de „†” — de exemplu „76 †”; la citire, după data nașterii, stă tot vârsta la moarte, cu „†” după ea. O persoană bifată „Decedat”, dar fără dată, are „Vârstă” „—”. În liste, „†” apare după numele ei.
 
 Aplicația refuză o dată de deces care nu are sens și scrie sub câmp de ce:
 
@@ -204,13 +212,15 @@ O legătură se scoate din „Legături”: alegeți rândul și apăsați „De
 
 Fișa „Arbore de moștenire”, mov deschis, desenează familia persoanei: părinții și bunicii până la străbunici, copiii până la strănepoți, frații și soțul sau soția (Figura [[fig-persons-tree]]). Dacă nu o vedeți, bifați „Arbore de moștenire” în „Panouri”.
 
+Fișa este cât familia: cu persoana singură sau cu o singură rudă are 2 unități, cu mai multe rude 3 (secțiunea [[start-tiles]]). Desenul se deschide centrat pe persoană, chiar dacă o parte din arbore rămâne atunci în afara fișei. O lățime trasă de mână se păstrează.
+
 „Deschide arborele întreg” deschide arborele întreg chiar peste ecranul persoanei. Fișa crește până umple fereastra, iar persoana pleacă de unde stă în fișă spre mijloc, la aceeași mărime; apoi arborele se apropie până se citesc datele și se deschide fișa persoanei. „Restrânge”, Esc, un clic în afara arborelui sau butonul înapoi al browserului îl strâng în fișă pe același drum. Dacă între timp l-ați mutat, l-ați mărit sau ați căutat altă persoană, întâi se întoarce, pe un arc, acolo unde se terminase deschiderea. Cât durează fiecare parte se alege în „Setări”, la „Praguri de timp” (secțiunea [[admin-settings-thresholds]]) — aceleași valori ca la „Hartă extinsă”.
 
 ![3.3 Fișa „Arbore de moștenire” a unei persoane](persons-tree.png){#fig-persons-tree}
 
 În arbore intră doar legăturile cu un rol de rudenie — rolurile marcate „Rudenie” în „Roluri Persoane”. O persoană fără astfel de legături arată „Nicio legătură de familie încă.”.
 
-Sub desen stau două butoane: „Adaugă o rudă” (o persoană cu o za de lanț) deschide jumătatea în care legați o rudă nouă, iar „Scoate o rudă” (o persoană cu un coș) pe cea cu legăturile de familie ale persoanei; fiecare se restrânge din butonul ei. Când ajungeți la persoană din „Rapoarte” → „Arbori de moștenire”, cu un clic pe numele ei (secțiunea [[reports-inheritance]]), „Adaugă o rudă” este deja deschisă.
+Sub desen stau două butoane, desenate ca „Asociază persoană” din „Legături”: „Adaugă o rudă” — persoana, apoi zaua de lanț — deschide jumătatea „O rudă nouă a lui …”, în care legați o rudă nouă, iar „Scoate o rudă” — persoana, apoi un coș — pe cea cu legăturile de familie ale persoanei. Pot fi deschise amândouă; fiecare se restrânge din butonul ei sau din săgeata ei. Când ajungeți la persoană din „Rapoarte” → „Arbori de moștenire”, cu un clic pe numele ei (secțiunea [[reports-inheritance]]), „Adaugă o rudă” este deja deschisă.
 
 - „Legăturile de familie ale persoanei” arată rudele ei, fiecare cu rolul.
 - Ca să adăugați o rudă: la „Ruda”, scrieți numele și alegeți persoana; la „Ce este pentru …”, alegeți rudenia; apăsați „Adaugă legătura”. Ruda apare în desen.

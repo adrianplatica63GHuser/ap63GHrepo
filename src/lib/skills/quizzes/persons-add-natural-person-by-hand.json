@@ -382,11 +382,11 @@
           "section": "persons-list",
           "ro": {
             "question": "Unde vedeți ID-ul de sistem al unei persoane fizice?",
-            "explanation": "ID-ul de sistem nu apare în listă; îl vedeți pe ecranul persoanei, în colțul fișei „Identitate”."
+            "explanation": "ID-ul de sistem nu apare în listă; îl vedeți pe ecranul persoanei, în bara de sus, la stânga versiunii."
           },
           "en": {
             "question": "Where do you see a natural person's system ID?",
-            "explanation": "The system ID does not appear in the list; you see it on the person's screen, in the corner of the „Identitate” tile."
+            "explanation": "The system ID does not appear in the list; you see it on the person's screen, in the top bar, left of the version."
           },
           "options": [
             {
@@ -398,8 +398,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "Pe ecranul persoanei, în colțul fișei „Identitate”.",
-              "en": "On the person's screen, in the corner of the „Identitate” tile."
+              "ro": "Pe ecranul persoanei, în bara de sus, la stânga versiunii.",
+              "en": "On the person's screen, in the top bar, left of the version."
             },
             {
               "id": "o3",

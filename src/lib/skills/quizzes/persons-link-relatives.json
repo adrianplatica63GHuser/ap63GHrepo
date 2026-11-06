@@ -167,11 +167,11 @@
           "id": "a5",
           "section": "persons-relatives-tree",
           "ro": {
-            "question": "Ciprian l-a adăugat pe tatăl lui Andrei Munteanu din panoul „Adaugă sau scoate o rudă” al fișei „Arbore de moștenire”. Trebuie să-l mai asocieze o dată și din „Legături”?",
+            "question": "Ciprian l-a adăugat pe tatăl lui Andrei Munteanu cu „Adaugă o rudă” din fișa „Arbore de moștenire”. Trebuie să-l mai asocieze o dată și din „Legături”?",
             "explanation": "Legăturile adăugate în „Arbore de moștenire” sunt aceleași cu cele din „Legături”: o rudă legată într-un loc apare și în celălalt."
           },
           "en": {
-            "question": "Ciprian added Andrei Munteanu's father from the „Adaugă sau scoate o rudă” panel of the „Arbore de moștenire” tile. Must he associate him once more from „Legături”?",
+            "question": "Ciprian added Andrei Munteanu's father with „Adaugă o rudă” (add a relative) in the „Arbore de moștenire” tile. Must he associate him once more from „Legături”?",
             "explanation": "The ties added in „Arbore de moștenire” are the same as those in „Legături”: a relative linked in one place appears in the other too."
           },
           "options": [
@@ -234,8 +234,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Legătura rămâne în arbore până o scoateți și de acolo, cu „Adaugă sau scoate o rudă”.",
-              "en": "The link stays in the tree until you remove it from there too, with „Adaugă sau scoate o rudă”."
+              "ro": "Legătura rămâne în arbore până o scoateți și de acolo, cu „Scoate o rudă”.",
+              "en": "The link stays in the tree until you remove it from there too, with „Scoate o rudă”."
             }
           ]
         },
@@ -244,11 +244,11 @@
           "section": "reports-inheritance",
           "ro": {
             "question": "În „Rapoarte” → „Arbori de moștenire”, Ciprian vede că Ana Popescu nu are legată mama. Cum o adaugă?",
-            "explanation": "Ecranul „Arbori de moștenire” este doar pentru citit. Un clic pe numele Anei deschide ecranul ei, cu panoul rudelor din fișa „Arbore de moștenire” deja deschis; de acolo adăugați ruda."
+            "explanation": "Ecranul „Arbori de moștenire” este doar pentru citit. Un clic pe numele Anei deschide ecranul ei, cu „Adaugă o rudă” din fișa „Arbore de moștenire” deja deschisă; de acolo adăugați ruda."
           },
           "en": {
             "question": "In „Rapoarte” → „Arbori de moștenire”, Ciprian sees that Ana Popescu has no mother linked. How does he add her?",
-            "explanation": "The „Arbori de moștenire” screen is for reading only. A click on Ana's name opens her screen, with the relatives' panel of the „Arbore de moștenire” tile already open; from there you add the relative."
+            "explanation": "The „Arbori de moștenire” screen is for reading only. A click on Ana's name opens her screen, with „Adaugă o rudă” in the „Arbore de moștenire” tile already open; from there you add the relative."
           },
           "options": [
             {
@@ -266,8 +266,8 @@
             {
               "id": "o3",
               "correct": true,
-              "ro": "Face clic pe numele Anei și o adaugă din panoul rudelor, deja deschis.",
-              "en": "He clicks Ana's name and adds her from the relatives' panel, already open."
+              "ro": "Face clic pe numele Anei și o adaugă din „Adaugă o rudă”, deja deschisă.",
+              "en": "He clicks Ana's name and adds her from „Adaugă o rudă”, already open."
             },
             {
               "id": "o4",
@@ -324,12 +324,12 @@
           "id": "b1",
           "section": "persons-relatives-tree",
           "ro": {
-            "question": "Pe ecranul lui Mihai Popescu, Ciprian vrea să-i lege tatăl din fișa „Arbore de moștenire”. Ce apasă ca să se deschidă panoul legăturilor de familie?",
-            "explanation": "Sub desen, butonul „Adaugă sau scoate” deschide panoul legăturilor de familie; numele lui întreg, „Adaugă sau scoate o rudă”, apare când țineți mouse-ul pe el. Dacă fișa nu se vede, bifați „Arbore de moștenire” în „Panouri”."
+            "question": "Pe ecranul lui Mihai Popescu, Ciprian vrea să-i lege tatăl din fișa „Arbore de moștenire”. Ce apasă ca să poată alege ruda?",
+            "explanation": "Sub desen, „Adaugă o rudă” — persoana, apoi zaua de lanț — deschide jumătatea în care legați o rudă nouă; „Scoate o rudă” deschide legăturile de familie ale persoanei. Dacă fișa nu se vede, bifați „Arbore de moștenire” în „Panouri”."
           },
           "en": {
-            "question": "On Mihai Popescu's screen, Ciprian wants to link his father from the „Arbore de moștenire” tile. What does he press so that the panel of family ties opens?",
-            "explanation": "Under the drawing, the button „Adaugă sau scoate” (add or remove) opens the panel of family ties; its whole name, „Adaugă sau scoate o rudă” (add or remove a relative), shows when you rest the mouse on it. If the tile is not showing, tick „Arbore de moștenire” in „Panouri”."
+            "question": "On Mihai Popescu's screen, Ciprian wants to link his father from the „Arbore de moștenire” tile. What does he press so that he can choose the relative?",
+            "explanation": "Under the drawing, „Adaugă o rudă” (add a relative) — the person, then the chain link — opens the half where you tie in a new relative; „Scoate o rudă” (remove a relative) opens the person's family ties. If the tile is not showing, tick „Arbore de moștenire” in „Panouri”."
           },
           "options": [
             {
@@ -353,8 +353,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "„Adaugă sau scoate”, sub desen.",
-              "en": "„Adaugă sau scoate”, under the drawing."
+              "ro": "„Adaugă o rudă”, sub desen.",
+              "en": "„Adaugă o rudă”, under the drawing."
             }
           ]
         },
@@ -613,8 +613,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Pentru că rudele se leagă doar din „Arbore de moștenire”, cu „Adaugă sau scoate o rudă”.",
-              "en": "Because relatives are linked only from „Arbore de moștenire”, with „Adaugă sau scoate o rudă”."
+              "ro": "Pentru că rudele se leagă doar din „Arbore de moștenire”, cu „Adaugă o rudă”.",
+              "en": "Because relatives are linked only from „Arbore de moștenire”, with „Adaugă o rudă”."
             },
             {
               "id": "o4",
