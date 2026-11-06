@@ -13,7 +13,7 @@ Open „Domain” in the sidebar, then „Properties”. The list „Properties�
 
 The search box at the top of the list searches by „Code”, „Nickname”, „Cadastral No.”, „Carte Funciara”, „Tarla/Solă” and „Parcelă” — as the box itself says; rest the mouse on it to read the whole text. The list's filters are set from its columns (section [[properties-list-filters]]). Below the table, „Showing … of …” says how many properties you are seeing out of how many there are.
 
-The first column is „Nickname”, the name you give the property; „New!” stands in it, after the nickname, and „Crossed” after that on a property whose corners cross. It is always shown and is not among the options in „Choose fields”; you can move it, like any column, by dragging its name (section [[start-lists]]). The property's code has no column in the list; you find it on the property's screen, in the corner of its first tile.
+The first column is „Nickname”, the name you give the property; „New!” stands in it, after the nickname, and „Crossed” after that on a property whose corners cross. It is always shown and is not among the options in „Choose fields”; you can move it, like any column, by dragging its name (section [[start-lists]]). The property's code has no column in the list; you find it on the property's screen, in the top bar, to the left of the versions (section [[links-versions]]).
 
 „Choose fields” adds up to four columns after „Nickname”. You can choose from the cadastral fields and the locality, by their short names:
 
@@ -85,7 +85,7 @@ When you press „Save” on a new property, you go back to the list. The new pr
 
 ### 5.2.2 The address {#properties-add-address}
 
-The „Address” tile has the fields „Street, No., Floor, Apt”, „Postal Code”, „Locality”, „County / Sector”, „Country” and „Notes”. If you leave „Country” empty and fill in the address, „România” is saved.
+The „Address” tile has the fields „Street, No., Floor, Apt”, „Postal Code”, „Locality”, „County / Sector”, „Country” and „Notes”. „Postal Code” and „Locality” stand on one row, „County / Sector” and „Country” on the row under it, lined up as on a person's address. „Country” is chosen from a list, „Address country” in „Reference Data” (section [[admin-reference-data]]); a country saved earlier that the list does not have stays among the options. If you leave „Country” empty and fill in the address, „România” is saved.
 
 „Fetch from Street View” fills the field „Street View address” with the address Google finds at the centre of the corners. It needs at least one corner and writes over what was in the field, so check the result. Every click is a look-up that Google charges for.
 
@@ -146,7 +146,7 @@ The ticks in „Panels” („Parts shown”) choose the tiles, as on any object
 | Corners | The parcel's corners, in order (section [[properties-corners-table]]). |
 | Street View | The street view next to the parcel (section [[properties-corners-street-view]]). |
 
-„Default” shows „Cadastral identification”, „Address”, „Map” and „Corners”. The tiles „Map”, „Corners” and „Street View” start on the right, one under another, are light purple and are dragged elsewhere like any tile (section [[start-tiles]]). On a narrow screen they drop below the other tiles.
+„Default” shows „Cadastral identification”, „Address”, „Map” and „Corners”. The tiles „Map”, „Corners” and „Street View” start on the right, one under another, are green and are dragged elsewhere like any tile (section [[start-tiles]]). On a narrow screen they drop below the other tiles.
 
 When you untick the map tiles, the screen shows only the data: the cadastral identification and the address (Figure [[fig-properties-record]]).
 
@@ -164,7 +164,7 @@ The parcel's shape is given by its corners, in the order in which they are joine
 
 The table has the columns „#” (the order), „Orig. #” (the corner's number in the file or plan it comes from), then the coordinates. „Display:” chooses how the coordinates are shown: „DD” (decimal degrees), „DMS” (degrees, minutes, seconds) or „Stereo 70” (North and East, in metres). You type them in the same form.
 
-Each row has four buttons:
+Each row has four buttons, always on the same line, whatever the „Display:”:
 
 - „Move up” and „Move down” — change the order of the corners, and so the parcel's shape;
 - „Edit” — turns the row into fields to type in, with „Save” and „Cancel” on the row. The rows' buttons and „+ Add Corner” are there while „Corners” is open with the tile's own „Edit”; a corner dragged on the map opens it by itself;
@@ -186,7 +186,7 @@ The „Map” tile draws the parcel. It has its title above it, like any tile; u
 - „Navigate” — the route to the property (section [[properties-navigate]]);
 - „STR” and „SAT” — the street map or the satellite image.
 
-The property's corners are small blue dots, the colour of its sides, as on the full map (section [[map-what]]). When you move the mouse over a row of „Corners”, its corner gets a ring around it.
+The property has dark green sides and a lighter green inside, and its corners are small dots the colour of its sides, as on the full map (section [[map-what]]). When you move the mouse over a row of „Corners”, its corner gets a ring around it.
 
 ### 5.4.3 Drawing and dragging corners {#properties-corners-draw}
 
@@ -199,9 +199,11 @@ A corner placed wrongly is corrected by dragging it with the mouse on the map. T
 
 ### 5.4.4 The expanded map {#properties-corners-expanded}
 
-„Expand map” opens the map on the whole screen, centred on the property and at the tile's scale, so the property is the same size as there. The property is red, with its corners red, and around it stand all the other properties in the archive, blue, as the full map shows them — from afar, drops (section [[map-what]]). The other properties are only to look at: a click on them does nothing.
+„Expand map” opens the map on the whole screen, in two parts. First the „Map” tile grows until it fills the window, and the property travels from where it stands on the tile to the middle, at the same size; then the map zooms out until the property is about a tenth of the map's height. Dragging the map or turning the mouse wheel stops the opening where it has got to. The property is red, with its corners red, and around it stand all the other properties in the archive, green, as the full map shows them — from afar, drops (section [[map-what]]). The other properties are only to look at: a click on them does nothing.
 
-The expanded map has „Draw”, „Show Angles” and „STR” / „SAT”. A corner drawn or dragged here is this property's corner. „Collapse” or the Escape key closes the expanded map and takes you back to the tile, with the drawing kept.
+The expanded map has „Draw”, „Show Angles” and „STR” / „SAT”. A corner drawn or dragged here is this property's corner. „Collapse”, the Escape key or a click outside the map close it the same way, in reverse: the map comes back in to the tile's scale, then shrinks back into the tile, with the drawing kept. If you moved the map or zoomed in meanwhile, it first returns, on an arc, to where the opening ended. A second press while it is closing closes it at once.
+
+How long the two parts last is set in „Settings”, under „Time thresholds”, in the „Maps” group (section [[admin-settings-thresholds]]): 3 seconds each by default, and 0 skips that part. The return on the arc lasts as long as the flight of „Search the map” (section [[map-search]]).
 
 ### 5.4.5 The „Street View” tile {#properties-corners-street-view}
 
@@ -233,7 +235,7 @@ The rest of the cadastral data — the cadastral number, the land book, the area
 
 ## 5.6 „Navigate” {#properties-navigate}
 
-„Navigate”, on the top row of the „Map” tile, helps you get to the property by car. It opens a window with the route in Google Maps and the same route as a QR code, for the phone.
+„Navigate”, on the top row of the „Map” tile, helps you get to the property by car. It opens a window with the route in Google Maps and the same route as a QR code, for the phone. The window's title, „Navigate to …”, carries the property's nickname; one without a nickname opens „Navigate to the property”.
 
 The application chooses the destination:
 

@@ -149,7 +149,7 @@ The history icon, the only one on the „Calculation of a Side Road” screen, b
 
 - „Measurements on map” — „Angles”, „Ruler”, „Area of a delimited zone” and „Area of any zone” (sections [[map-ruler]] and [[map-area]]).
 - „Groupings of properties” — „Tarlale”, „Groups” and „Select” (sections [[map-what-tarlale]], [[map-what-groups]] and [[map-select]]).
-- „Navigation” — „Navigate”, which is on the property's screen and in a property's bubble on the map (section [[properties-navigate]]).
+- „Navigation” — „Navigate”, which is on the property's screen and in a property's bubble on the map (section [[properties-navigate]]), and „Search the map”, the magnifier on the map of all properties, which finds a place and flies to it (section [[map-search]]).
 
 For the first two, „OK” opens the map of all properties, „All Properties”, with those buttons pulsing together, in violet, three times; then they settle. None is pressed for you: press the one you need. If you reload the page, the buttons are pointed out again. For „Navigation”, „OK” only closes the box. No guide writes anything to the archive.
 

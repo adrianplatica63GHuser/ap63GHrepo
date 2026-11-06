@@ -150,7 +150,7 @@ Pictograma istoricului, singura de pe ecranul „Calcul drum lateral”, lângă
 
 - „Măsurători pe hartă” — „Unghiuri”, „Riglă”, „Suprafața unei zone delimitate” și „Suprafața unei zone oarecare” (secțiunile [[map-ruler]] și [[map-area]]).
 - „Grupări de proprietăți” — „Tarlale”, „Grupuri” și „Selectează” (secțiunile [[map-what-tarlale]], [[map-what-groups]] și [[map-select]]).
-- „Navigare” — „Navighează”, care stă pe ecranul proprietății și în bula unei proprietăți de pe hartă (secțiunea [[properties-navigate]]).
+- „Navigare” — „Navighează”, care stă pe ecranul proprietății și în bula unei proprietăți de pe hartă (secțiunea [[properties-navigate]]), și „Caută pe hartă”, lupa de pe harta tuturor proprietăților, care găsește un loc și zboară până la el (secțiunea [[map-search]]).
 
 La primele două, „OK” deschide harta tuturor proprietăților, „Toate Proprietățile”, cu butoanele acelea pulsând împreună, în violet, de trei ori; apoi se liniștesc. Niciunul nu este apăsat în locul dumneavoastră: apăsați-l pe cel de care aveți nevoie. Dacă reîncărcați pagina, butoanele sunt arătate din nou. La „Navigare”, „OK” doar închide caseta. Niciun ghid nu scrie ceva în arhivă.
 

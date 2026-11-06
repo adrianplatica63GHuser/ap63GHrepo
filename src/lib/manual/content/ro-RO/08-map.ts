@@ -11,10 +11,11 @@ Câteva gesturi ale hărții nu se văd pe nicio etichetă: dublu-clicul, apăsa
 
 ## 8.1 Ce arată harta {#map-what}
 
-Ecranul se numește „Toate Proprietățile”. Harta se deschide potrivită astfel încât să încapă toate proprietățile pe care le desenează. Fiecare proprietate cu colțuri apare ca o formă albastră, cu laturile unite în ordinea colțurilor ei, iar colțurile ei sunt puncte mici de aceeași culoare. Când micșorați harta și o formă devine prea mică pentru a se citi, în locul ei apare o picătură (secțiunea [[map-what-drops]]). O proprietate fără colțuri nu are contur, deci nu apare pe hartă; colțurile i se pot adăuga oricând, în „Puncte de contur” (secțiunea [[properties-corners-table]]).
+Ecranul se numește „Toate Proprietățile”. Harta se deschide potrivită astfel încât să încapă toate proprietățile pe care le desenează. Fiecare proprietate cu colțuri apare ca o formă verde: laturile, unite în ordinea colțurilor ei, sunt verde închis, interiorul verde mai deschis, iar colțurile ei sunt puncte mici de culoarea laturilor. Când micșorați harta și o formă devine prea mică pentru a se citi, în locul ei apare o picătură (secțiunea [[map-what-drops]]). O proprietate fără colțuri nu are contur, deci nu apare pe hartă; colțurile i se pot adăuga oricând, în „Puncte de contur” (secțiunea [[properties-corners-table]]).
 
-Sus, pe hartă, stau butoanele ei. „HARTĂ” și „SATELIT” aleg harta străzilor sau imaginea din satelit, ca pe fișa „Hartă” a unei proprietăți. Celelalte butoane sunt uneltele hărții, în trei grupuri despărțite de un spațiu de două ori mai mare decât cel dintre butoane:
+Sus, pe hartă, stau butoanele ei. „HARTĂ” și „SATELIT” aleg harta străzilor sau imaginea din satelit, ca pe fișa „Hartă” a unei proprietăți. Celelalte butoane sunt uneltele hărții, în patru grupuri despărțite de un spațiu de două ori mai mare decât cel dintre butoane:
 
+- „Caută pe hartă” — o lupă —, primul din rând: găsește un singur loc și zboară până la el (secțiunea [[map-search]]);
 - cele care măsoară: „Unghiuri” și „Riglă” — un unghi și o distanță, dreaptă sau în zigzag (secțiunea [[map-ruler]]); „Suprafața unei zone delimitate” și „Suprafața unei zone oarecare” — suprafața unei zone (secțiunea [[map-area]]);
 - cele care grupează proprietățile: „Tarlale” — conturul fiecărei tarlale (secțiunea [[map-what-tarlale]]); „Grupuri” — alege ce proprietăți se văd (secțiunea [[map-what-groups]]); „Selectează” — alege proprietăți, ca să le puneți într-un grup (secțiunea [[map-select]]);
 - „Setări hartă” — distanța la care picăturile se unesc (secțiunea [[map-what-drops]]).
@@ -26,7 +27,7 @@ Harta se deschide din două locuri:
 - din lista „Proprietăți”, cu butonul „Hartă completă” — o săgeată și un glob cu două repere —, din dreapta, de lângă „Adaugă proprietate” (secțiunea [[properties-list]]). Bara de navigare arată atunci „Acasă › Proprietăți › Hartă completă”, iar un clic pe „Proprietăți” vă întoarce la listă. În bara laterală rămâne aprins „Proprietăți”;
 - din bara laterală, „Instrumente” → „Măsurători pe hartă” sau „Grupări de proprietăți”. Fiecare deschide o casetă cu butoanele despre care e vorba, desenate ca pe hartă, și ce face fiecare. „OK” deschide aceeași hartă, cu butoanele acelea pulsând împreună, de trei ori, într-un inel violet, ca să le găsiți ușor: „Unghiuri”, „Riglă” și cele două butoane de suprafață, respectiv „Tarlale”, „Grupuri” și „Selectează”. Niciunul nu se apasă singur: alegeți-l pe cel de care aveți nevoie (secțiunea [[tools-area]]).
 
-Al treilea ghid din „Instrumente”, „Navigare”, arată butonul „Navighează” și spune unde îl găsiți: pe ecranul proprietății și în bula unei proprietăți de pe hartă (secțiunea [[map-what-bubble]]). „OK” doar închide caseta.
+Al treilea ghid din „Instrumente”, „Navigare”, arată butonul „Navighează” și spune unde îl găsiți: pe ecranul proprietății și în bula unei proprietăți de pe hartă (secțiunea [[map-what-bubble]]). Arată și „Caută pe hartă”, lupa de pe harta aceasta (secțiunea [[map-search]]). „OK” doar închide caseta.
 
 ### 8.1.2 Bula unei proprietăți și dublu-clicul {#map-what-bubble}
 
@@ -51,14 +52,14 @@ La salvare, arhiva refuză de la început o a doua proprietate cu aceeași tarla
 
 ### 8.1.5 Picăturile și picăturile cu număr {#map-what-drops}
 
-Cât timp o proprietate este destul de mare pe ecran, harta îi desenează forma. Când micșorați harta și latura cea mai lungă a formei ajunge sub 24 de pixeli, în locul ei apare o **picătură** albastră, cu vârful în mijlocul proprietății. Fiecare proprietate se schimbă după mărimea ei: un câmp mare rămâne formă mult timp după ce un lot mic de lângă el a devenit picătură. Picătura are aceeași mărime oricât ați micșora harta.
+Cât timp o proprietate este destul de mare pe ecran, harta îi desenează forma. Când micșorați harta și latura cea mai lungă a formei ajunge sub 24 de pixeli, în locul ei apare o **picătură** verde, conturată în culoarea șampaniei, cu vârful în mijlocul proprietății. Fiecare proprietate se schimbă după mărimea ei: un câmp mare rămâne formă mult timp după ce un lot mic de lângă el a devenit picătură. Picătura are aceeași mărime oricât ați micșora harta.
 
-Picăturile ajunse prea aproape una de alta se unesc într-o **picătură cu număr**, mai mare, cu numărul proprietăților pe care le acoperă scris cu alb. Când se unesc și picături cu număr, numerele lor se adună. Când măriți harta, totul se desface în ordine inversă: picăturile cu număr se despart, iar picăturile redevin forme.
+Picăturile ajunse prea aproape una de alta se unesc într-o **picătură cu număr**, mai mare, cu numărul proprietăților pe care le acoperă scris tot în culoarea șampaniei. Când se unesc și picături cu număr, numerele lor se adună. Când măriți harta, totul se desface în ordine inversă: picăturile cu număr se despart, iar picăturile redevin forme.
 
 - Un clic pe o picătură deschide aceeași bulă ca un clic pe forma proprietății, cu „Deschide” și „Navighează” (secțiunea [[map-what-bubble]]).
 - Un clic pe o picătură cu număr mărește harta cât să încapă proprietățile ei. Dacă harta nu se mai poate mări, se deschide bula cu lista lor.
 
-Culorile spun ce spun și la forme: roșu, o proprietate selectată (secțiunea [[map-select]]); roz intermitent, o proprietate duplicată (secțiunea [[map-what-duplicates]]). Două proprietăți duplicate au aceleași colțuri, așa că, de departe, ajung mereu în aceeași picătură cu număr, care clipește în roz. O picătură cu număr este roșie dacă are în ea o proprietate selectată.
+Culorile spun ce spun și la forme: roșu, o proprietate selectată (secțiunea [[map-select]]); roz intermitent, o proprietate duplicată (secțiunea [[map-what-duplicates]]). Două proprietăți duplicate au aceleași colțuri, așa că, de departe, ajung mereu în aceeași picătură cu număr, care clipește în roz. O picătură cu număr este roșie dacă are în ea o proprietate selectată. Pe o picătură roșie sau roz, conturul și numărul sunt albe.
 
 „Setări hartă”, din bara hărții, alege distanța sub care picăturile se unesc: „Picăturile se unesc sub” între 20 și 80 de pixeli, implicit 40. O distanță mai mică arată mai multe picături, una mai mare mai puține. Alegerea se păstrează în browserul în care ați făcut-o; alt calculator sau alt browser pornește de la 40.
 
@@ -69,6 +70,22 @@ Culorile spun ce spun și la forme: roșu, o proprietate selectată (secțiunea 
 Conturul unei tarlale sunt colțurile ei, dacă au fost introduse pe pagina tarlalei (secțiunea [[properties-tarla]]). Altfel este forma din jurul tuturor proprietăților tarlalei care au colțuri — cea mai mică formă fără adâncituri care le cuprinde pe toate. Crește pe măsură ce arhiva crește și nu este o limită oficială: nicio sursă publică nu dă limitele tarlalelor. O tarla fără colțuri și fără proprietăți cu colțuri nu are contur.
 
 Codul tarlalei apare pe contur când apropiați harta la câțiva kilometri. Un clic pe contur sau pe cod deschide pagina tarlalei.
+
+### 8.1.7 „Caută pe hartă” {#map-search}
+
+„Caută pe hartă”, primul buton din bara hărții — o lupă —, găsește un singur loc și zboară până la el. Apăsat, deschide sub el o casetă. Deasupra ei, un rând spune că această căutare găsește un singur loc, iar pentru mai multe proprietăți deodată trimite, printr-un link, la „Căutare globală” (secțiunea [[reports-search]]). Scrieți ce căutați și apăsați Enter sau „Caută”, lupa de lângă casetă; tasta Escape închide caseta.
+
+Caseta înțelege, în ordinea aceasta:
+
+- **un număr** — de exemplu 42 sau PROP42 — este numărul unei proprietăți: 42 găsește proprietatea cu codul PROP00042;
+- **un nume de pe hartă** — porecla unei proprietăți, apoi codul unei tarlale: scris întreg, doar începutul lui sau o parte din el, cu sau fără diacritice și majuscule;
+- **o adresă** — o stradă cu număr, o stradă, o localitate sau un județ —, pe care o caută Google. Doar un text pe care harta nu-l găsește printre proprietăți și tarlale ajunge la Google, iar fiecare asemenea căutare este una pe care Google o taxează.
+
+Harta zboară apoi la locul găsit, implicit în patru secunde: urcă întâi, pe un arc, până se văd și locul de acum, și cel găsit, apoi coboară pe el. O proprietate sau o tarla ajunge la mijloc, cam cât o zecime din hartă, iar proprietatea clipește când harta ajunge la ea; o adresă cu număr se arată de aproape, cu un semn care se stinge după câteva secunde; o stradă, o localitate sau un județ umplu harta. O tragere a hărții sau rotița mouse-ului opresc zborul acolo unde a ajuns.
+
+Când locul găsit este singurul, caseta se închide. Când mai sunt și alte potriviri, caseta rămâne deschisă și spune câte — de exemplu „Încă o potrivire” —, cu un link la „Căutare globală”, unde le vedeți pe toate. Când nu se găsește nimic, caseta spune că nu s-a găsit nimic pentru ce ați scris și că „Harta a rămas unde era.”
+
+Zborul se reglează în „Setări”, la „Praguri de timp”, în grupa „Hărți” (secțiunea [[admin-settings-thresholds]]): cât durează, implicit 4 secunde — cu 0, harta sare direct la locul găsit —, și cât de sus urcă arcul, coeficientul a, implicit 1 — cu 0, zborul alunecă drept, fără să urce, iar cu 2 urcă de două ori mai sus. Aceleași două valori le folosește și „Hartă extinsă” când se întoarce, pe arc, înainte să se închidă (secțiunea [[properties-corners-expanded]]).
 
 ## 8.2 Selecția {#map-select}
 

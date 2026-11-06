@@ -1686,7 +1686,7 @@
       "navigation": {
         "title": "Navigare",
         "intro": "Drumul până la o proprietate, în Google Maps, și un loc găsit pe harta tuturor proprietăților.",
-        "search": "Pe harta tuturor proprietăților: o casetă în care scrieți o adresă, un nume de pe hartă sau numărul unei proprietăți; harta zboară, în patru secunde, la locul găsit și îl arată la mijloc.",
+        "search": "Pe harta tuturor proprietăților: o casetă în care scrieți o adresă, un nume de pe hartă sau numărul unei proprietăți; harta zboară la locul găsit și îl arată la mijloc; cât durează zborul și cât de sus urcă se aleg în „Setări” (implicit, patru secunde).",
         "navigate": "Deschide traseul până la proprietate în Google Maps, cu un cod QR pentru telefon. Îl găsiți pe fișa proprietății și în fereastra care se deschide la un clic pe o proprietate pe harta tuturor proprietăților."
       }
     }

@@ -1686,7 +1686,7 @@
       "navigation": {
         "title": "Navigation",
         "intro": "The way to a property, in Google Maps, and a place found on the map of all properties.",
-        "search": "On the map of all properties: a box where you type an address, a name on the map or a property's number; the map flies, in four seconds, to the place found and shows it in the middle.",
+        "search": "On the map of all properties: a box where you type an address, a name on the map or a property's number; the map flies to the place found and shows it in the middle; how long the flight takes and how high it rises are chosen in „Settings” (by default, four seconds).",
         "navigate": "Opens the route to the property in Google Maps, with a QR code for the phone. You find it on the property form, and in the window that opens when you click a property on the map of all properties."
       }
     }

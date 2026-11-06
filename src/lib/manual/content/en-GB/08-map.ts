@@ -11,10 +11,11 @@ A few of the map's gestures are not shown on any label: the double-click, clicki
 
 ## 8.1 What the map shows {#map-what}
 
-The screen is called „All Properties”. The map opens fitted so that every property it draws fits on it. Each property with corners appears as a blue shape, its sides joined in the order of its corners, and its corners are small dots of the same colour. When you zoom out and a shape becomes too small to read, a drop appears in its place (section [[map-what-drops]]). A property without corners has no outline, so it does not appear on the map; corners can be added to it at any time, in „Corners” (section [[properties-corners-table]]).
+The screen is called „All Properties”. The map opens fitted so that every property it draws fits on it. Each property with corners appears as a green shape: its sides, joined in the order of its corners, are dark green, its inside a lighter green, and its corners are small dots the colour of its sides. When you zoom out and a shape becomes too small to read, a drop appears in its place (section [[map-what-drops]]). A property without corners has no outline, so it does not appear on the map; corners can be added to it at any time, in „Corners” (section [[properties-corners-table]]).
 
-At the top of the map are its buttons. „STR” and „SAT” choose the street map or the satellite image, as on a property's „Map” tile. The other buttons are the map's tools, in three groups set apart by a space twice the one between the buttons:
+At the top of the map are its buttons. „STR” and „SAT” choose the street map or the satellite image, as on a property's „Map” tile. The other buttons are the map's tools, in four groups set apart by a space twice the one between the buttons:
 
+- „Search the map” — a magnifier —, first in the row: finds a single place and flies to it (section [[map-search]]);
 - the ones that measure: „Angles” and „Ruler” — an angle and a distance, straight or zigzag (section [[map-ruler]]); „Area of a delimited zone” and „Area of any zone” — the area of a zone (section [[map-area]]);
 - the ones that group the properties: „Tarlale” — each tarla's outline (section [[map-what-tarlale]]); „Groups” — chooses which properties are shown (section [[map-what-groups]]); „Select” — picks properties, to put them in a group (section [[map-select]]);
 - „Map settings” — the distance at which drops merge (section [[map-what-drops]]).
@@ -26,7 +27,7 @@ The map opens from two places:
 - from the „Properties” list, with the „Full map” button — an arrow and a globe with two pins —, on the right, beside „Add new Property” (section [[properties-list]]). The navigation bar then reads „Home › Properties › Full map”, and a click on „Properties” takes you back to the list. In the sidebar, „Properties” stays lit;
 - from the sidebar, „Tools” → „Measurements on map” or „Groupings of properties”. Each opens a box with the buttons it is about, drawn as on the map, and what each does. „OK” opens the same map, with those buttons pulsing together, three times, in a violet ring, so that you find them easily: „Angles”, „Ruler” and the two area buttons, or „Tarlale”, „Groups” and „Select”. None is pressed for you: choose the one you need (section [[tools-area]]).
 
-The third guide under „Tools”, „Navigation”, shows the „Navigate” button and says where you find it: on the property's screen and in a property's bubble on the map (section [[map-what-bubble]]). „OK” only closes the box.
+The third guide under „Tools”, „Navigation”, shows the „Navigate” button and says where you find it: on the property's screen and in a property's bubble on the map (section [[map-what-bubble]]). It also shows „Search the map”, the magnifier on this map (section [[map-search]]). „OK” only closes the box.
 
 ### 8.1.2 A property's bubble and the double-click {#map-what-bubble}
 
@@ -51,14 +52,14 @@ On saving, the archive refuses from the start a second property with the same ta
 
 ### 8.1.5 Drops and numbered drops {#map-what-drops}
 
-While a property is large enough on screen, the map draws its shape. When you zoom out and the longer side of the shape falls under 24 pixels, a blue **drop** appears in its place, its tip at the middle of the property. Each property changes on its own size: a large field stays a shape long after a small lot beside it has become a drop. A drop stays the same size however far you zoom out.
+While a property is large enough on screen, the map draws its shape. When you zoom out and the longer side of the shape falls under 24 pixels, a green **drop** appears in its place, outlined in champagne, its tip at the middle of the property. Each property changes on its own size: a large field stays a shape long after a small lot beside it has become a drop. A drop stays the same size however far you zoom out.
 
-Drops that come too close to one another merge into a **numbered drop**, larger, with the number of properties it covers written in white. When numbered drops merge too, their numbers add up. When you zoom in, everything comes apart in reverse: numbered drops split, and drops become shapes again.
+Drops that come too close to one another merge into a **numbered drop**, larger, with the number of properties it covers written in champagne too. When numbered drops merge too, their numbers add up. When you zoom in, everything comes apart in reverse: numbered drops split, and drops become shapes again.
 
 - A click on a drop opens the same bubble as a click on the property's shape, with „Open” and „Navigate” (section [[map-what-bubble]]).
 - A click on a numbered drop zooms the map in until its properties fit. If the map cannot zoom in any further, the bubble opens with the list of them.
 
-The colours say what they say on the shapes: red, a selected property (section [[map-select]]); blinking pink, a duplicate property (section [[map-what-duplicates]]). Two duplicate properties have the same corners, so from afar they always end up in the same numbered drop, which blinks pink. A numbered drop is red when a selected property is in it.
+The colours say what they say on the shapes: red, a selected property (section [[map-select]]); blinking pink, a duplicate property (section [[map-what-duplicates]]). Two duplicate properties have the same corners, so from afar they always end up in the same numbered drop, which blinks pink. A numbered drop is red when a selected property is in it. On a red or pink drop, the outline and the number are white.
 
 „Map settings”, on the map's toolbar, chooses the distance under which drops merge: „Drops merge under” between 20 and 80 pixels, 40 by default. A smaller distance shows more drops, a larger one fewer. The choice is kept in the browser where you made it; another computer or another browser starts from 40.
 
@@ -69,6 +70,22 @@ The colours say what they say on the shapes: red, a selected property (section [
 A tarla's outline is its own corners, if they were entered on the tarla's page (section [[properties-tarla]]). Otherwise it is the shape around all the tarla's properties that have corners — the smallest shape without dents that holds them all. It grows as the archive grows, and it is not an official boundary: no public source gives tarla boundaries. A tarla with no corners and no properties with corners has no outline.
 
 The tarla's code appears on the outline when you zoom the map in to a few kilometres. A click on the outline or on the code opens the tarla's page.
+
+### 8.1.7 „Search the map” {#map-search}
+
+„Search the map”, the first button on the map's toolbar — a magnifier —, finds a single place and flies to it. Pressed, it opens a box under it. Above the box, a line says that this search finds one place, and for several properties at once it sends you, through a link, to „Global Search” (section [[reports-search]]). Type what you are looking for and press Enter or „Search”, the magnifier beside the box; the Escape key closes the box.
+
+The box understands, in this order:
+
+- **a number** — for example 42 or PROP42 — is a property's number: 42 finds the property with the code PROP00042;
+- **a name on the map** — a property's nickname, then a tarla's code: written in full, only its beginning or a part of it, with or without diacritics and capitals;
+- **an address** — a street with a number, a street, a locality or a county —, which Google looks up. Only a text the map does not find among the properties and tarlale reaches Google, and each such search is one Google charges for.
+
+The map then flies to the place found, in four seconds by default: it first rises, on an arc, until both the place you are at and the place found are in view, then comes down onto it. A property or a tarla lands in the middle, about a tenth of the map, and the property blinks when the map reaches it; an address with a number is shown close up, with a marker that fades after a few seconds; a street, a locality or a county fills the map. Dragging the map or turning the mouse wheel stops the flight where it has got to.
+
+When the place found is the only one, the box closes. When there are other matches, the box stays open and says how many — for example „One more match” —, with a link to „Global Search”, where you see them all. When nothing is found, the box says that nothing was found for what you typed and that „The map stayed where it was.”
+
+The flight is set in „Settings”, under „Time thresholds”, in the „Maps” group (section [[admin-settings-thresholds]]): how long it lasts, 4 seconds by default — with 0 the map jumps straight to the place found —, and how high the arc rises, the coefficient a, 1 by default — with 0 the flight glides straight, without rising, and with 2 it rises twice as high. „Expand map” uses the same two values when it returns, on the arc, before closing (section [[properties-corners-expanded]]).
 
 ## 8.2 Selecting {#map-select}
 

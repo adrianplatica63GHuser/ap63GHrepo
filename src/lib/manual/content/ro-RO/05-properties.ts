@@ -13,7 +13,7 @@ Deschideți „Domeniu” în bara laterală, apoi „Proprietăți”. Se desch
 
 Caseta de căutare din capul listei caută după „Cod”, „Poreclă”, „Nr. cadastru”, „Nr. CF”, „Tarla/Solă” și „Parcelă” — așa scrie și în ea; țineți mouse-ul pe ea ca să citiți textul întreg. Filtrele listei se pun din coloane (secțiunea [[properties-list-filters]]). Sub tabel, „Se afișează … din …” spune câte proprietăți vedeți din câte sunt.
 
-Prima coloană este „Poreclă”, numele pe care îl dați proprietății; „Nou!” stă în ea, după poreclă, și „Încrucișat” după el, la o proprietate cu colțurile încrucișate. Ea se vede întotdeauna și nu apare printre opțiunile din „Câmpuri afișate”; o puteți muta, ca orice coloană, trăgând-o de nume (secțiunea [[start-lists]]). Codul proprietății nu are coloană în listă; îl găsiți pe ecranul proprietății, în colțul primei fișe.
+Prima coloană este „Poreclă”, numele pe care îl dați proprietății; „Nou!” stă în ea, după poreclă, și „Încrucișat” după el, la o proprietate cu colțurile încrucișate. Ea se vede întotdeauna și nu apare printre opțiunile din „Câmpuri afișate”; o puteți muta, ca orice coloană, trăgând-o de nume (secțiunea [[start-lists]]). Codul proprietății nu are coloană în listă; îl găsiți pe ecranul proprietății, în bara de sus, la stânga versiunilor (secțiunea [[links-versions]]).
 
 „Câmpuri afișate” adaugă până la patru coloane după „Poreclă”. Puteți alege dintre câmpurile cadastrale și localitate, cu numele lor scurte:
 
@@ -85,7 +85,7 @@ Când apăsați „Salvează” pe o proprietate nouă, vă întoarceți în lis
 
 ### 5.2.2 Adresa {#properties-add-address}
 
-Fișa „Adresă” are câmpurile „Stradă, Nr., etaj, ap”, „Cod poștal”, „Oraș / Localitate”, „Județ / Sector”, „Țară” și „Note”. Dacă lăsați „Țară” gol și completați adresa, se salvează „România”.
+Fișa „Adresă” are câmpurile „Stradă, Nr., etaj, ap”, „Cod poștal”, „Oraș / Localitate”, „Județ / Sector”, „Țară” și „Note”. „Cod poștal” și „Oraș / Localitate” stau pe un rând, „Județ / Sector” și „Țară” pe rândul de sub el, aliniate ca pe adresa unei persoane. „Țară” se alege dintr-o listă, „Țara adresei” din „Date de referință” (secțiunea [[admin-reference-data]]); o țară salvată înainte, pe care lista n-o are, rămâne printre opțiuni. Dacă lăsați „Țară” gol și completați adresa, se salvează „România”.
 
 „Preia din Street View” completează câmpul „Adresă Street View” cu adresa pe care Google o găsește la centrul colțurilor. Are nevoie de cel puțin un colț și scrie peste ce era în câmp, așa că verificați rezultatul. Fiecare clic este o căutare pe care Google o taxează.
 
@@ -146,7 +146,7 @@ Bifele din „Panouri” („Părți afișate”) aleg fișele, ca pe orice obie
 | Puncte de contur | Colțurile parcelei, în ordine (secțiunea [[properties-corners-table]]). |
 | Street View | Imaginea străzii de lângă parcelă (secțiunea [[properties-corners-street-view]]). |
 
-„Implicit” arată „Identificare cadastrală”, „Adresă”, „Hartă” și „Puncte de contur”. Fișele „Hartă”, „Puncte de contur” și „Street View” pornesc din dreapta, una sub alta, sunt mov deschis și se trag în alt loc ca orice fișă (secțiunea [[start-tiles]]). Pe un ecran îngust, coboară sub celelalte fișe.
+„Implicit” arată „Identificare cadastrală”, „Adresă”, „Hartă” și „Puncte de contur”. Fișele „Hartă”, „Puncte de contur” și „Street View” pornesc din dreapta, una sub alta, sunt verzi și se trag în alt loc ca orice fișă (secțiunea [[start-tiles]]). Pe un ecran îngust, coboară sub celelalte fișe.
 
 Când debifați fișele de hartă, ecranul arată doar datele: identificarea cadastrală și adresa (Figura [[fig-properties-record]]).
 
@@ -164,7 +164,7 @@ Forma parcelei o dau colțurile ei, în ordinea în care sunt unite. Le vedeți 
 
 Tabelul are coloanele „Nr.” (ordinea), „Nr. orig.” (numărul colțului în fișierul sau planul din care vine), apoi coordonatele. „Afișare:” alege cum se arată coordonatele: „DD” (grade zecimale), „DMS” (grade, minute, secunde) sau „Stereo 70” (Nord și Est, în metri). În același fel le și scrieți.
 
-Fiecare rând are patru butoane:
+Fiecare rând are patru butoane, mereu pe același rând, oricare ar fi „Afișare:”-ul:
 
 - „Mută mai sus” și „Mută mai jos” — schimbă ordinea colțurilor, deci și forma parcelei;
 - „Editează” — face din rând câmpuri de scris, cu „Salvează” și „Anulează” pe rând. Butoanele rândurilor și „+ Adaugă punct” stau acolo cât timp „Puncte de contur” este deschisă cu „Editează”-ul fișei; un colț tras pe hartă o deschide singur;
@@ -186,7 +186,7 @@ Fișa „Hartă” desenează parcela. Are deasupra titlul ei, ca orice fișă; 
 - „Navighează” — traseul până la proprietate (secțiunea [[properties-navigate]]);
 - „HARTĂ” și „SATELIT” — harta străzilor sau imaginea din satelit.
 
-Colțurile proprietății sunt puncte mici, albastre, de culoarea laturilor, ca pe harta completă (secțiunea [[map-what]]). Când treceți cu mouse-ul peste un rând din „Puncte de contur”, colțul lui primește un cerc în jur.
+Proprietatea are laturile verde închis și interiorul verde mai deschis, iar colțurile ei sunt puncte mici de culoarea laturilor, ca pe harta completă (secțiunea [[map-what]]). Când treceți cu mouse-ul peste un rând din „Puncte de contur”, colțul lui primește un cerc în jur.
 
 ### 5.4.3 Desenarea și tragerea colțurilor {#properties-corners-draw}
 
@@ -199,9 +199,11 @@ Un colț așezat greșit se corectează trăgându-l cu mouse-ul pe hartă. Tabe
 
 ### 5.4.4 Harta extinsă {#properties-corners-expanded}
 
-„Hartă extinsă” deschide harta pe tot ecranul, centrată pe proprietate și la scara de pe fișă, așa că proprietatea are aceeași mărime ca acolo. Proprietatea este roșie, cu colțurile ei roșii, iar în jurul ei stau toate celelalte proprietăți din arhivă, albastre, cum le arată harta completă — de departe, picături (secțiunea [[map-what]]). Celelalte proprietăți sunt doar de privit: un clic pe ele nu face nimic.
+„Hartă extinsă” deschide harta pe tot ecranul, în două părți. Întâi fișa „Hartă” crește până umple fereastra, iar proprietatea pleacă de unde stă în fișă spre mijloc, la aceeași mărime; apoi harta se depărtează până când proprietatea are cam o zecime din înălțimea hărții. O tragere a hărții sau rotița mouse-ului opresc deschiderea acolo unde a ajuns. Proprietatea este roșie, cu colțurile ei roșii, iar în jurul ei stau toate celelalte proprietăți din arhivă, verzi, cum le arată harta completă — de departe, picături (secțiunea [[map-what]]). Celelalte proprietăți sunt doar de privit: un clic pe ele nu face nimic.
 
-Harta extinsă are „Desenează”, „Arată Unghiuri” și „HARTĂ” / „SATELIT”. Un colț desenat sau tras aici este colțul acestei proprietăți. „Restrânge” sau tasta Escape închide harta extinsă și vă întoarce la fișă, cu desenul păstrat.
+Harta extinsă are „Desenează”, „Arată Unghiuri” și „HARTĂ” / „SATELIT”. Un colț desenat sau tras aici este colțul acestei proprietăți. „Restrânge”, tasta Escape sau un clic în afara hărții o închid pe același drum, invers: harta se apropie din nou la scara fișei, apoi se strânge înapoi în fișă, cu desenul păstrat. Dacă între timp ați mutat sau ați apropiat harta, întâi se întoarce, pe un arc, acolo unde se terminase deschiderea. O a doua apăsare, cât timp se închide, o închide pe loc.
+
+Cât durează cele două părți se alege în „Setări”, la „Praguri de timp”, în grupa „Hărți” (secțiunea [[admin-settings-thresholds]]): implicit câte 3 secunde, iar 0 sare peste partea aceea. Întoarcerea pe arc ține cât zborul lui „Caută pe hartă” (secțiunea [[map-search]]).
 
 ### 5.4.5 Fișa „Street View” {#properties-corners-street-view}
 
@@ -233,7 +235,7 @@ Restul datelor cadastrale — numărul cadastral, cartea funciară, suprafața d
 
 ## 5.6 „Navighează” {#properties-navigate}
 
-„Navighează”, pe rândul de sus al fișei „Hartă”, vă ajută să ajungeți la proprietate cu mașina. Se deschide o fereastră cu traseul în Google Maps și cu același traseu sub forma unui cod QR, pentru telefon.
+„Navighează”, pe rândul de sus al fișei „Hartă”, vă ajută să ajungeți la proprietate cu mașina. Se deschide o fereastră cu traseul în Google Maps și cu același traseu sub forma unui cod QR, pentru telefon. Titlul ferestrei, „Navighează la …”, poartă porecla proprietății; una fără poreclă deschide „Navighează la proprietate”.
 
 Destinația o alege aplicația:
 
