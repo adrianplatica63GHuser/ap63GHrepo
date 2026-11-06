@@ -199,6 +199,7 @@ export const SKILLS: readonly Skill[] = [
       "TC-ICON-07",
       "TC-FOLD-01",
       "TC-PERS-15", // 40.77: a tile read, „Editează", „Salvează", „Renunță"
+      "TC-TILES-28",
     ],
     manual: ["start-tiles", "start-read-edit", "intro-objects", "start-preview", "admin-settings-account"],
   },
@@ -282,7 +283,7 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: [],
     screens: ["properties-map"],
-    cases: ["TC-MAP-01", "TC-PROP-10", "TC-PROP-13", "TC-MAP-05", "TC-MAP-06", "TC-MAP-09"],
+    cases: ["TC-MAP-01", "TC-PROP-10", "TC-PROP-13", "TC-MAP-05", "TC-MAP-06", "TC-MAP-09", "TC-MAP-11"],
     manual: ["map-what-open", "map-what-bubble", "map-what", "properties-navigate", "map-select"],
   },
   {
@@ -515,7 +516,7 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: ["documents-create-document", "documents-read-pages", "documents-choose-document-type"],
     screens: ["document-detail"],
-    cases: ["TC-DOC-02", "TC-DOC-03", "TC-DOC-04", "TC-DOC-06", "TC-DOC-18"],
+    cases: ["TC-DOC-02", "TC-DOC-03", "TC-DOC-04", "TC-DOC-06", "TC-DOC-18", "TC-DOC-29"],
     manual: ["documents-identification", "documents-type", "documents-sale", "documents-list", "documents-example-sale"],
   },
   {
@@ -631,8 +632,8 @@ export const SKILLS: readonly Skill[] = [
     path: "workspace",
     name: { ro: "Așază fișele și previzualizează alături", en: "Arrange the tiles and preview side by side" },
     description: {
-      ro: "Tragi o fișă într-un loc liber — și pe cele mov deschis, care pornesc din dreapta —, o urci cu dublu-clic, le urci pe toate cu „Toate sus”, îi faci loc ținând-o peste alta, citești schița fișelor de lângă bife și le muți trăgându-i dreptunghiurile, deschizi un obiect legat ca previzualizare lângă cel pe care lucrezi și, dintr-o listă, lângă tabel.",
-      en: "Drag a tile into a free place — the light purple ones too, which start on the right —, raise it with a double-click, raise them all with „Toate sus”, make room by holding it over another, read the sketch of the tiles beside the tick boxes and move the tiles by dragging its rectangles, open a linked object as a preview beside the one you are working on and, from a list, beside the table.",
+      ro: "Tragi o fișă într-un loc liber — și pe cele colorate, care pornesc din dreapta —, o urci cu dublu-clic, le urci pe toate cu „Toate sus” și le aduci la stânga cu „Toate la stânga”, îi lățești sau îi îngustezi trăgându-i marginea dreaptă, o închizi cu X-ul din colț, îi faci loc ținând-o peste alta, citești schița fișelor de lângă bife și le muți trăgându-i dreptunghiurile, deschizi un obiect legat ca previzualizare lângă cel pe care lucrezi și, dintr-o listă, lângă tabel.",
+      en: "Drag a tile into a free place — the coloured ones too, which start on the right —, raise it with a double-click, raise them all with „Toate sus” and bring them left with „Toate la stânga”, widen or narrow it by dragging its right edge, close it with the X in its corner, make room by holding it over another, read the sketch of the tiles beside the tick boxes and move the tiles by dragging its rectangles, open a linked object as a preview beside the one you are working on and, from a list, beside the table.",
     },
     predecessors: ["workspace-sign-in-and-navigate", "workspace-find-in-a-list", "workspace-read-a-record-screen"],
     screens: DETAIL_SCREENS,
@@ -650,6 +651,9 @@ export const SKILLS: readonly Skill[] = [
       "TC-TILES-22",
       "TC-TILES-24",
       "TC-TILES-25",
+      "TC-TILES-26",
+      "TC-TILES-27",
+      "TC-TILES-29",
     ],
     manual: ["start-tiles", "start-preview", "links-related", "admin-settings-account"],
   },
@@ -900,6 +904,7 @@ export const SKILLS: readonly Skill[] = [
       "TC-VL-09",
       "TC-VL-10",
       "TC-VL-11",
+      "TC-VL-12",
     ],
     manual: ["admin-reference-data-values", "admin-reference-data-roles", "admin-reference-data-document-types", "admin-reference-data", "admin-example-role"],
   },
@@ -915,7 +920,7 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: ["workspace-sign-in-and-navigate", "workspace-arrange-tiles"],
     screens: ["admin-settings", "admin-users"],
-    cases: ["TC-SET-01", "TC-SET-02", "TC-SET-03", "TC-SET-04", "TC-SET-05", "TC-USERS-01", "TC-AUTH-02"],
+    cases: ["TC-SET-01", "TC-SET-02", "TC-SET-03", "TC-SET-04", "TC-SET-05", "TC-USERS-01", "TC-AUTH-02", "TC-SET-06"],
     manual: ["admin-settings-thresholds", "admin-settings-account", "admin-settings-costs", "admin-users", "admin-example-threshold"],
   },
   {
@@ -1058,30 +1063,6 @@ export const SKILLS: readonly Skill[] = [
 export const SKILLS_UNCOVERED_CASES: Readonly<Record<string, string>> = {
   "TC-LAYOUT-01":
     "The other screens measured at fixed widths (1400 and 2400 px): a statement about layout, not something a user does or understands.",
-  "TC-SET-06":
-    "Slice 41.16: the width unit set on „Setări”. Its skill is written by the next Help and learning update (due 2026-11-05, from " +
-    "docs/help/LAST-SYNC.md), which covers 41.16–41.19 together; until then the case has no skill.",
-  "TC-TILES-26":
-    "Slice 41.17: a tile's width dragged by its right edge. Its skill comes with the same Help and learning update as " +
-    "TC-SET-06's (due 2026-11-05), which covers 41.16–41.19 together.",
-  "TC-TILES-27":
-    "Slice 41.19: one width on every form for Legături, the address tiles, Clasificare and Etichete și grupuri. Its skill " +
-    "comes with the same Help and learning update (due 2026-11-05).",
-  "TC-DOC-29":
-    "Slice 41.53: the notary office in „Legături”. Its skill comes with the next Help and learning update (due " +
-    "2026-11-05), which covers 41.46–41.62 together.",
-  "TC-VL-12":
-    "Slice 41.51: „Țara adresei” and the note a save in it or in „Cetățenie” shows. Its skill comes with the next Help " +
-    "and learning update (due 2026-11-05), which covers 41.46–41.62 together.",
-  "TC-TILES-29":
-    "Slice 41.91: the X in every tile's corner. Its skill comes with the Help and learning update of 2026-11-05 (41.93), " +
-    "which covers 41.13–41.92 together.",
-  "TC-TILES-28":
-    "Slice 41.46: every hover text in the icon buttons' bubble. Its skill comes with the next Help and learning update " +
-    "(due 2026-11-05), which covers 41.46–41.62 together.",
-  "TC-MAP-11":
-    "Slice 41.70: „Caută pe hartă” on the big map. Its skill comes with the next Help and learning update (due " +
-    "2026-11-05), which covers 41.63–41.70 together.",
 };
 
 export function skillByKey(key: string): Skill | undefined {
