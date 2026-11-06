@@ -421,11 +421,11 @@
           "section": "intro-purpose",
           "ro": {
             "question": "Ce găsiți pe „Tablou de bord”?",
-            "explanation": "Tabloul de bord arată ce s-a adăugat în ultimele șapte zile, obiectele ale căror metadate nu au mai fost actualizate de mult, actele care expiră în curând și ce s-a lucrat recent."
+            "explanation": "Tabloul de bord arată ce s-a adăugat în ultima săptămână, obiectele a căror clasificare nu a mai fost confirmată de mult — „Clasificări de revizuit” —, actele care expiră în curând și ce s-a lucrat recent."
           },
           "en": {
             "question": "What do you find on „Tablou de bord” (the dashboard)?",
-            "explanation": "The dashboard shows what was added in the last seven days, the objects whose metadata has not been updated for a long time, the documents that expire soon and what was worked on recently."
+            "explanation": "The dashboard shows what was added in the last week, the objects whose classification has not been confirmed for a long time — „Clasificări de revizuit” (classifications to review) —, the documents that expire soon and what was worked on recently."
           },
           "options": [
             {

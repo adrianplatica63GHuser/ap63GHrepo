@@ -282,11 +282,11 @@
           "section": "links-classify-tags",
           "ro": {
             "question": "În nor stă „proba ×1”, pusă din greșeală pe un teren din Bragadiru. Ciprian vrea ca eticheta să dispară din nor. Ce face?",
-            "explanation": "Pe teren, în „Etichete și grupuri”, ține mouse-ul pe etichetă și apasă „×”-ul din colțul ei. O etichetă scoasă de pe ultimul obiect care o purta dispare din nor."
+            "explanation": "Pe teren, deschide „Etichete și grupuri” cu „Editează” — creionul —, ține mouse-ul pe etichetă și apasă „×”-ul din colțul ei. O etichetă scoasă de pe ultimul obiect care o purta dispare din nor."
           },
           "en": {
             "question": "In the cloud stands „proba ×1” (test), put by mistake on a plot in Bragadiru. Ciprian wants the tag to disappear from the cloud. What does he do?",
-            "explanation": "On the plot, in „Etichete și grupuri” (tags and groups), he holds the mouse over the tag and presses the „×” in its corner. A tag removed from the last object that carried it disappears from the cloud."
+            "explanation": "On the plot, he opens „Etichete și grupuri” (tags and groups) with „Editează” (edit) — the pencil —, holds the mouse over the tag and presses the „×” in its corner. A tag removed from the last object that carried it disappears from the cloud."
           },
           "options": [
             {

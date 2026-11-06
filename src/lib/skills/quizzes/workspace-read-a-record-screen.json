@@ -16,11 +16,11 @@
           "section": "start-tiles",
           "ro": {
             "question": "Pe ecranul unui obiect, unde alegeți ce fișe se văd?",
-            "explanation": "„Panouri”, în bara de sus, după versiuni și înainte de „?”, deschide panoul cu bifele fișelor, „Toate sus”, „Toate” și „Implicit”; o bifă îl lasă deschis, iar Esc sau un clic în afara lui îl închide."
+            "explanation": "„Panouri”, în bara de sus, după versiuni și înainte de „?”, deschide panoul cu bifele fișelor, „Toate sus”, „Toate la stânga”, „Toate” și „Implicit”; o bifă îl lasă deschis, iar Esc sau un clic în afara lui îl închide."
           },
           "en": {
             "question": "On an object's screen, where do you choose which tiles show?",
-            "explanation": "„Panouri”, in the top bar, after the versions and before „?”, opens the panel with the tiles' tick boxes, „Toate sus”, „Toate” and „Implicit”; a tick leaves it open, and Esc or a click outside it closes it."
+            "explanation": "„Panouri”, in the top bar, after the versions and before „?”, opens the panel with the tiles' tick boxes, „Toate sus”, „Toate la stânga”, „Toate” and „Implicit”; a tick leaves it open, and Esc or a click outside it closes it."
           },
           "options": [
             {
@@ -54,18 +54,18 @@
           "section": "start-tiles",
           "ro": {
             "question": "Unde găsiți ID-ul de sistem al unui obiect deschis?",
-            "explanation": "ID-ul de sistem al obiectului stă în colțul din dreapta-sus al primei fișe."
+            "explanation": "ID-ul de sistem al obiectului stă în bara de sus, la stânga versiunilor, înaintea lui „Panouri” și „?”; un clic pe el îl selectează întreg."
           },
           "en": {
             "question": "Where do you find the system ID of an open object?",
-            "explanation": "The object's system ID sits in the top right-hand corner of the first tile."
+            "explanation": "The object's system ID stands in the top bar, left of the versions, before „Panouri” and „?”; a click on it selects it whole."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "În bara de navigare, după numele ecranului",
-              "en": "In the navigation bar, after the screen's name"
+              "ro": "În colțul din dreapta-sus al primei fișe",
+              "en": "In the top right-hand corner of the first tile"
             },
             {
               "id": "o2",
@@ -76,8 +76,8 @@
             {
               "id": "o3",
               "correct": true,
-              "ro": "În colțul din dreapta-sus al primei fișe",
-              "en": "In the top right-hand corner of the first tile"
+              "ro": "În bara de sus, la stânga versiunilor",
+              "en": "In the top bar, left of the versions"
             },
             {
               "id": "o4",
