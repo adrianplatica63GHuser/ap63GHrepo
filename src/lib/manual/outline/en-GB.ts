@@ -80,7 +80,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "properties-corners-table": "How to add, edit, reorder or delete corners, switch coordinates between DD, DMS and Stereo 70, and straighten a corner order whose sides cross.",
   "properties-corners-map": "What the buttons on a property's map do: expand, draw, show angles, street map or satellite; the corners, small green dots; and where to find „Navigate”.",
   "properties-corners-draw": "How to draw a plot's outline on the map by clicking, close the shape, and drag a misplaced corner with the mouse to fix it.",
-  "properties-corners-expanded": "How the property's map opens full-screen, growing out of the tile, the property red in the middle and every other property around it; what you can draw there, and how to go back to the tile with „Collapse” or Escape, the map shrinking back into it.",
+  "properties-corners-expanded": "The property's map full-screen: it grows out of the tile, the property red in the middle, the others around it; what you can draw there; „Collapse” or Escape shrinks it back into the tile.",
   "properties-corners-street-view": "How to see the street next to the parcel in Street View, why the tile is off until ticked (Google charges) and what it means when there are no images.",
   "properties-coord-file": "How to import a property from a surveyor's .txt file of Stereo 70 coordinates: the file format, the tarla and parcela asked for, and a parcel that already has one.",
   "properties-navigate": "How to drive to the plot: a Google Maps route and a QR code for your phone, choosing where you start, and why „Navigate” may be inactive.",

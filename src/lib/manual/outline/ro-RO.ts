@@ -80,7 +80,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "properties-corners-table": "Cum adaugi, editezi, muți sau ștergi colțuri, schimbi afișarea coordonatelor (DD, DMS, Stereo 70) și îndrepți o ordine a colțurilor care se încrucișează.",
   "properties-corners-map": "Ce fac butoanele hărții unei proprietăți: hartă extinsă, desenare, unghiuri, hartă de străzi sau satelit; colțurile, puncte mici verzi; și unde găsești „Navighează”.",
   "properties-corners-draw": "Cum desenezi conturul unui teren pe hartă cu clicuri, cum închizi forma și cum tragi (muți) cu mouse-ul un colț pus greșit.",
-  "properties-corners-expanded": "Cum se deschide harta proprietății pe tot ecranul, crescând din fișă, cu ea în roșu, la mijloc, și toate celelalte proprietăți în jur; ce poți desena acolo și cum revii la fișă cu „Restrânge” sau Escape, harta strângându-se înapoi în ea.",
+  "properties-corners-expanded": "Harta proprietății pe tot ecranul: crește din fișă, cu ea în roșu la mijloc și celelalte în jur; ce desenezi acolo; „Restrânge” sau Escape o strâng înapoi în fișă.",
   "properties-corners-street-view": "Cum vezi strada de lângă parcelă în Street View, de ce fișa e oprită până o bifezi (Google taxează) și ce înseamnă când nu are imagini.",
   "properties-coord-file": "Cum imporți o proprietate dintr-un fișier .txt cu coordonate Stereo 70 de la topograf: formatul, tarlaua și parcela cerute, o parcelă care are deja una.",
   "properties-navigate": "Cum ajungi la teren cu mașina: traseu în Google Maps și cod QR pentru telefon, de unde pornești și de ce butonul „Navighează” poate fi inactiv.",
