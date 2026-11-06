@@ -15,7 +15,7 @@ The screen is a single page (Figure [[fig-admin-value-lists]]). On the left are 
 
 A page with several lists shows them as tiles: they stand side by side as far as they fit, each as wide as its columns need, and can be dragged elsewhere, as on a property's screen. „Default”, at the top right, puts them back; where they stand is kept in your browser.
 
-Every list stands the same distance from its tile's edges — left, right and bottom —, that of „Use Categories”. Where the tile is wider than its columns need, the list widens to it, and the width gained goes to the description or, where the list has none, to the name; on „Citizenship” and „Relationship to the business” the tile narrows around the list. „Person Roles” and the two „Links” pages keep their tiles.
+Every list stands the same distance from its tile's edges — left, right and bottom —, that of „Use Categories”. Where the tile is wider than its columns need, the list widens to it, and the width gained goes to the description or, where the list has none, to the name; on „Citizenship”, „Address country” and „Relationship to the business” the tile narrows around the list. „Person Roles” and the two „Links” pages keep their tiles.
 
 ![12.1 „Reference Data”](admin-value-lists.png){#fig-admin-value-lists}
 
@@ -23,7 +23,7 @@ Every list stands the same distance from its tile's edges — left, right and bo
 |---|---|
 | Object types | „Natural Person Types”, „Juridical Person Types”, „Property Types and Uses”, „Document Types” |
 | Roles and links | „Person Roles”, „Property → Property Links”, „Document → Document Links” |
-| Value lists | „Tarla Codes”, „Citizenship”, „Relationship to the business” |
+| Value lists | „Tarla Codes”, „Citizenship”, „Address country”, „Relationship to the business” |
 
 „Use Categories” has no button of its own: it is the second tile of the page „Property Types and Uses” (section [[admin-reference-data-property-types]]).
 
@@ -41,6 +41,10 @@ The „Used by” column says how many objects use the value: „1 object”, �
 - **A value deleted.** „Delete” asks „Delete “…”?” and first checks what depends on the value: „Checking what depends on this value…”. If nothing does, it reads „Nothing depends on this value. Deleting it removes it permanently — this cannot be undone.”; „Delete” deletes it, „Cancel” gives up. If objects use it, the window says how many, and deleting is not possible until you move them onto another value: choose it under „Move them to:” and press „Move”.
 
 Old versions of the objects do not change: each keeps the value as it was when it was saved (section [[links-versions]]).
+
+„Citizenship” and „Address country” hold the same countries: the first, a person's citizenship; the second, the „Country” list on every address — a person's, a company's, a property's. An address keeps the country's name, so a country taken out of the list stays on the addresses that have it. After an addition, a rename, a deletion or a merge in one of the two, the application reminds you of the other, for instance „You saved a change in „Citizenship”. Check whether „Address country” needs the same change, so the two lists stay in step.”; the message stays until you close it.
+
+On „Citizenship”, „Printed forms” holds, separated by commas, the ways an identity document may print the citizenship, for instance ROU or ROUMAINE. The import of an identity card reads them to find the person's citizenship (chapter [[import]]).
 
 ### 12.1.2 Roles and links {#admin-reference-data-roles}
 
@@ -69,7 +73,7 @@ Above the three lists of „Roles and links” stands the tile „How objects ar
 
 „Document Types” has the columns „Name”, „Short name”, „Status” and „Used by (n objects)”. „Status” says where the type comes from and whether it has a form: „Added by hand”, „Created by an import” or „Has a form”; the four identity document types say „Identity document”. Hold the mouse over a type's name and the bubble shows the full name, with the type's key under it, for instance „CONTRACT_VANZARE”.
 
-Above the table are two ticks: „With a form” shows only the types that have a form, „Without a form” only those that do not. Both ticked, or neither, shows every type. When an import stops at a type without a form, its link opens the list with „Without a form” ticked (chapter [[import]]).
+Above the table are two ticks: „With a form” shows only the types that have a form, „Without a form” only those that do not. The four identity document types stand under „With a form”: their form is the system one (below). Both ticked, or neither, shows every type. When an import stops at a type without a form, its link opens the list with „Without a form” ticked (chapter [[import]]).
 
 „Open”, on a type's row, opens the type's page, with three tabs:
 
@@ -116,33 +120,39 @@ Groups, stamps and tags are put on objects from each object's „Tags and groups
 
 ### 12.3.1 Groups {#admin-groups-groups}
 
-„Administration” → „Groups” shows the panel „Ce este un Grup?” (what is a group?), „Add”, the search box, the number of groups, for instance „4 groups”, and the table „Code” · „Description”. Each row has the group's code, with the number of members in brackets, the kind of objects it gathers, the description, „Edit” and „Delete”. The list stops at two thirds of the window's height and scrolls inside its tile, with the row of headings always at the top.
+„Administration” → „Groups” has three tiles: „Ce este un Grup?” (what is a group?), „How you work with groups” and „Groups”, the list. As on an object's screen, „Panels”, in the top bar, chooses which are shown, and „Default”, there, brings them back and puts them in their places (section [[start-tiles]]); the choice stays the browser's. „I understand”, at the foot of the „Ce este un Grup?” tile, hides it; you bring it back by ticking it in „Panels”.
+
+„How you work with groups” asks „What do you want to do?” and offers six choices, under „The group itself”, „The group's members” and „On the map” — for instance „Make a new group” or „Add or take out members” —, each with a line saying when it fits. Until you choose one, the tile shows no step; then it shows only the chosen one's steps, and remembers it, in the browser.
+
+The „Groups” tile has „Add”, the search box, the number of groups, for instance „4 groups”, and the table „Code” · „Description”. Each row has the group's code, with the number of members in brackets, the kind of objects it gathers, the description, „Edit” and „Delete”. The list stops at two thirds of the window's height and scrolls inside its tile, with the row of headings always at the top.
 
 The box beside „Add”, „search by Code or Description”, finds a group by its code or by the words of its description — every word typed, in any order, with or without diacritics; a code typed whole comes first. While you type, the count says how many groups show out of how many there are, for instance „1 of 4”; when none matches, the table says „No group matches the search.”.
 
 1. „Add” opens „Add new group”. Choose „Target” — „Property”, „Physical person”, „Juridical person” or „Document” —, write „Description” and press „Save”. You stay on the list, with the new group first; the code, of the form GRP-001, is given on saving.
-2. „Edit” opens „Group GRP-…”, with two tiles: „Group identity” (the code and the target on one line, „Description”, „Save group”) and „Group members”, with two lists: „In Group already” on the left, „Members available to include” on the right.
-3. Search in „Search…”, tick the objects on the right and press „‹ Include”; to take one out, tick it in „In Group already” and press „Take out ›”. A double click on a row moves it to the other list. Moved rows carry „pending”, and the screen shows „Unsaved changes”: nothing has been written yet.
+2. „Edit” opens „Group GRP-…”, with three tiles: „Group identity” — the code and the target on one line, „Description”, which grows with the text, and „Save group” at its foot —, „Group members”, with two lists of one height, „In Group already” on the left and „Members available to include” on the right, and „How you work with groups”.
+3. Above each list is a „Search…” box, which narrows it to the matching names; the number beside the list's title says how many rows show. Tick the objects on the right and press „‹ Include”; to take one out, tick it in „In Group already” and press „Take out ›”. The number in the button's brackets says how many ticked rows it moves; with nothing ticked, the button cannot be pressed. A double click or Enter on a row moves it to the other list. Moved rows carry „pending”, and the screen shows „Unsaved changes”: nothing has been written yet.
 4. „Save group” writes the changes; each member gets its position in the group, „[01]”, „[02]”.
 
-The screen's tiles can be moved by dragging them by an empty spot, and „Default”, at the top right, puts them back. „Delete” on a group's row asks „Delete this group? This cannot be undone.”; the objects in the group stay in the archive.
+Opened from an object — with a click on the group's code, in „Tags and groups” (section [[links-classify-groups]]) —, the group's screen shows only „Group identity”, and only for that visit: „Panels” ticks other tiles as well, „All” shows them all, and „Default” goes back to the usual choice.
+
+The screens' tiles can be moved by dragging them by an empty spot and widened or narrowed by dragging their right edge, as on an object's screen; „Default”, in „Panels”, puts them back. „Delete” on a group's row asks „Delete this group? This cannot be undone.”; the objects in the group stay in the archive.
 
 ### 12.3.2 Stamps {#admin-groups-stamps}
 
-„Administration” → „Stamps” shows the panel „What is a Stamp?”, the search box, the number of stamps and the table „Stamp” · „Members”: each row has the stamp's code and description, its note, how many objects carry it, „Apply” and „Delete”. The list stops at two thirds of the window's height and scrolls inside its tile, with the row of headings always at the top.
+„Administration” → „Stamps” has, like „Groups”, three tiles chosen with „Panels”: „What is a Stamp?”, „How you work with stamps” — the steps, in short: how you find, make, apply and delete a stamp — and „Stamps”, the list. The list has the search box, the number of stamps and the table „Stamp” · „Members”: each row has the stamp's code and description, its note, how many objects carry it, „Apply” and „Delete”. The list stops at two thirds of the window's height and scrolls inside its tile, with the row of headings always at the top.
 
 The box „search by Code or Short description” finds a stamp by its code or by the words of its short description, as with groups: every word, in any order, with or without diacritics, and the count says how many show out of how many there are; when none matches, „No stamp matches the search.”.
 
 1. The „+” button, „Create stamp”, opens the form: „Short description” (required, at most 200 characters) and „Notes”. The code, of the form STMP-AAA, is given on saving. „Save” leaves you on the list, with the new stamp first.
-2. „Apply” opens „Apply stamp: …”, with four tiles: „Stamp description”, „Object type”, „Objects available to stamp” and „Objects already stamped”.
-3. Choose the kind of objects in „Object type”; the lists show only objects of that kind. Tick them and press „Apply stamp”, or, in the other list, „Remove stamp”. The screen shows „Unsaved changes”.
+2. „Apply” opens „Apply stamp: …”, with three tiles: „Stamp description” — the code and the short description on one line, „Notes” and „Save stamps” at its foot —, „Stamped objects”, with two lists, „Objects already stamped” on the left and „Objects available to stamp” on the right, each with its own „Search…” box, and „How you work with stamps”.
+3. Choose the kind of objects at the top, in „Object type”; both lists show only objects of that kind. Tick on the right and press „‹ Apply stamp”, or tick on the left and press „Remove stamp ›”; a double click or Enter moves a single row. Moved rows carry „pending”, „Staged changes” appears beside „Object type”, and the screen shows „Unsaved changes”. A row moved back cancels the move.
 4. „Save stamps”, the floppy-disk button, writes the changes. A stamp can sit on objects of different kinds: change „Object type” and carry on.
 
-As with groups, the tiles are moved by dragging, and „Default” puts them back. „Delete” asks „Delete this stamp and remove it from all items? …”: the stamp disappears from the objects as well, and the objects stay.
+As with groups, the tiles are moved and widened by dragging, and „Default”, in „Panels”, puts them back; opened from an object, the stamp's screen shows only „Stamp description”. „Delete” asks „Delete this stamp and remove it from all items? …”: the stamp disappears from the objects as well, and the objects stay.
 
 ### 12.3.3 Tags {#admin-groups-tags}
 
-„Administration” → „Tags” shows „Tag cloud”: every tag in the archive, how many distinct ones there are and, on each, how many times it is used, for instance „×1”. The most used are larger. When they do not fit in the window, only the tags scroll; the title and the buttons stay at the top.
+„Administration” → „Tags” has two tiles, chosen with „Panels”: „Tags”, with a sentence about the screen, and „Tag cloud”: every tag in the archive, how many distinct ones there are and, on each, how many times it is used, for instance „×1”. The most used are larger. When they do not fit in the window, only the tags scroll; the title and the buttons stay at the top.
 
 A double click on a tag selects it, and a second one deselects it; a selected tag appears pressed.
 
@@ -181,13 +191,14 @@ The texts behind the „?” button and the light-bulb hints on the screens (sec
 - **The password.** Type the new password in „New password” — at least 8 characters — and once more in „Confirm password”, then press „Change password”. The application confirms with „Password changed!”. If the two do not match, it says „The passwords do not match.”.
 - **The language.** Under „Language” choose „Română” or „English”.
 - **Appearance.** Under „Language”, at „Appearance”, the box „Night (Dark Mode)” turns the whole application dark; it is the same box as under „GA40” in the sidebar, so each shows the other ticked (section [[start-sidebar]]).
+- **„Width unit”**. Every tile is a whole number of units wide (section [[start-tiles]]). Type under „Unit” how many pixels a unit has — a whole number from 80 to 200 — and press „Save” or Enter. The fields keep their size: with a smaller unit a tile takes more units, with a larger one fewer, but never narrower than what it holds. „Settings” is redrawn at once; the other screens take the new unit the next time they are shown. While the unit is not the usual one, „Back to 119 px” puts it back. The unit belongs to the browser, not to the account.
 - **„My defaults”**. For each kind of object — „Natural person”, „Juridical person”, „Property”, „Document” — tick the tiles you want „Default” to show on its screen and press „Save”; „Saved.” appears. The set belongs to the account, not to the browser, so it stays after a reload, and in any browser. „Back to default” forgets your set and brings back the application's usual one: „Back to default.”. At least one tile stays ticked.
 
 „Sign out” is at the bottom of the sidebar.
 
 ### 12.5.2 „Time thresholds” {#admin-settings-thresholds}
 
-„Time thresholds” holds eleven numbers, in five groups: „Dashboard”, „Documents”, „Persons”, „The „New!” badge” and „Tiles”. Ten decide when something is „new”, „soon” or „old”; the eleventh, „Hold time over another tile”, in „Tiles”, says how long you hold a dragged tile over another before that one makes room (section [[start-tiles]]). Each threshold has a name, a sentence, a number with its unit and an example. The example changes at once, with the number you type: on „Expiring-soon filter window”, with 30 it reads „Example: A document shows «expiring soon» 30 days ahead.”, and with 45, „… 45 days ahead.”.
+„Time thresholds” holds fifteen numbers, in six groups: „Dashboard”, „Documents”, „Persons”, „The „New!” badge”, „Tiles” and „Maps”. Ten decide when something is „new”, „soon” or „old”; the eleventh, „Hold time over another tile”, in „Tiles”, says how long you hold a dragged tile over another before that one makes room (section [[start-tiles]]). The four in „Maps” say how the maps move: how long the two parts of opening with „Expand map” last (section [[properties-corners-expanded]]) and, with „Search the map”, how long the flight to the place found lasts and how high it rises (section [[map-search]]). Each threshold has a name, a sentence, a number with its unit and an example. The example changes at once, with the number you type: on „Expiring-soon filter window”, with 30 it reads „Example: A document shows «expiring soon» 30 days ahead.”, and with 45, „… 45 days ahead.”.
 
 Among other things, the thresholds decide:
 
@@ -195,9 +206,11 @@ Among other things, the thresholds decide:
 - how long before a document shows „expiring soon”;
 - how long before its expiry an identity document — identity card or passport — is flagged („ID card expiring soon threshold”);
 - how long a changed object carries the „New!” badge, red and then amber, and after how long the badge disappears;
-- how long you hold a tile over another before that one slides down to make room.
+- how long you hold a tile over another before that one slides down to make room;
+- how long, with „Expand map”, the „Map” tile takes to grow and then the map to zoom out;
+- how long the big map's flight to a place found with „Search the map” lasts, and the coefficient a of its path: with 0 the map glides straight, with 1 it rises until both places show, with 2 twice as high.
 
-As soon as you change a number, „Cancel” appears beside „Save” and brings back the saved value. „Save” confirms with „Saved successfully.”. The values are whole numbers between 1 and 3650, except „Hold time over another tile”, which is written in seconds, with a comma or a full stop and at most two decimals, between 0.2 and 10: „1.5” means one and a half seconds. A value outside these is refused on „Save”, with a message that says why. The thresholds belong to the archive, not to an account: a change is seen by every user.
+As soon as you change a number, „Cancel” appears beside „Save” and brings back the saved value. „Save” confirms with „Saved successfully.”. The values are whole numbers between 1 and 3650, except those written in seconds, with a comma or a full stop and at most two decimals: „Hold time over another tile”, between 0.2 and 10 — „1.5” means one and a half seconds —, the two of „Expand map”, between 0 and 10, and the flight, between 0 and 15; for these, 0 skips the movement. The coefficient a is written with at most two decimals, between 0 and 3. A value outside these is refused on „Save”, with a message that says why. The thresholds belong to the archive, not to an account: a change is seen by every user.
 
 ### 12.5.3 „Costs” {#admin-settings-costs}
 

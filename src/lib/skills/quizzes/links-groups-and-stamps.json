@@ -15,19 +15,19 @@
           "id": "a1",
           "section": "links-classify-groups",
           "ro": {
-            "question": "Pe ecranul grupului GRP-004 bifați cinci terenuri, apăsați „Adaugă în grup” și plecați fără „Salvează grupul”. Ce arată „Grupuri”, în „Etichete și grupuri”, pe unul dintre terenuri?",
+            "question": "Pe ecranul grupului GRP-004 bifați cinci terenuri, apăsați „‹ Include” și plecați fără „Salvează grupul”. Ce arată „Grupuri”, în „Etichete și grupuri”, pe unul dintre terenuri?",
             "explanation": "Până la „Salvează grupul” nu se scrie nimic, iar ecranul grupului arată „Modificări nesalvate”; terenurile nu au intrat în grup."
           },
           "en": {
-            "question": "On the screen of group GRP-004 you tick five plots, press „Adaugă în grup” (add to group) and leave without „Salvează grupul” (save the group). What does „Grupuri”, in „Etichete și grupuri”, show on one of the plots?",
+            "question": "On the screen of group GRP-004 you tick five plots, press „‹ Include” and leave without „Salvează grupul” (save the group). What does „Grupuri”, in „Etichete și grupuri”, show on one of the plots?",
             "explanation": "Until „Salvează grupul” nothing is written, and the group's screen shows „Modificări nesalvate” (unsaved changes); the plots did not join the group."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "GRP-004, cu semnul „[nou]” lângă el",
-              "en": "GRP-004, with the „[nou]” mark beside it"
+              "ro": "GRP-004, cu „în așteptare” lângă el",
+              "en": "GRP-004, with „în așteptare” (pending) beside it"
             },
             {
               "id": "o2",
@@ -134,8 +134,8 @@
             {
               "id": "o1",
               "correct": true,
-              "ro": "Schimbați „Tip element” pe acte, le bifați, „Aplică ștampila”, apoi „Salvează ștampilele”",
-              "en": "Change „Tip element” to documents, tick them, „Aplică ștampila”, then „Salvează ștampilele”"
+              "ro": "Schimbați „Tip element” pe acte, le bifați, „‹ Aplică ștampila”, apoi „Salvează ștampilele”",
+              "en": "Change „Tip element” to documents, tick them, „‹ Aplică ștampila”, then „Salvează ștampilele”"
             },
             {
               "id": "o2",
@@ -382,37 +382,37 @@
           "id": "b2",
           "section": "admin-groups-groups",
           "ro": {
-            "question": "Pe ecranul grupului, terenurile adăugate poartă „[nou]”, iar ecranul arată „Modificări nesalvate”. Ce urmează și ce vedeți după?",
-            "explanation": "Membrii adăugați poartă „[nou]” și încă nu s-a scris nimic; „Salvează grupul” scrie schimbările, iar „[nou]” devine poziția membrului în grup."
+            "question": "Pe ecranul grupului, terenurile adăugate poartă „în așteptare”, iar ecranul arată „Modificări nesalvate”. Ce urmează și ce vedeți după?",
+            "explanation": "Rândurile mutate poartă „în așteptare” și încă nu s-a scris nimic; „Salvează grupul” scrie schimbările, iar fiecare membru primește poziția lui în grup, „[01]”, „[02]”."
           },
           "en": {
-            "question": "On the group's screen, the plots added carry „[nou]” (new), and the screen shows „Modificări nesalvate”. What comes next, and what do you see after?",
-            "explanation": "The members added carry „[nou]” and nothing has been written yet; „Salvează grupul” writes the changes, and „[nou]” becomes the member's position in the group."
+            "question": "On the group's screen, the plots added carry „în așteptare” (pending), and the screen shows „Modificări nesalvate”. What comes next, and what do you see after?",
+            "explanation": "The rows moved carry „în așteptare” and nothing has been written yet; „Salvează grupul” writes the changes, and each member gets its position in the group, „[01]”, „[02]”."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "„Salvează grupul”; „[nou]” devine poziția terenului, „[01]”, „[02]”",
-              "en": "„Salvează grupul”; „[nou]” becomes the plot's position, „[01]”, „[02]”"
+              "ro": "„Salvează grupul”; terenurile primesc poziția, „[01]”, „[02]”",
+              "en": "„Salvează grupul”; the plots get their position, „[01]”, „[02]”"
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "Nimic: terenurile sunt deja în grup, „[nou]” arată doar că sunt recente",
-              "en": "Nothing: the plots are already in the group, „[nou]” only shows they are recent"
+              "ro": "Nimic: terenurile sunt deja în grup, „în așteptare” arată doar că sunt recente",
+              "en": "Nothing: the plots are already in the group, „în așteptare” only shows they are recent"
             },
             {
               "id": "o3",
               "correct": false,
-              "ro": "„Salvează”, pe ecranul fiecărui teren; „[nou]” dispare",
-              "en": "„Salvează”, on each plot's screen; „[nou]” goes away"
+              "ro": "„Salvează”, pe ecranul fiecărui teren; „în așteptare” dispare",
+              "en": "„Salvează”, on each plot's screen; „în așteptare” goes away"
             },
             {
               "id": "o4",
               "correct": false,
-              "ro": "„Implicit”, sus în dreapta, care confirmă membrii noi",
-              "en": "„Implicit” (default), top right, which confirms the new members"
+              "ro": "„Implicit”, din „Panouri”, care confirmă membrii noi",
+              "en": "„Implicit” (default), in „Panouri”, which confirms the new members"
             }
           ]
         },
@@ -421,11 +421,11 @@
           "section": "links-classify-groups",
           "ro": {
             "question": "Sunteți pe ecranul unui teren și vreți să-l puneți în grupul GRP-003 fără să plecați de pe el. Ce apăsați?",
-            "explanation": "Pe un obiect, „Grupuri” din „Etichete și grupuri” arată grupurile lui, iar „+ Adaugă în grup” deschide lista grupurilor."
+            "explanation": "Pe un obiect, „Editează” deschide „Etichete și grupuri”; la „Grupuri”, „+ Adaugă în grup” deschide lista grupurilor, iar alegerea se salvează pe loc."
           },
           "en": {
             "question": "You are on a plot's screen and want to put it into group GRP-003 without leaving it. What do you press?",
-            "explanation": "On an object, „Grupuri” in „Etichete și grupuri” shows its groups, and „+ Adaugă în grup” opens the list of groups."
+            "explanation": "On an object, „Editează” (edit) opens „Etichete și grupuri”; under „Grupuri”, „+ Adaugă în grup” opens the list of groups, and the choice is saved at once."
           },
           "options": [
             {
@@ -449,8 +449,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "„+ Adaugă în grup”, la „Grupuri”, în „Etichete și grupuri”",
-              "en": "„+ Adaugă în grup”, under „Grupuri”, in „Etichete și grupuri”"
+              "ro": "„Editează” pe „Etichete și grupuri”, apoi „+ Adaugă în grup”",
+              "en": "„Editează” on „Etichete și grupuri”, then „+ Adaugă în grup”"
             }
           ]
         },
@@ -459,11 +459,11 @@
           "section": "admin-groups-stamps",
           "ro": {
             "question": "Ieri ați ștampilat trei persoane pe „Aplică ștampila: …”. Azi, în lista ștampilelor, rândul ștampilei arată că n-o poartă niciun obiect. Ce s-a întâmplat, cel mai probabil?",
-            "explanation": "După „Aplică ștampila”, ecranul arată „Modificări nesalvate”; abia „Salvează ștampilele”, butonul cu discheta, scrie schimbările."
+            "explanation": "După „‹ Aplică ștampila”, ecranul arată „Modificări nesalvate”; abia „Salvează ștampilele”, butonul cu discheta, scrie schimbările."
           },
           "en": {
             "question": "Yesterday you stamped three persons on „Aplică ștampila: …”. Today, in the list of stamps, the stamp's row shows that no object carries it. What most likely happened?",
-            "explanation": "After „Aplică ștampila”, the screen shows „Modificări nesalvate”; only „Salvează ștampilele”, the button with the floppy disk, writes the changes."
+            "explanation": "After „‹ Aplică ștampila”, the screen shows „Modificări nesalvate”; only „Salvează ștampilele”, the button with the floppy disk, writes the changes."
           },
           "options": [
             {
@@ -475,8 +475,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "Nu ați apăsat „Salvează ștampilele” după „Aplică ștampila”",
-              "en": "You did not press „Salvează ștampilele” after „Aplică ștampila”"
+              "ro": "Nu ați apăsat „Salvează ștampilele” după „‹ Aplică ștampila”",
+              "en": "You did not press „Salvează ștampilele” after „‹ Aplică ștampila”"
             },
             {
               "id": "o3",
@@ -535,11 +535,11 @@
           "section": "links-classify-stamps",
           "ro": {
             "question": "Ștampila STMP-AAC a fost pusă din greșeală pe o persoană; pe celelalte este bine pusă. Ce faceți?",
-            "explanation": "Pe obiect, la „Ștampile”, „×” scoate ștampila; „Șterge” din lista ștampilelor ar scoate-o de pe toate obiectele."
+            "explanation": "Pe obiect, după „Editează” pe „Etichete și grupuri”, „×” de la „Ștampile” scoate ștampila; „Șterge” din lista ștampilelor ar scoate-o de pe toate obiectele."
           },
           "en": {
             "question": "Stamp STMP-AAC was put on one person by mistake; on the others it is right. What do you do?",
-            "explanation": "On the object, under „Ștampile”, the „×” takes the stamp off; „Șterge” in the list of stamps would take it off every object."
+            "explanation": "On the object, after „Editează” (edit) on „Etichete și grupuri”, the „×” under „Ștampile” takes the stamp off; „Șterge” in the list of stamps would take it off every object."
           },
           "options": [
             {
@@ -563,8 +563,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "Pe ecranul persoanei, la „Ștampile”, apăsați „×” pe ștampilă",
-              "en": "On the person's screen, under „Ștampile”, press „×” on the stamp"
+              "ro": "Pe ecranul persoanei, „Editează”, apoi „×” pe ștampilă",
+              "en": "On the person's screen, „Editează”, then „×” on the stamp"
             }
           ]
         },

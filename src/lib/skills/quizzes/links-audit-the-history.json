@@ -168,24 +168,24 @@
           "section": "links-classify-classification",
           "ro": {
             "question": "Ciprian vrea să afle când a fost trecută „Relevanță” a unui teren din „Actual” în „Istoric”. Unde se uită?",
-            "explanation": "Sub „Proveniență”, „Istoric” ține fiecare schimbare din „Clasificare”, cu data ei."
+            "explanation": "„Istoric”, din „Clasificare”, ține doar schimbările de proveniență. Fiecare salvare din „Clasificare” adaugă însă o versiune a obiectului: cu „Versiunea anterioară” ajungeți la versiunea în care „Relevanță” s-a schimbat și citiți valoarea de dinainte."
           },
           "en": {
             "question": "Ciprian wants to find out when a plot's „Relevanță” (relevance) was moved from „Actual” to „Istoric”. Where does he look?",
-            "explanation": "Under „Proveniență” (provenance), „Istoric” (history) keeps every change in „Clasificare”, with its date."
+            "explanation": "„Istoric” (history), in „Clasificare”, keeps only the changes of provenance. Every save in „Clasificare” adds a version of the object, though: with „Versiunea anterioară” (previous version) you reach the version in which „Relevanță” changed and read the value before it."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "În „Etichete și grupuri”, la „Etichete / Cuvinte cheie”",
-              "en": "In „Etichete și grupuri”, at „Etichete / Cuvinte cheie”"
+              "ro": "În „Clasificare”, la „Istoric”, sub cele trei valori",
+              "en": "In „Clasificare”, at „Istoric”, under the three values"
             },
             {
               "id": "o2",
               "correct": true,
-              "ro": "În „Clasificare”, la „Istoric”, sub „Proveniență”",
-              "en": "In „Clasificare”, at „Istoric”, under „Proveniență”"
+              "ro": "În versiunile terenului, cu „Versiunea anterioară”",
+              "en": "In the plot's versions, with „Versiunea anterioară”"
             },
             {
               "id": "o3",
@@ -780,12 +780,12 @@
           "id": "b9",
           "section": "links-classify-classification",
           "ro": {
-            "question": "Ciprian deschide „Clasificare” unui teren cu „Editează”, schimbă „Importanță” din „Medie” în „Ridicată” și apasă „Salvează”. Ce urmă lasă schimbarea?",
-            "explanation": "După salvare fișa se citește din nou, cu „Ridicată”; „Istoric” ține fiecare schimbare, cu data ei, iar salvarea adaugă o versiune a obiectului."
+            "question": "Ciprian deschide „Clasificare” unui teren cu „Editează”, schimbă „Importanță” din „Medie” în „Ridicată” apasă „Salvează” și apoi „Confirmă”. Ce urmă lasă schimbarea?",
+            "explanation": "„Salvează” deschide întâi caseta de confirmare; „Confirmă” scrie valoarea, le socotește pe toate trei verificate azi și adaugă o versiune a obiectului. „Istoric” ține doar schimbările de proveniență."
           },
           "en": {
-            "question": "Ciprian opens a plot's „Clasificare” with „Editează” (edit), changes „Importanță” (importance) from „Medie” to „Ridicată” and presses „Salvează” (save). What trace does the change leave?",
-            "explanation": "After the save the tile reads again, with „Ridicată”; „Istoric” keeps every change, with its date, and the save adds a version of the object."
+            "question": "Ciprian opens a plot's „Clasificare” with „Editează” (edit), changes „Importanță” (importance) from „Medie” to „Ridicată” presses „Salvează” (save) and then „Confirmă” (confirm). What trace does the change leave?",
+            "explanation": "„Salvează” first opens the confirmation box; „Confirmă” writes the value, counts all three as reviewed today and adds a version of the object. „Istoric” keeps only the changes of provenance."
           },
           "options": [
             {
@@ -797,8 +797,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Valoarea „Medie” se șterge din toate versiunile",
-              "en": "The value „Medie” is cleared from all versions"
+              "ro": "Valoarea „Medie” se șterge din toate versiunile de dinainte",
+              "en": "The value „Medie” is cleared from all the earlier versions"
             },
             {
               "id": "o3",
@@ -809,8 +809,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "Intră în „Istoric”, cu data ei, și adaugă o versiune",
-              "en": "It goes into „Istoric”, with its date, and adds a version"
+              "ro": "O versiune nouă, iar toate trei sunt verificate azi",
+              "en": "A new version, and all three count as reviewed today"
             }
           ]
         },

@@ -438,11 +438,11 @@
           "section": "links-classify-classification",
           "ro": {
             "question": "Care dintre acestea adaugă o versiune nouă a obiectului?",
-            "explanation": "„Salvează”, sub listele din „Clasificare” deschise cu „Editează”, se apasă după ce schimbați o valoare, iar salvarea adaugă o versiune a obiectului."
+            "explanation": "În „Clasificare” deschisă cu „Editează”, „Salvează” se apasă după ce schimbați o valoare și deschide confirmarea; „Confirmă” scrie valoarea și adaugă o versiune a obiectului."
           },
           "en": {
             "question": "Which of these adds a new version of the object?",
-            "explanation": "„Salvează”, under the lists of „Clasificare” opened with „Editează”, is pressed after you change a value, and the save adds a version of the object."
+            "explanation": "In „Clasificare” opened with „Editează”, „Salvează” is pressed after you change a value and opens the confirmation; „Confirmă” (confirm) writes the value and adds a version of the object."
           },
           "options": [
             {
@@ -460,8 +460,8 @@
             {
               "id": "o3",
               "correct": true,
-              "ro": "Schimbarea „Importanță” în „Clasificare”, apoi „Salvează”",
-              "en": "Changing „Importanță” in „Clasificare”, then „Salvează”"
+              "ro": "„Importanță” schimbată, „Salvează”, apoi „Confirmă”",
+              "en": "„Importanță” changed, „Salvează”, then „Confirmă”"
             },
             {
               "id": "o4",

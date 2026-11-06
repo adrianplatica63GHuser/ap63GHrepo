@@ -54,18 +54,18 @@
           "section": "links-classify-classification",
           "ro": {
             "question": "Un coleg vă întreabă când a fost schimbată valoarea din „Relevanță” a unui teren și ce valoare avea înainte. Unde aflați?",
-            "explanation": "Sub „Proveniență”, „Istoric” ține fiecare schimbare din „Clasificare”, cu data ei."
+            "explanation": "„Istoric”, din „Clasificare”, ține doar schimbările de proveniență. Fiecare salvare din „Clasificare” adaugă însă o versiune a obiectului: cu „Versiunea anterioară” ajungeți la versiunea în care „Relevanță” s-a schimbat și citiți valoarea de dinainte."
           },
           "en": {
             "question": "A colleague asks you when the value in a plot's „Relevanță” (relevance) was changed and what it was before. Where do you find out?",
-            "explanation": "Under „Proveniență”, „Istoric” (history) keeps every change in „Clasificare”, with its date."
+            "explanation": "„Istoric” (history), in „Clasificare”, keeps only the changes of provenance. Every save in „Clasificare” adds a version of the object, though: with „Versiunea anterioară” (previous version) you reach the version in which „Relevanță” changed and read the value before it."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "La „Istoric”, sub „Proveniență”, în fișa „Clasificare” a terenului",
-              "en": "Under „Istoric”, below „Proveniență”, in the plot's „Clasificare” tile"
+              "ro": "În versiunile terenului, cu „Versiunea anterioară”",
+              "en": "In the plot's versions, with „Versiunea anterioară”"
             },
             {
               "id": "o2",
@@ -167,12 +167,12 @@
           "id": "a5",
           "section": "links-classify-classification",
           "ro": {
-            "question": "Pe un act, deschideți „Clasificare” cu „Editează”, schimbați „Relevanță” din „Actual” în „Istoric” și apăsați „Salvează”. Ce s-a mai întâmplat cu actul, în afară de noua valoare?",
-            "explanation": "Salvarea din „Clasificare” adaugă o versiune a obiectului, iar „Istoric” păstrează schimbarea, cu data ei."
+            "question": "Pe un act, deschideți „Clasificare” cu „Editează”, schimbați „Relevanță” din „Actual” în „Istoric” apăsați „Salvează” și apoi „Confirmă”. Ce s-a mai întâmplat cu actul, în afară de noua valoare?",
+            "explanation": "„Confirmă”, după „Salvează” din „Clasificare”, scrie valoarea și adaugă o versiune a obiectului, ca orice salvare; versiunea de dinainte păstrează valoarea veche."
           },
           "en": {
-            "question": "On a document, you open „Clasificare” with „Editează” (edit), change „Relevanță” from „Actual” (current) to „Istoric” (historical) and press „Salvează” (save). What else happened to the document, besides the new value?",
-            "explanation": "The save in „Clasificare” adds a version of the object, and „Istoric” keeps the change, with its date."
+            "question": "On a document, you open „Clasificare” with „Editează” (edit), change „Relevanță” from „Actual” (current) to „Istoric” (historical) press „Salvează” (save) and then „Confirmă” (confirm). What else happened to the document, besides the new value?",
+            "explanation": "„Confirmă”, after „Salvează” in „Clasificare”, writes the value and adds a version of the object, as any save does; the version before keeps the old value."
           },
           "options": [
             {
@@ -206,11 +206,11 @@
           "section": "links-classify-tags",
           "ro": {
             "question": "Pe același teren adăugați eticheta „litigiu” și schimbați „Importanță” în „Ridicată”. Care dintre cele două schimbări are nevoie de „Salvează”?",
-            "explanation": "Eticheta se salvează pe loc, fără „Salvează”; în „Clasificare”, deschisă cu „Editează”, „Salvează” de sub liste scrie valoarea schimbată."
+            "explanation": "Eticheta se salvează pe loc, fără „Salvează”; în „Clasificare”, deschisă cu „Editează”, valoarea schimbată o scriu „Salvează”, de sub liste, și apoi „Confirmă”."
           },
           "en": {
             "question": "On the same plot you add the tag „litigiu” (dispute) and change „Importanță” to „Ridicată”. Which of the two changes needs „Salvează”?",
-            "explanation": "The tag is saved at once, without „Salvează”; in „Clasificare”, opened with „Editează” (edit), „Salvează” under the lists writes the changed value."
+            "explanation": "The tag is saved at once, without „Salvează”; in „Clasificare”, opened with „Editează” (edit), the changed value is written by „Salvează”, under the lists, and then „Confirmă” (confirm)."
           },
           "options": [
             {
@@ -509,11 +509,11 @@
           "section": "links-classify-tags",
           "ro": {
             "question": "Eticheta „litgiu”, scrisă greșit, stă pe un singur teren și vreți să dispară din nor. Ce faceți?",
-            "explanation": "O etichetă se scoate de pe obiect cu „×”-ul care apare când țineți mouse-ul pe ea; scoasă de pe ultimul obiect care o purta, dispare din nor."
+            "explanation": "Pe „Etichete și grupuri”, după „Editează”, o etichetă se scoate cu „×”-ul care apare când țineți mouse-ul pe ea; scoasă de pe ultimul obiect care o purta, dispare din nor."
           },
           "en": {
             "question": "The misspelt tag „litgiu” is on a single plot and you want it gone from the cloud. What do you do?",
-            "explanation": "A tag is taken off an object with the „×” that appears when you rest the mouse on it; taken off the last object that carried it, it disappears from the cloud."
+            "explanation": "On „Etichete și grupuri”, after „Editează” (edit), a tag is taken off with the „×” that appears when you rest the mouse on it; taken off the last object that carried it, it disappears from the cloud."
           },
           "options": [
             {
@@ -537,8 +537,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "Pe teren, țineți mouse-ul pe ea și apăsați „×”-ul din colțul ei",
-              "en": "On the plot, rest the mouse on it and press the „×” in its corner"
+              "ro": "Pe teren, după „Editează”, apăsați „×”-ul etichetei",
+              "en": "On the plot, after „Editează”, press the tag's „×”"
             }
           ]
         },

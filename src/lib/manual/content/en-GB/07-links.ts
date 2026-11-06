@@ -46,10 +46,13 @@ A person's share in a document is written after the association, on the document
 - Between two persons, the role is the ticked person's, towards the person whose screen you are on; the sentence beside „Role” says so: „The role the ticked person has towards …”. The other end shows the reverse role, matched to the person's gender: if on a daughter's screen you tick her father as „Părinte”, on the father's screen she appears as „Fiică” (daughter).
 - A person linked to a company as „Reprezentant legal / Mandatar” sees the company, on their own screen, with the role „Reprezentat(ă) / Mandant(ă)” (represented / principal).
 - If the document's type has no role prepared, the screen says so in place of the „Role” list, and the association is made without a role. Roles are prepared in „Reference Data” (section [[admin-reference-data]]).
+- On a document whose issuer is called „Notariat”, the notary office chosen there enters „Links” by itself, as a juridical person with the role „Notar” (section [[documents-identification]]).
 
 ### 7.1.4 Removing a link {#links-associate-remove}
 
 On „Links”, choose the row with the round button at its left, then press „Dissociate”. The link disappears from both ends, without any question; the two objects stay in the archive, untouched. One row is chosen at a time, whatever its kind. „Dissociate” can be used only with a row chosen, and while a row is chosen the three „Associate …” cannot be used.
+
+The notary office that came from „Notariat” is not dissociated here: the application refuses and says „The notary office is changed on „Document identification”.”.
 
 ## 7.2 The „Links” tile {#links-related}
 
@@ -101,7 +104,7 @@ As with documents, the link is read from the property you are on. From the parce
 
 ## 7.4 The „Classification” and „Tags and groups” tiles {#links-classify}
 
-Every object has two tiles that concern how you work with it: „Classification” and „Tags and groups”. Rest the mouse on a field's title to learn what it is for, or on the chosen value to learn what it means.
+Every object has two tiles that concern how you work with it: „Classification” and „Tags and groups”. On „Classification”, an ⓘ, „About “Classification””, right after the title, explains in a bubble the three values, „History” and „Review”; resting the mouse on a chosen value tells you what it means. On „Tags and groups”, rest the mouse on the title „Tags / Keywords” or „See Also” to learn what it is for.
 
 ### 7.4.1 „Classification” {#links-classify-classification}
 
@@ -111,15 +114,19 @@ Every object has two tiles that concern how you work with it: „Classification�
 | Relevance | Inactive, Historical, Current, Future | where the object stands in time; an old deed can be historical and still very important |
 | Provenance | for instance „Manual (Add new)”, „AI interpretation”, „Coordinate file (.txt)” | how the object came into the archive |
 
-„Classification” is read like a form tile (section [[start-read-edit]]): the three values stand one under another, each with its name above it, small, in navy, and with „Mark as reviewed” — the badge with the tick — beside it; under it, when it last changed. „Mark as reviewed” notes that the value is still right, without changing it.
+„Classification” is read like a form tile (section [[start-read-edit]]): the three values stand one under another, each with its name above it, small, in navy.
 
-„Edit” — the pencil —, in the tile's corner, opens the three lists, one under another, as wide as the tile, and the tile gets the blue outline. „Save”, under them, writes all three at once and adds a version of the object (section [[links-versions]]); it cannot be pressed until you change a value. „Cancel” or Esc puts them back, writing nothing. A choice from a list is not saved by itself. With no value at all, the tile stands on one line — „Classification”, „not filled in” and „Add”, which opens the lists. On an old version the tile is only read.
+The three are reviewed together, as one block. Under them, a single line says when the oldest of them was last changed or reviewed — for instance „(updated 12 days ago)” — and has at its end „Mark as reviewed”, the badge with the tick, which notes that all three are still right, without changing them. A value changed today counts as reviewed: when all three are from today, the badge is filled, is called „Reviewed today” and cannot be pressed. When the block has stood unchanged and unreviewed longer than its threshold in „Settings” says (section [[admin-settings-thresholds]]), a red line appears under it, for instance „Not reviewed in 120 days — please review”, and „Classifications to review”, on the dashboard, counts the object (section [[intro-purpose]]).
 
-Under „Provenance”, „History” keeps every change, with its date.
+„Mark as reviewed” writes nothing straight away: it first opens a box, „Confirm that all three still hold today:”, with the three values. „Confirm” marks all three, and „Back” or Esc leaves everything as it was.
+
+„Edit” — the pencil —, in the tile's corner, opens the three lists, one under another, as wide as the tile, and the tile gets the blue outline. „Save”, under them, opens the same box, with the changed values marked „changed” and with „Saving confirms all three as checked today.”. „Confirm” writes all three at once, counts them as reviewed today and adds a version of the object (section [[links-versions]]); „Back” leaves you editing, with what you chose. „Save” cannot be pressed until you change a value. „Cancel” or Esc puts them back, writing nothing. A choice from a list is not saved by itself. With no value at all, the tile stands on one line — „Classification”, „not filled in” and „Add”, which opens the lists. On an old version the tile is only read.
+
+Under the review line, „History” keeps every change of provenance, with its date.
 
 ### 7.4.2 Tags {#links-classify-tags}
 
-Tags are free words by which you find objects again — „lease”, „dispute”, „inheritance”. In „Tags and groups”, under „Tags / Keywords”, type the tag into „Enter a tag…” and press „Add” or Enter. The tag is saved at once, without „Save”, and is written in lower case. To remove it, rest the mouse on it and press the „×” that appears in its corner.
+Tags are free words by which you find objects again — „lease”, „dispute”, „inheritance”. At rest, „Tags and groups” shows only the tags, groups, stamps and „See Also” references, with no button to add or remove. „Edit” — the pencil —, in the tile's corner, brings them all (section [[start-read-edit]]). Under „Tags / Keywords”, type the tag into „Enter a tag…” and press „Add” or Enter. The tag is saved at once, without „Save”, and is written in lower case. To remove it, rest the mouse on it and press the „×” that appears in its corner. Every addition and every removal is saved at once, so under the tile there is one button, „Done”, which brings it back to reading, as does Esc.
 
 You find every object with a tag in „Global Search”: type the tag into „Tag” and press „Search” (section [[reports-search]]).
 
@@ -134,19 +141,21 @@ A tag removed from the last object that carried it disappears from the cloud.
 
 A group gathers, for a short-lived task, objects of one kind — for instance the plots of land for a valuation. The group is made in „Administration” → „Groups” (section [[admin-groups]]): „Add”, choose „Target” and type „Description”, then „Save”; the code, in the form GRP-001, is given automatically. „Edit” on the group's row opens its screen: tick objects in „Members available to include”, press „‹ Include” and then „Save group”. Until „Save group” nothing is written, and the screen shows „Unsaved changes”.
 
-On an object, „Groups” in „Tags and groups” shows its groups. „+ Add to group” opens the list of groups; „×” on a group takes the object out of it. Beside the group's code, the number in brackets is how many members the group has now — for instance „GRP-001 [2]”, with „2 members” when you rest the mouse on it.
+On an object, „Groups” in „Tags and groups” shows its groups. After „Edit”, „+ Add to group” opens the list of groups, each with its code and the start of its description; a click outside it or Esc closes it. „×” on a group takes the object out of it. Beside the group's code, the number in brackets is how many members the group has now — for instance „GRP-001 [2]”, with „2 members” when you rest the mouse on it. A click on the code opens the group's screen with „Group identity” only (section [[admin-groups-groups]]).
 
 An object can belong to at most three groups. At the third, „+” can no longer be pressed and under the list it says: „An object can belong to at most 3 groups. Remove it from one to add it to another.”. You find a group's members in „Global Search”, by „Group code”. A deleted group does not take its objects with it.
 
 ### 7.4.4 Stamps {#links-classify-stamps}
 
-A stamp marks a lasting characteristic, on objects of any kind. It is made in „Administration” → „Stamps”, with „Create stamp”: „Short description” and „Notes”, and the code is given on saving. „Apply”, on the stamp's row, opens its screen: choose the kind of objects in „Object type”, tick them in „Objects available to stamp”, press „Apply stamp” and then „Save stamps”. The list of stamps shows, for each, how many objects carry it.
+A stamp marks a lasting characteristic, on objects of any kind. It is made in „Administration” → „Stamps”, with „Create stamp”: „Short description” and „Notes”, and the code is given on saving. „Apply”, on the stamp's row, opens its screen (section [[admin-groups-stamps]]): in „Stamped objects”, choose the kind of objects in „Object type”, tick them in „Objects available to stamp”, press „‹ Apply stamp” and then „Save stamps”. The list of stamps shows, for each, how many objects carry it.
 
-On the object, the stamp appears in „Tags and groups”, under „Stamps”, where „+ Apply stamp” puts on another and „×” takes it off. A deleted stamp disappears from every object.
+On the object, the stamp appears in „Tags and groups”, under „Stamps”. After „Edit”, „+ Apply stamp” puts on another — its list too closes with a click outside it or with Esc — and „×” takes it off. A click on the stamp opens its screen with „Stamp description” only. A deleted stamp disappears from every object.
 
 ## 7.5 Versions and „Make Current” {#links-versions}
 
 Every save of an object keeps a new version and leaves the one before untouched (section [[intro-versions]]). Versions are counted from 0: an object just created shows „v 0” in the top bar, left of „Panels” (section [[start-breadcrumb]]). „Save” cannot be pressed until you change something, so a new version appears only when something has changed. After the save you stay on the object.
+
+The links in „Links” make no versions, with one exception: linking or unlinking an addendum's „Actul modificat” (the amended document) makes a new version of the addendum (section [[documents-dependent-addendum]]).
 
 When it has several versions, the same place shows „N versions”, for instance „2 versions”. Pressed, it takes you one version back and shows „Previous version”, „Next version” and „Make Current” (Figure [[fig-links-versions]]). On an old version:
 
@@ -193,7 +202,7 @@ A sale contract cites the certificate of inheritance the seller's right comes fr
 ### 7.7.3 Gather a few plots for a valuation {#links-example-group}
 
 1. In „Administration” → „Groups”, make a group with „Target” „Property” and a description, for instance „Spring valuation” (section [[links-classify-groups]]).
-2. On the group's screen, tick the plots, press „‹ Include”, then „Save group”.
+2. On the group's screen, in „Group members”, tick the plots in „Members available to include”, press „‹ Include”, then „Save group”.
 3. In „Global Search”, type the group's code into „Group code” and press „Search”: every plot in the group appears (section [[reports-search]]).
 4. When the valuation is over, delete the group; the plots stay in the archive.
 

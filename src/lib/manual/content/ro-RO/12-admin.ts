@@ -15,7 +15,7 @@ Ecranul este o singură pagină (Figura [[fig-admin-value-lists]]). În stânga 
 
 O pagină cu mai multe liste le arată ca fișe: stau una lângă alta cât încap, fiecare cât îi cer coloanele, și se pot trage în alt loc, ca pe ecranul unei proprietăți. „Implicit”, din dreapta sus, le pune la loc; locul lor se păstrează în browserul vostru.
 
-Fiecare listă stă la aceeași distanță de marginile fișei ei — stânga, dreapta și jos —, cea a „Categorii Folosință”. Unde fișa e mai lată decât îi cer coloanele, lista se lărgește până acolo, iar lățimea câștigată o primește descrierea sau, unde lista nu are descriere, denumirea; la „Cetățenie” și „Relația cu firma” fișa se îngustează în jurul listei. „Roluri Persoane” și cele două „Legături” își păstrează fișele.
+Fiecare listă stă la aceeași distanță de marginile fișei ei — stânga, dreapta și jos —, cea a „Categorii Folosință”. Unde fișa e mai lată decât îi cer coloanele, lista se lărgește până acolo, iar lățimea câștigată o primește descrierea sau, unde lista nu are descriere, denumirea; la „Cetățenie”, „Țara adresei” și „Relația cu firma” fișa se îngustează în jurul listei. „Roluri Persoane” și cele două „Legături” își păstrează fișele.
 
 ![12.1 „Date de referință”](admin-value-lists.png){#fig-admin-value-lists}
 
@@ -23,7 +23,7 @@ Fiecare listă stă la aceeași distanță de marginile fișei ei — stânga, d
 |---|---|
 | Tipuri de obiecte | „Tipuri de Persoană Fizică”, „Tipuri de Persoană Juridică”, „Tipuri de Proprietate și Folosințe”, „Tipuri de Document” |
 | Roluri și legături | „Roluri Persoane”, „Legături Proprietate → Proprietate”, „Legături Document → Document” |
-| Liste de valori | „Indicative Tarla”, „Cetățenie”, „Relația cu firma” |
+| Liste de valori | „Indicative Tarla”, „Cetățenie”, „Țara adresei”, „Relația cu firma” |
 
 „Categorii Folosință” nu are un buton al ei: este a doua fișă a paginii „Tipuri de Proprietate și Folosințe” (secțiunea [[admin-reference-data-property-types]]).
 
@@ -41,6 +41,10 @@ Coloana „Folosit de” spune câte obiecte folosesc valoarea: „1 obiect”, 
 - **O valoare ștearsă.** „Șterge” întreabă „Ștergeți „…”?” și verifică întâi ce depinde de valoare: „Se verifică ce depinde de această valoare…”. Dacă nu depinde nimic, scrie „Nimic nu depinde de această valoare. La ștergere dispare definitiv — acțiunea nu poate fi anulată.”; „Șterge” o șterge, „Anulează” renunță. Dacă o folosesc obiecte, fereastra spune câte, iar ștergerea nu este posibilă până nu le mutați pe altă valoare: alegeți-o la „Mutați-le pe:” și apăsați „Mută”.
 
 Versiunile vechi ale obiectelor nu se schimbă: fiecare păstrează valoarea așa cum era când a fost salvată (secțiunea [[links-versions]]).
+
+„Cetățenie” și „Țara adresei” țin aceleași țări: prima, cetățenia unei persoane; a doua, lista „Țară” de pe fiecare adresă — a unei persoane, a unei firme, a unei proprietăți. O adresă păstrează numele țării, așa că o țară scoasă din listă rămâne pe adresele care o au. După o adăugare, o redenumire, o ștergere sau o unire în una dintre cele două, aplicația amintește de cealaltă, de exemplu „Ați salvat o schimbare în „Cetățenie”. Verificați dacă „Țara adresei” are nevoie de aceeași schimbare, ca listele să rămână în acord.”; mesajul rămâne până îl închideți.
+
+La „Cetățenie”, „Forme tipărite” ține, despărțite prin virgulă, felurile în care un act de identitate poate tipări cetățenia, de exemplu ROU sau ROUMAINE. Importul unei cărți de identitate le citește ca să găsească cetățenia persoanei (capitolul [[import]]).
 
 ### 12.1.2 Rolurile și legăturile {#admin-reference-data-roles}
 
@@ -69,7 +73,7 @@ Deasupra celor trei liste din „Roluri și legături” stă fișa „Cum se le
 
 „Tipuri de Document” are coloanele „Denumire”, „Denumire scurtă”, „Stare” și „Folosit de (n obiecte)”. „Stare” spune de unde vine tipul și dacă are formular: „Adăugat manual”, „Creat la import” sau „Are formular”; cele patru tipuri de act de identitate spun „Act de identitate”. Țineți mouse-ul pe denumirea unui tip și bula arată denumirea întreagă, iar sub ea cheia tipului, de exemplu „CONTRACT_VANZARE”.
 
-Deasupra tabelului stau două bife: „Cu formular” arată doar tipurile care au formular, „Fără formular” doar pe cele care nu au. Amândouă bifate, sau niciuna, arată toate tipurile. Când un import se oprește la un tip fără formular, legătura lui deschide lista cu „Fără formular” bifat (capitolul [[import]]).
+Deasupra tabelului stau două bife: „Cu formular” arată doar tipurile care au formular, „Fără formular” doar pe cele care nu au. Cele patru tipuri de act de identitate stau sub „Cu formular”: formularul lor este cel de sistem (mai jos). Amândouă bifate, sau niciuna, arată toate tipurile. Când un import se oprește la un tip fără formular, legătura lui deschide lista cu „Fără formular” bifat (capitolul [[import]]).
 
 „Deschide”, pe rândul unui tip, deschide pagina tipului, cu trei file:
 
@@ -116,33 +120,39 @@ Grupurile, ștampilele și etichetele se pun pe obiecte din fișa „Etichete ș
 
 ### 12.3.1 Grupurile {#admin-groups-groups}
 
-„Administrare” → „Grupuri” arată panoul „Ce este un Grup?”, „Adaugă”, caseta de căutare, numărul grupurilor, de exemplu „4 grupuri”, și tabelul „Cod” · „Descriere”. Fiecare rând are codul grupului, cu numărul membrilor în paranteză, felul obiectelor pe care le strânge, descrierea, „Editează” și „Șterge”. Lista se oprește la două treimi din înălțimea ferestrei și se derulează în fișa ei, cu rândul de titluri mereu sus.
+„Administrare” → „Grupuri” are trei fișe: „Ce este un Grup?”, „Cum lucrezi cu grupurile” și „Grupuri”, lista. Ca pe ecranul unui obiect, „Panouri”, în bara de sus, alege care se văd, iar „Implicit”, acolo, le aduce înapoi și le pune la locul lor (secțiunea [[start-tiles]]); alegerea rămâne a browserului. „Am înțeles”, la piciorul fișei „Ce este un Grup?”, o ascunde; o aduceți înapoi bifând-o în „Panouri”.
+
+„Cum lucrezi cu grupurile” întreabă „Ce vrei să faci?” și oferă șase variante, sub „Grupul însuși”, „Membrii grupului” și „Pe hartă” — de exemplu „Fac un grup nou” sau „Adaug sau scot membri” —, fiecare cu un rând care spune când se potrivește. Până nu alegeți una, fișa nu arată niciun pas; apoi arată doar pașii variantei alese și o ține minte, în browser.
+
+Fișa „Grupuri” are „Adaugă”, caseta de căutare, numărul grupurilor, de exemplu „4 grupuri”, și tabelul „Cod” · „Descriere”. Fiecare rând are codul grupului, cu numărul membrilor în paranteză, felul obiectelor pe care le strânge, descrierea, „Editează” și „Șterge”. Lista se oprește la două treimi din înălțimea ferestrei și se derulează în fișa ei, cu rândul de titluri mereu sus.
 
 Caseta de lângă „Adaugă”, „caută după Cod sau Descriere”, găsește un grup după cod sau după cuvintele descrierii — toate cuvintele scrise, în orice ordine, cu sau fără diacritice; un cod scris întreg vine primul. Cât timp scrieți, numărul spune câte grupuri se văd din câte sunt, de exemplu „1 din 4”; dacă nu se potrivește niciunul, tabelul spune „Niciun grup nu se potrivește căutării.”.
 
 1. „Adaugă” deschide „Adaugă grup nou”. Alegeți „Țintă” — „Proprietate”, „Persoană fizică”, „Persoană juridică” sau „Document” —, scrieți „Descriere” și apăsați „Salvează”. Rămâneți pe listă, cu grupul nou primul; codul, de forma GRP-001, se dă la salvare.
-2. „Editează” deschide „Grup GRP-…”, cu două fișe: „Identitatea grupului” (codul și ținta pe un rând, „Descriere”, „Salvează grupul”) și „Membrii grupului”, cu două liste: „Deja în grup” în stânga, „Membri disponibili pentru includere” în dreapta.
-3. Căutați în „Caută…”, bifați obiectele din dreapta și apăsați „‹ Include”; ca să scoateți unul, bifați-l în „Deja în grup” și apăsați „Scoate ›”. Un dublu clic pe un rând îl mută în cealaltă listă. Rândurile mutate poartă „în așteptare”, iar ecranul arată „Modificări nesalvate”: încă nu s-a scris nimic.
+2. „Editează” deschide „Grup GRP-…”, cu trei fișe: „Identitatea grupului” — codul și ținta pe un rând, „Descriere”, care crește odată cu textul, și „Salvează grupul” la piciorul ei —, „Membrii grupului”, cu două liste de aceeași înălțime, „Deja în grup” în stânga și „Membri disponibili pentru includere” în dreapta, și „Cum lucrezi cu grupurile”.
+3. Deasupra fiecărei liste stă o casetă „Caută…”, care o strânge la numele potrivite; numărul de lângă titlul listei spune câte rânduri se văd. Bifați obiectele din dreapta și apăsați „‹ Include”; ca să scoateți unul, bifați-l în „Deja în grup” și apăsați „Scoate ›”. Numărul din paranteza butonului spune câte rânduri bifate mută; fără nicio bifă, butonul nu se poate apăsa. Un dublu clic sau Enter pe un rând îl mută în cealaltă listă. Rândurile mutate poartă „în așteptare”, iar ecranul arată „Modificări nesalvate”: încă nu s-a scris nimic.
 4. „Salvează grupul” scrie schimbările; fiecare membru primește poziția lui în grup, „[01]”, „[02]”.
 
-Fișele ecranului se pot muta trăgându-le de un loc gol, iar „Implicit”, sus în dreapta, le pune la loc. „Șterge” pe rândul unui grup întreabă „Ștergeți acest grup? Această acțiune nu poate fi anulată.”; obiectele din grup rămân în arhivă.
+Deschis de pe un obiect — cu un clic pe codul grupului, în „Etichete și grupuri” (secțiunea [[links-classify-groups]]) —, ecranul grupului arată doar „Identitatea grupului”, și numai pentru vizita aceea: „Panouri” mai bifează alte fișe, „Toate” le arată pe toate, iar „Implicit” revine la alegerea obișnuită.
+
+Fișele ecranelor se pot muta trăgându-le de un loc gol și lărgi sau îngusta trăgându-le de marginea dreaptă, ca pe ecranul unui obiect; „Implicit”, din „Panouri”, le pune la loc. „Șterge” pe rândul unui grup întreabă „Ștergeți acest grup? Această acțiune nu poate fi anulată.”; obiectele din grup rămân în arhivă.
 
 ### 12.3.2 Ștampilele {#admin-groups-stamps}
 
-„Administrare” → „Ștampile” arată panoul „Ce este o Ștampilă?”, caseta de căutare, numărul ștampilelor și tabelul „Ștampilă” · „Elemente”: fiecare rând are codul și descrierea ștampilei, nota ei, câte obiecte o poartă, „Aplică” și „Șterge”. Lista se oprește la două treimi din înălțimea ferestrei și se derulează în fișa ei, cu rândul de titluri mereu sus.
+„Administrare” → „Ștampile” are, ca „Grupuri”, trei fișe alese cu „Panouri”: „Ce este o Ștampilă?”, „Cum lucrezi cu ștampilele” — pașii, pe scurt: cum găsiți, faceți, aplicați și ștergeți o ștampilă — și „Ștampile”, lista. Lista are caseta de căutare, numărul ștampilelor și tabelul „Ștampilă” · „Elemente”: fiecare rând are codul și descrierea ștampilei, nota ei, câte obiecte o poartă, „Aplică” și „Șterge”. Lista se oprește la două treimi din înălțimea ferestrei și se derulează în fișa ei, cu rândul de titluri mereu sus.
 
 Caseta „caută după Cod sau Descriere scurtă” găsește o ștampilă după cod sau după cuvintele descrierii scurte, ca la grupuri: toate cuvintele, în orice ordine, cu sau fără diacritice, iar numărul spune câte se văd din câte sunt; dacă nu se potrivește niciuna, „Nicio ștampilă nu se potrivește căutării.”.
 
 1. Butonul cu „+”, „Creare ștampilă”, deschide formularul: „Descriere scurtă” (obligatorie, cel mult 200 de caractere) și „Note”. Codul, de forma STMP-AAA, se dă la salvare. „Salvează” vă lasă pe listă, cu ștampila nouă prima.
-2. „Aplică” deschide „Aplică ștampila: …”, cu patru fișe: „Descrierea ștampilei”, „Tip element”, „Elemente disponibile pentru ștampilare” și „Elemente deja ștampilate”.
-3. Alegeți în „Tip element” felul obiectelor; listele arată doar obiecte de felul acela. Bifați-le și apăsați „Aplică ștampila”, sau, în cealaltă listă, „Elimină ștampila”. Ecranul arată „Modificări nesalvate”.
+2. „Aplică” deschide „Aplică ștampila: …”, cu trei fișe: „Descrierea ștampilei” — codul și descrierea scurtă pe un rând, „Note” și „Salvează ștampilele” la piciorul ei —, „Elementele ștampilei”, cu două liste, „Elemente deja ștampilate” în stânga și „Elemente disponibile pentru ștampilare” în dreapta, fiecare cu caseta ei „Caută…”, și „Cum lucrezi cu ștampilele”.
+3. Alegeți sus, în „Tip element”, felul obiectelor; amândouă listele arată doar obiecte de felul acela. Bifați în dreapta și apăsați „‹ Aplică ștampila”, sau bifați în stânga și apăsați „Elimină ștampila ›”; un dublu clic sau Enter mută un singur rând. Rândurile mutate poartă „în așteptare”, lângă „Tip element” apare „Modificări în așteptare”, iar ecranul arată „Modificări nesalvate”. Un rând mutat înapoi anulează mutarea.
 4. „Salvează ștampilele”, butonul cu discheta, scrie schimbările. O ștampilă poate sta pe obiecte de feluri diferite: schimbați „Tip element” și continuați.
 
-Ca la grupuri, fișele se mută trăgându-le, iar „Implicit” le pune la loc. „Șterge” întreabă „Ștergeți această ștampilă și o eliminați de pe toate elementele?”: ștampila dispare și de pe obiecte, iar obiectele rămân.
+Ca la grupuri, fișele se mută și se lărgesc trăgându-le, iar „Implicit”, din „Panouri”, le pune la loc; deschis de pe un obiect, ecranul ștampilei arată doar „Descrierea ștampilei”. „Șterge” întreabă „Ștergeți această ștampilă și o eliminați de pe toate elementele?”: ștampila dispare și de pe obiecte, iar obiectele rămân.
 
 ### 12.3.3 Etichetele {#admin-groups-tags}
 
-„Administrare” → „Etichete” arată „Nor de etichete”: toate etichetele din arhivă, câte distincte sunt și, pe fiecare, de câte ori este folosită, de exemplu „×1”. Cele mai folosite sunt mai mari. Când nu încap în fereastră, se derulează doar etichetele; titlul și butoanele rămân sus.
+„Administrare” → „Etichete” are două fișe, alese cu „Panouri”: „Etichete”, cu o propoziție despre ecran, și „Nor de etichete”: toate etichetele din arhivă, câte distincte sunt și, pe fiecare, de câte ori este folosită, de exemplu „×1”. Cele mai folosite sunt mai mari. Când nu încap în fereastră, se derulează doar etichetele; titlul și butoanele rămân sus.
 
 Un dublu-clic pe o etichetă o alege, iar al doilea o lasă; eticheta aleasă apare apăsată.
 
@@ -181,13 +191,14 @@ Textele din spatele butonului „?” și sfaturile cu bec de pe ecrane (secțiu
 - **Parola.** Scrieți parola nouă în „Parola nouă” — cel puțin 8 caractere — și încă o dată în „Confirmă parola”, apoi apăsați „Schimbă parola”. Aplicația confirmă cu „Parola a fost schimbată!”. Dacă cele două nu se potrivesc, spune „Parolele nu coincid.”.
 - **Limba.** La „Limba” alegeți „Română” sau „English”.
 - **Aspect.** Sub „Limba”, la „Aspect”, căsuța „Noapte (Mod Întunecat)” trece toată aplicația pe fundal închis; e aceeași căsuță ca sub „GA40” în bara laterală, așa că una o arată bifată pe cealaltă (secțiunea [[start-sidebar]]).
+- **„Unitatea de lățime”.** Lățimea fiecărei fișe este un număr întreg de unități (secțiunea [[start-tiles]]). Scrieți la „Unitatea” câți pixeli are o unitate — un număr întreg între 80 și 200 — și apăsați „Salvează” sau Enter. Câmpurile își păstrează mărimea: cu o unitate mai mică o fișă ia mai multe unități, cu una mai mare mai puține, dar niciodată nu e mai îngustă decât ce conține. „Setări” se redesenează pe loc; celelalte ecrane iau unitatea nouă când sunt afișate din nou. Cât unitatea nu e cea obișnuită, „Revino la 119 px” o pune la loc. Unitatea este a browserului, nu a contului.
 - **„Implicitele mele”.** Pentru fiecare fel de obiect — „Persoană fizică”, „Persoană juridică”, „Proprietate”, „Act” — bifați fișele pe care vreți să le arate „Implicit” pe ecranul lui și apăsați „Salvează”; apare „Salvat.”. Setul este al contului, nu al browserului, așa că rămâne și după o reîncărcare, și în orice browser. „Revino la implicit” uită setul dumneavoastră și readuce setul obișnuit al aplicației: „Revenit la implicit.”. Cel puțin o fișă rămâne bifată.
 
 „Ieșire” stă jos în bara laterală.
 
 ### 12.5.2 „Praguri de timp” {#admin-settings-thresholds}
 
-„Praguri de timp” ține unsprezece numere, în cinci grupe: „Tablou de bord”, „Acte”, „Persoane”, „Insigna „Nou!”” și „Fișe”. Zece hotărăsc când ceva este „nou”, „curând” sau „vechi”; al unsprezecelea, „Timp de ținere peste altă fișă”, din „Fișe”, spune cât timp țineți o fișă trasă peste alta până când aceea îi face loc (secțiunea [[start-tiles]]). Fiecare prag are un nume, o propoziție, un număr cu unitatea lui și un exemplu. Exemplul se schimbă pe loc, după numărul pe care îl scrieți: la „Fereastră filtru expiră curând”, cu 30 scrie „Exemplu: Un act apare «expiră curând» cu 30 de zile înainte.”, iar cu 45, „… cu 45 de zile înainte.”.
+„Praguri de timp” ține cincisprezece numere, în șase grupe: „Tablou de bord”, „Acte”, „Persoane”, „Insigna „Nou!””, „Fișe” și „Hărți”. Zece hotărăsc când ceva este „nou”, „curând” sau „vechi”; al unsprezecelea, „Timp de ținere peste altă fișă”, din „Fișe”, spune cât timp țineți o fișă trasă peste alta până când aceea îi face loc (secțiunea [[start-tiles]]). Cele patru din „Hărți” spun cum se mișcă hărțile: cât durează cele două părți ale deschiderii cu „Hartă extinsă” (secțiunea [[properties-corners-expanded]]) și, la „Caută pe hartă”, cât durează zborul până la locul găsit și cât de sus urcă el (secțiunea [[map-search]]). Fiecare prag are un nume, o propoziție, un număr cu unitatea lui și un exemplu. Exemplul se schimbă pe loc, după numărul pe care îl scrieți: la „Fereastră filtru expiră curând”, cu 30 scrie „Exemplu: Un act apare «expiră curând» cu 30 de zile înainte.”, iar cu 45, „… cu 45 de zile înainte.”.
 
 Pragurile hotărăsc, printre altele:
 
@@ -195,9 +206,11 @@ Pragurile hotărăsc, printre altele:
 - cu cât timp înainte un act apare „expiră curând”;
 - cu cât timp înainte de expirare este semnalat un act de identitate — carte de identitate sau pașaport („Prag CI expiră curând”);
 - cât timp poartă un obiect schimbat insigna „Nou!”, roșie și apoi chihlimbar, și după cât timp insigna dispare;
-- cât timp țineți o fișă peste alta până când aceea alunecă în jos, ca să-i facă loc.
+- cât timp țineți o fișă peste alta până când aceea alunecă în jos, ca să-i facă loc;
+- cât durează, la „Hartă extinsă”, mărirea fișei „Hartă” și apoi depărtarea hărții;
+- cât durează zborul hărții mari la un loc găsit cu „Caută pe hartă” și coeficientul a al drumului lui: cu 0 harta alunecă drept, cu 1 urcă până se văd ambele locuri, cu 2 de două ori mai sus.
 
-Cum schimbați un număr, lângă „Salvează” apare „Anulează”, care readuce valoarea salvată. „Salvează” confirmă cu „Salvat cu succes.”. Valorile sunt numere întregi între 1 și 3650, afară de „Timp de ținere peste altă fișă”, care se scrie în secunde, cu virgulă sau punct și cel mult două zecimale, între 0,2 și 10: „1,5” înseamnă o secundă și jumătate. O valoare în afara acestora este refuzată la „Salvează”, cu un mesaj care spune de ce. Pragurile sunt ale arhivei, nu ale unui cont: o schimbare se vede la toți utilizatorii.
+Cum schimbați un număr, lângă „Salvează” apare „Anulează”, care readuce valoarea salvată. „Salvează” confirmă cu „Salvat cu succes.”. Valorile sunt numere întregi între 1 și 3650, afară de cele scrise în secunde, cu virgulă sau punct și cel mult două zecimale: „Timp de ținere peste altă fișă”, între 0,2 și 10 — „1,5” înseamnă o secundă și jumătate —, cele două ale lui „Hartă extinsă”, între 0 și 10, și zborul, între 0 și 15; la ele, 0 sare peste mișcare. Coeficientul a se scrie cu cel mult două zecimale, între 0 și 3. O valoare în afara acestora este refuzată la „Salvează”, cu un mesaj care spune de ce. Pragurile sunt ale arhivei, nu ale unui cont: o schimbare se vede la toți utilizatorii.
 
 ### 12.5.3 „Costuri” {#admin-settings-costs}
 

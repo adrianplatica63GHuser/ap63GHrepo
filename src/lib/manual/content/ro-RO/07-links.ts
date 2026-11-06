@@ -46,10 +46,13 @@ Cota-parte a unei persoane pe un act se scrie după asociere, pe act (secțiunea
 - Între două persoane, rolul este al persoanei bifate față de persoana pe al cărei ecran sunteți; propoziția de lângă „Rol” o spune: „Rolul pe care persoana bifată îl are față de …”. Celălalt capăt arată rolul invers, potrivit genului persoanei: dacă pe ecranul unei fiice îl bifați pe tatăl ei ca „Părinte”, pe ecranul tatălui ea apare ca „Fiică”.
 - O persoană legată de o firmă ca „Reprezentant legal / Mandatar” vede firma, pe ecranul ei, cu rolul „Reprezentat(ă) / Mandant(ă)”.
 - Dacă tipul actului nu are niciun rol pregătit, ecranul spune asta în locul listei „Rol”, iar asocierea se face fără rol. Rolurile se pregătesc în „Date de referință” (secțiunea [[admin-reference-data]]).
+- Pe un act al cărui emitent se numește „Notariat”, biroul notarial ales acolo intră singur în „Legături”, ca persoană juridică cu rolul „Notar” (secțiunea [[documents-identification]]).
 
 ### 7.1.4 Dezasocierea {#links-associate-remove}
 
 Pe „Legături”, alegeți rândul cu butonul rotund din stânga lui, apoi apăsați „Dezasociază”. Legătura dispare din ambele capete, fără nicio întrebare; cele două obiecte rămân în arhivă, neatinse. Se alege un singur rând odată, de orice fel ar fi. „Dezasociază” se poate folosi doar cu un rând ales, iar cât timp un rând este ales, cele trei „Asociază …” nu se pot folosi.
+
+Biroul notarial venit din „Notariat” nu se dezasociază de aici: aplicația refuză și spune „Biroul notarial se schimbă din „Identificarea actului”.”.
 
 ## 7.2 Fișa „Legături” {#links-related}
 
@@ -101,7 +104,7 @@ Ca la acte, legătura se citește de la proprietatea pe care vă aflați. De pe 
 
 ## 7.4 Fișele „Clasificare” și „Etichete și grupuri” {#links-classify}
 
-Pe orice obiect stau două fișe care țin de felul în care lucrați cu el: „Clasificare” și „Etichete și grupuri”. Țineți mouse-ul pe titlul unui câmp ca să aflați la ce folosește, sau pe valoarea aleasă ca să aflați ce înseamnă.
+Pe orice obiect stau două fișe care țin de felul în care lucrați cu el: „Clasificare” și „Etichete și grupuri”. Pe „Clasificare”, un ⓘ, „Despre „Clasificare””, chiar după titlu, explică într-o bulă cele trei valori, „Istoric” și „Revizuire”; ținând mouse-ul pe o valoare aleasă aflați ce înseamnă. Pe „Etichete și grupuri”, țineți mouse-ul pe titlul „Etichete / Cuvinte cheie” sau „Vezi și” ca să aflați la ce folosește.
 
 ### 7.4.1 „Clasificare” {#links-classify-classification}
 
@@ -111,15 +114,19 @@ Pe orice obiect stau două fișe care țin de felul în care lucrați cu el: „
 | Relevanță | Inactiv, Istoric, Actual, De perspectivă | unde stă obiectul în timp; un act vechi poate fi istoric și totuși foarte important |
 | Proveniență | de exemplu „Manual (Adaugă nou)”, „Interpretare AI”, „Fișier de coordonate (.txt)” | cum a intrat obiectul în arhivă |
 
-„Clasificare” se citește ca o fișă de formular (secțiunea [[start-read-edit]]): cele trei valori stau una sub alta, fiecare cu numele deasupra, mic, bleumarin, și cu „Marchează ca verificat” — insigna cu bifa — alături; dedesubt scrie când s-a schimbat ultima oară. „Marchează ca verificat” notează că valoarea e încă bună, fără s-o schimbe.
+„Clasificare” se citește ca o fișă de formular (secțiunea [[start-read-edit]]): cele trei valori stau una sub alta, fiecare cu numele deasupra, mic, bleumarin.
 
-„Editează” — creionul —, în colțul fișei, deschide cele trei liste, una sub alta, cât fișa de late, iar fișa capătă conturul albastru. „Salvează”, sub ele, le scrie pe toate trei deodată și adaugă o versiune a obiectului (secțiunea [[links-versions]]); nu se poate apăsa până nu schimbați o valoare. „Renunță” sau Esc le pune la loc, fără să scrie nimic. O alegere dintr-o listă nu se salvează singură. Fără nicio valoare, fișa stă pe un singur rând — „Clasificare”, „necompletat” și „Adaugă”, care deschide listele. Pe o versiune veche fișa doar se citește.
+Cele trei se verifică împreună, ca un singur bloc. Sub ele, un singur rând spune când a fost schimbată sau verificată ultima oară cea mai veche dintre ele — de exemplu „(actualizat acum 12 zile)” — și are la capăt „Marchează ca verificat”, insigna cu bifa, care notează că toate trei sunt încă bune, fără să le schimbe. O valoare schimbată azi contează ca verificată: când toate trei sunt de azi, insigna e plină, se numește „Verificat azi” și nu se poate apăsa. Când blocul a stat neschimbat și neverificat mai mult decât spune pragul lui din „Setări” (secțiunea [[admin-settings-thresholds]]), sub rând apare, cu roșu, de exemplu „Neverificat de 120 zile — vă rugăm să revedeți”, iar „Clasificări de revizuit”, pe tabloul de bord, numără obiectul (secțiunea [[intro-purpose]]).
 
-Sub „Proveniență”, „Istoric” ține fiecare schimbare, cu data ei.
+„Marchează ca verificat” nu scrie nimic dintr-odată: deschide întâi o casetă, „Confirmați că toate trei sunt încă valabile azi:”, cu cele trei valori. „Confirmă” le marchează pe toate trei, iar „Înapoi” sau Esc lasă totul cum era.
+
+„Editează” — creionul —, în colțul fișei, deschide cele trei liste, una sub alta, cât fișa de late, iar fișa capătă conturul albastru. „Salvează”, sub ele, deschide aceeași casetă, cu valorile schimbate marcate „modificat” și cu „Salvarea le confirmă pe toate trei ca verificate azi.”. „Confirmă” le scrie pe toate trei deodată, le socotește verificate azi și adaugă o versiune a obiectului (secțiunea [[links-versions]]); „Înapoi” vă lasă în editare, cu ce ați ales. „Salvează” nu se poate apăsa până nu schimbați o valoare. „Renunță” sau Esc le pune la loc, fără să scrie nimic. O alegere dintr-o listă nu se salvează singură. Fără nicio valoare, fișa stă pe un singur rând — „Clasificare”, „necompletat” și „Adaugă”, care deschide listele. Pe o versiune veche fișa doar se citește.
+
+Sub rândul verificării, „Istoric” ține fiecare schimbare de proveniență, cu data ei.
 
 ### 7.4.2 Etichetele {#links-classify-tags}
 
-Etichetele sunt cuvinte libere după care regăsiți obiectele — „arendă”, „litigiu”, „moștenire”. În „Etichete și grupuri”, la „Etichete / Cuvinte cheie”, scrieți eticheta în „Introduceți o etichetă…” și apăsați „Adaugă” sau Enter. Eticheta se salvează pe loc, fără „Salvează”, și se scrie cu litere mici. Ca s-o scoateți, țineți mouse-ul pe ea și apăsați „×”-ul care apare în colțul ei.
+Etichetele sunt cuvinte libere după care regăsiți obiectele — „arendă”, „litigiu”, „moștenire”. Cât stă, „Etichete și grupuri” arată doar etichetele, grupurile, ștampilele și trimiterile din „Vezi și”, fără niciun buton de adăugat sau de scos. „Editează” — creionul —, în colțul fișei, le aduce pe toate (secțiunea [[start-read-edit]]). La „Etichete / Cuvinte cheie”, scrieți eticheta în „Introduceți o etichetă…” și apăsați „Adaugă” sau Enter. Eticheta se salvează pe loc, fără „Salvează”, și se scrie cu litere mici. Ca s-o scoateți, țineți mouse-ul pe ea și apăsați „×”-ul care apare în colțul ei. Fiecare adăugare și fiecare scoatere se salvează pe loc, așa că sub fișă stă un singur buton, „Gata”, care o aduce înapoi la citit, ca și Esc.
 
 Toate obiectele cu o etichetă le găsiți în „Căutare globală”: scrieți eticheta în „Etichetă” și apăsați „Caută” (secțiunea [[reports-search]]).
 
@@ -134,19 +141,21 @@ O etichetă scoasă de pe ultimul obiect care o purta dispare din nor.
 
 Un grup strânge, pentru o treabă de scurtă durată, obiecte de un singur fel — de exemplu terenurile pentru o evaluare. Grupul se face în „Administrare” → „Grupuri” (secțiunea [[admin-groups]]): „Adaugă”, alegeți „Țintă” și scrieți „Descriere”, apoi „Salvează”; codul, de forma GRP-001, se dă singur. „Editează” pe rândul grupului deschide ecranul lui: bifați obiecte în „Membri disponibili pentru includere”, apăsați „‹ Include” și apoi „Salvează grupul”. Până la „Salvează grupul” nu se scrie nimic, iar ecranul arată „Modificări nesalvate”.
 
-Pe un obiect, „Grupuri” din „Etichete și grupuri” arată grupurile lui. „+ Adaugă în grup” deschide lista grupurilor; „×” pe un grup îl scoate din grup. Lângă codul grupului, numărul din paranteze este câți membri are grupul acum — de exemplu „GRP-001 [2]”, cu „2 membri” când țineți mouse-ul pe el.
+Pe un obiect, „Grupuri” din „Etichete și grupuri” arată grupurile lui. După „Editează”, „+ Adaugă în grup” deschide lista grupurilor, fiecare cu codul și începutul descrierii; un clic în afara ei sau Esc o închide. „×” pe un grup îl scoate din grup. Lângă codul grupului, numărul din paranteze este câți membri are grupul acum — de exemplu „GRP-001 [2]”, cu „2 membri” când țineți mouse-ul pe el. Un clic pe cod deschide ecranul grupului doar cu „Identitatea grupului” (secțiunea [[admin-groups-groups]]).
 
 Un obiect poate face parte din cel mult trei grupuri. La al treilea, „+” nu se mai poate apăsa și sub listă scrie: „Un obiect poate face parte din cel mult 3 grupuri. Scoateți-l dintr-un grup pentru a-l adăuga în altul.” Membrii unui grup îi găsiți în „Căutare globală”, după „Cod grup”. Un grup șters nu ia cu el obiectele.
 
 ### 7.4.4 Ștampilele {#links-classify-stamps}
 
-O ștampilă marchează o însușire de durată, pe obiecte de orice fel. Se face în „Administrare” → „Ștampile”, cu „Creare ștampilă”: „Descriere scurtă” și „Note”, iar codul se dă la salvare. „Aplică”, pe rândul ștampilei, deschide ecranul ei: alegeți felul obiectelor în „Tip element”, bifați-le în „Elemente disponibile pentru ștampilare”, apăsați „Aplică ștampila” și apoi „Salvează ștampilele”. Lista ștampilelor arată la fiecare câte obiecte o poartă.
+O ștampilă marchează o însușire de durată, pe obiecte de orice fel. Se face în „Administrare” → „Ștampile”, cu „Creare ștampilă”: „Descriere scurtă” și „Note”, iar codul se dă la salvare. „Aplică”, pe rândul ștampilei, deschide ecranul ei (secțiunea [[admin-groups-stamps]]): în „Elementele ștampilei”, alegeți felul obiectelor în „Tip element”, bifați-le în „Elemente disponibile pentru ștampilare”, apăsați „‹ Aplică ștampila” și apoi „Salvează ștampilele”. Lista ștampilelor arată la fiecare câte obiecte o poartă.
 
-Pe obiect, ștampila apare în „Etichete și grupuri”, la „Ștampile”, unde „+ Aplică ștampilă” pune alta și „×” o scoate. O ștampilă ștearsă dispare de pe toate obiectele.
+Pe obiect, ștampila apare în „Etichete și grupuri”, la „Ștampile”. După „Editează”, „+ Aplică ștampilă” pune alta — lista se închide și ea cu un clic în afara ei sau cu Esc — și „×” o scoate. Un clic pe ștampilă deschide ecranul ei doar cu „Descrierea ștampilei”. O ștampilă ștearsă dispare de pe toate obiectele.
 
 ## 7.5 Versiunile și „Fă curentă” {#links-versions}
 
 Fiecare salvare a unui obiect păstrează o versiune nouă și o lasă neatinsă pe cea dinainte (secțiunea [[intro-versions]]). Versiunile se numără de la 0: un obiect abia creat arată „v 0” în bara de sus, la stânga lui „Panouri” (secțiunea [[start-breadcrumb]]). „Salvează” nu se poate apăsa până nu schimbați ceva, așa că o versiune nouă apare doar când s-a schimbat ceva. După salvare rămâneți pe obiect.
+
+Legăturile din „Legături” nu fac versiuni, cu o excepție: legarea sau dezlegarea „Actul modificat” al unui act adițional face o versiune nouă a actului adițional (secțiunea [[documents-dependent-addendum]]).
 
 Când are mai multe versiuni, în același loc stă „N versiuni”, de exemplu „2 versiuni”. Apăsat, vă duce cu o versiune înapoi și arată „Versiunea anterioară”, „Versiunea următoare” și „Fă curentă” (Figura [[fig-links-versions]]). Pe o versiune veche:
 
@@ -193,7 +202,7 @@ Un contract de vânzare-cumpărare citează certificatul de moștenitor din care
 ### 7.7.3 Strângeți câteva terenuri pentru o evaluare {#links-example-group}
 
 1. În „Administrare” → „Grupuri”, faceți un grup cu „Țintă” „Proprietate” și o descriere, de exemplu „Evaluare primăvară” (secțiunea [[links-classify-groups]]).
-2. Pe ecranul grupului, bifați terenurile, apăsați „‹ Include”, apoi „Salvează grupul”.
+2. Pe ecranul grupului, în „Membrii grupului”, bifați terenurile în „Membri disponibili pentru includere”, apăsați „‹ Include”, apoi „Salvează grupul”.
 3. În „Căutare globală”, scrieți codul grupului în „Cod grup” și apăsați „Caută”: apar toate terenurile grupului (secțiunea [[reports-search]]).
 4. Când evaluarea s-a încheiat, ștergeți grupul; terenurile rămân în arhivă.
 
