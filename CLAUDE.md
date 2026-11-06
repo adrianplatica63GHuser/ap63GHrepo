@@ -212,7 +212,7 @@ not a pattern the other lists already follow.
 - **Testing** — Jest 30 (`next/jest`, jsdom, Testing Library), colocated under
   `src/__tests__/` + Playwright (`e2e/`, deliberately not in CI)
 - **CI** — GitHub Actions: `npm ci` → lint → test → build
-- **Cloud** — Vercel + Supabase, `https://ga40prj.vercel.app`; every push to `main` deploys
+- **Cloud** — Vercel + Supabase, `https://ga40prj.vercel.app`; a push to `main` deploys **at most once per ~20 h** (`vercel.json` → `scripts/vercel-ignore-build.sh`; `[deploy]` in a commit message forces one, `[skip deploy]` skips) — Hobby keeps every deployment 30 days against 10 GB of Function Storage
 
 This list is a summary, not the source of truth. **`package.json` is** — check it before
 assuming any API, and fix this section whenever the two disagree.
