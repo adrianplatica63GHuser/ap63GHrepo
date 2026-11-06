@@ -254,7 +254,7 @@ async function blurRecent(page: Page, title: string): Promise<void> {
 }
 
 /** Off every row (no hover in the picture), and without `next dev`'s own badge in the corner. */
-/** Any box holding a 13-digit number — a CNP, in an editable form or a read-only version alike — blurred. */
+/** Any box holding a 13-digit number — a CNP, in an editable form or a read-only version alike — blurred; and every series and number. */
 async function blurCnp(page: Page): Promise<void> {
   await page.evaluate((f) => {
     // 40.78: the CNP is a box that grows — a <textarea> — since no field is FIXED; an <input> before.
@@ -265,6 +265,9 @@ async function blurCnp(page: Page): Promise<void> {
     for (const el of document.querySelectorAll<HTMLElement>("[data-read-value]")) {
       if (/^\s*\d{13}\s*$/.test(el.textContent ?? "")) el.style.filter = f;
     }
+    // 41.93: „Acte de identitate" now stands in the person's first screenful, so record.png showed a card's series
+    // and number; its „Seria și numărul" column is blurred wherever the CNP is.
+    for (const el of document.querySelectorAll<HTMLElement>("[data-identity-document] td:nth-child(2)")) el.style.filter = f;
   }, BLUR);
 }
 
