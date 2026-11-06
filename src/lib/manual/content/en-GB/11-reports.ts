@@ -109,11 +109,11 @@ Turn the mouse wheel over the tree to go from one level to another, and drag wit
 
 To reach a person, type their name into „Find a person…” and press „Find”: the tree centres on them, at the nearest level, and their card opens alongside. When the name is not in the tree, „No person by that name in the tree.” appears.
 
-When you hold the mouse over a person, a small card shows their name, their date of birth and how many family ties they have. A click on them opens the side card, with „Open” and „Close”. Any name opens the person's screen, with the relatives' panel of the „Inheritance tree” tile already open — from there you add or remove a relative.
+When you hold the mouse over a person, a small card shows their name, their date of birth and how many family ties they have. A click on them opens the side card, with „Open” and „Close”. Any name opens the person's screen, with „Add a relative” of the „Inheritance tree” tile already open — from there you tie in a relative, and „Remove a relative” removes one (section [[persons-relatives-tree]]).
 
 A person marked „Deceased” has „†” after the name and the years of their life under it, for instance „1955–2010”.
 
-From a person's „Inheritance tree” tile, „Open the whole tree” opens this screen centred on them.
+From a person's „Inheritance tree” tile, „Open the whole tree” opens the same tree, centred on them, right over the person's screen, and „Collapse” takes it back into the tile (section [[persons-relatives-tree]]).
 
 ### 11.2.2 The documents in the tree and „Shared documents” {#reports-inheritance-documents}
 

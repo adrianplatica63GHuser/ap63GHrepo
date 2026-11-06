@@ -14,11 +14,11 @@
           "section": "documents-add",
           "ro": {
             "question": "Ați deschis un act. Unde îi găsiți paginile scanate?",
-            "explanation": "Paginile se văd în fișa „Pagini”, mov, în dreapta formularului — pe un ecran îngust, sub el."
+            "explanation": "Paginile se văd în fișa „Pagini”, albastră, în dreapta formularului — pe un ecran îngust, sub el."
           },
           "en": {
             "question": "You have opened a document. Where do you find its scanned pages?",
-            "explanation": "The pages are shown in the „Pagini” (pages) tile, purple, to the right of the form — on a narrow screen, below it."
+            "explanation": "The pages are shown in the „Pagini” (pages) tile, blue, to the right of the form — on a narrow screen, below it."
           },
           "options": [
             {
@@ -30,8 +30,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "În fișa mov „Pagini”, în dreapta formularului",
-              "en": "In the purple „Pagini” tile, to the right of the form"
+              "ro": "În fișa albastră „Pagini”, în dreapta formularului",
+              "en": "In the blue „Pagini” tile, to the right of the form"
             },
             {
               "id": "o3",

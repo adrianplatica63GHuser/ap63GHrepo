@@ -109,11 +109,11 @@ Rotiți rotița mouse-ului peste arbore ca să treceți de la un nivel la altul,
 
 Ca să ajungeți la o persoană, scrieți-i numele în „Caută o persoană…” și apăsați „Caută”: arborele se centrează pe ea, la nivelul cel mai apropiat, iar cartea ei se deschide alături. Dacă numele nu este în arbore, apare „Nicio persoană cu acest nume în arbore.”.
 
-Când țineți mouse-ul pe o persoană, o carte mică îi arată numele, data nașterii și câte legături de familie are. Un clic pe ea deschide cartea din lateral, cu „Deschide” și „Închide”. Orice nume deschide ecranul persoanei, cu panoul rudelor din fișa „Arbore de moștenire” deja deschis — de acolo adăugați sau scoateți o rudă.
+Când țineți mouse-ul pe o persoană, o carte mică îi arată numele, data nașterii și câte legături de familie are. Un clic pe ea deschide cartea din lateral, cu „Deschide” și „Închide”. Orice nume deschide ecranul persoanei, cu „Adaugă o rudă” din fișa „Arbore de moștenire” deja deschisă — de acolo legați o rudă, iar „Scoate o rudă” scoate una (secțiunea [[persons-relatives-tree]]).
 
 O persoană marcată „Decedat” are „†” după nume și anii vieții sub el, de exemplu „1955–2010”.
 
-Din fișa „Arbore de moștenire” a unei persoane, „Deschide arborele întreg” deschide ecranul acesta centrat pe ea.
+Din fișa „Arbore de moștenire” a unei persoane, „Deschide arborele întreg” deschide același arbore, centrat pe ea, chiar peste ecranul persoanei, iar „Restrânge” îl strânge la loc în fișă (secțiunea [[persons-relatives-tree]]).
 
 ### 11.2.2 Actele din arbore și „Acte comune” {#reports-inheritance-documents}
 

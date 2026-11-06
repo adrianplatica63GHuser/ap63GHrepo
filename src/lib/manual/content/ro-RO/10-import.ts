@@ -131,7 +131,9 @@ Spre sfârșitul importului se deschid, pe rând, două feluri de ferestre.
 „Creează persoană din cartea de identitate” („Card 1 din 2”, de exemplu) se deschide pentru fiecare act de identitate: carte de identitate, veche sau nouă, ori pașaport. O singură citire hotărăște întâi ce fel de act este și o spune — „Act citit: Pașaport.”, de exemplu; dacă importul îl clasificase altfel, fereastra adaugă că la salvare actul trece la felul citit. Apoi arată separat ce se scrie pe act și ce se scrie pe persoană (secțiunea [[persons-identity-documents]]):
 
 - „Pe act — …”: numărul, datele și emitentul, doar cele pe care le are felul actului; în caseta „Se completează și pe act — …”, ce are numai actul, de pildă „Domiciliu”, „Starea civilă” sau „Codul țării”;
-- „Pe persoană — Identitate”: numele, CNP-ul, genul, nașterea, cetățenia și domiciliul, ca adresă de domiciliu — la un pașaport doar județul, la un pașaport CRDS doar țara.
+- „Pe persoană — Identitate”: numele, CNP-ul, genul, nașterea, cetățenia și domiciliul, ca adresă de domiciliu — la un pașaport doar județul, la un pașaport CRDS doar țara. „Țară” se alege din lista „Țara adresei”.
+
+Cetățenia rămâne pe act exact cum e tipărită, cu amândouă jumătățile ei — numele și codul țării, de exemplu Română / ROU. Pe persoană, „Cetățenie” se alege din listă, iar sub ea fereastra arată, doar de citit, ce a tipărit actul: „Pe act: „…””. O formă tipărită pe care lista n-o recunoaște se învață în „Date de referință”, la „Cetățenie”, în câmpul „Forme tipărite” — de exemplu ROU, ROUMAINE, despărțite prin virgulă (secțiunea [[admin-reference-data]]).
 
 Fereastra caută titularul în arhivă după CNP. Dacă îl găsește, „Persoana există deja”: comparați datele și apăsați „Confirmă și leagă”; persoana primește doar câmpurile pe care nu le avea completate, iar ce avea nu se înlocuiește. Dacă nu, „Persoană nouă”: apăsați „Creează și leagă”. Persoanele cu nume asemănător apar la „Potriviri posibile”, ca sugestii, nu ca potriviri sigure. Titularul este legat de carte ca „Titular act de identitate”. Sub el, „Părinții titularului” propune tatăl și mama de pe carte, legați apoi de titular ca „Tată” și „Mamă” (secțiunea [[persons-id-card]]). „Instituție emitentă” oferă emitenții, persoane juridice de un tip de autoritate publică; când autoritatea de pe carte nu e printre ei, „Adaugă „…” ca persoană juridică” o face, cu tipul pe care i-l sugerează numele (secțiunea [[companies-add-public-bodies]]).
 
@@ -139,7 +141,7 @@ Fereastra caută titularul în arhivă după CNP. Dacă îl găsește, „Persoa
 
 Pentru o firmă nouă al cărei CUI l-a citit AI-ul, fereastra are și „Completează din ANAF” (secțiunea [[companies-add-anaf]]). Apăsat, arată ce ar completa ANAF față de ce a citit AI-ul — numărul de la registrul comerțului, telefonul, tipul, adresa sediului —, cu aceleași bife: câmpurile goale bifate, cele citite altfel doar dacă le bifați. La „Creează și asociază”, firma se creează cu valorile bifate, deci ajunge în arhivă completă.
 
-**Răspundeți atunci.** După ce închideți fereastra importului, persoanele găsite în documente nu mai sunt oferite: „După ce închideți, nu mai există unde.” Unui act de identitate rămas fără răspuns îi rămâne „Creează persoane din CI”, pe ecranul actului (secțiunea [[persons-id-card-document]]).
+**Răspundeți atunci.** După ce închideți fereastra importului, persoanele găsite în documente nu mai sunt oferite: „După ce închideți, nu mai există unde.” Unui act de identitate rămas fără răspuns îi rămâne „Creează persoane din CI”, pe ecranul actului, cât timp actul nu are încă un titular (secțiunea [[persons-id-card-document]]).
 
 ### 10.4.5 Planurile parcelare și tarla lor {#import-scanning-tarla}
 

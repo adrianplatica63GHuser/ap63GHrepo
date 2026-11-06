@@ -23,7 +23,7 @@ Deasupra tabelului, pe un rând, stau caseta de căutare („caută după Cod, T
 
 ### 6.1.1 Filtrele listei {#documents-list-filters}
 
-Lista actelor se filtrează ca lista proprietăților, din pâlnia din colțul numelui unei coloane (secțiunea [[properties-list-filters]]). Pâlnia de pe „Tip” deschide aceeași listă de bife ca „Tip document:”, iar cele două arată mereu aceeași alegere. „Tip document:” și „Câmp specific:”, de pe rândul de sus, sunt mereu acolo și se poartă ca mai sus; filtrele puse din coloane devin etichete pe rândul de sub el, care apare doar cât timp este pus unul. „Expiră curând”, de pe același rând de sus, lângă „Câmpuri afișate”, este tot un filtru: apăsat, lista păstrează doar actele a căror valabilitate se încheie în curând; apăsat din nou, renunță la filtru.
+Lista actelor se filtrează ca lista proprietăților, din pâlnia din colțul numelui unei coloane (secțiunea [[properties-list-filters]]). Coloana „Tip” nu are pâlnie: tipul se alege doar din „Tip document:”. „Tip document:” și „Câmp specific:”, de pe rândul de sus, sunt mereu acolo și se poartă ca mai sus; filtrele puse din coloane devin etichete pe rândul de sub el, care apare doar cât timp este pus unul. „Expiră curând”, de pe același rând de sus, lângă „Câmpuri afișate”, este tot un filtru: apăsat, lista păstrează doar actele a căror valabilitate se încheie în curând; apăsat din nou, renunță la filtru.
 
 Coloanele care se pot filtra, alese în „Câmpuri afișate”:
 
@@ -39,7 +39,7 @@ Toate filtrele se adună, „Tip document:” și „Câmp specific:” cu tot: 
 
 Apăsați „Adaugă act”. Se deschide „Act nou”, cu fișa „Identificarea actului”. Alegeți întâi „Tip document” (secțiunea [[documents-type]]), apoi completați câmpurile și apăsați „Salvează”. Actul se deschide pe ecranul lui, cu titlul în capul ecranului și cu starea „Neprocesat”. Fiecare salvare face o versiune nouă a actului (secțiunea [[links-versions]]).
 
-Paginile se văd în fișa „Pagini”, mov, în dreapta formularului — pe un ecran îngust, sub el (Figura [[fig-documents-pages]]). Un act fără pagini arată „Nicio pagină adăugată”.
+Paginile se văd în fișa „Pagini”, albastră, în dreapta formularului — pe un ecran îngust, sub el (Figura [[fig-documents-pages]]). Un act fără pagini arată „Nicio pagină adăugată”.
 
 ![6.1 Fișa „Pagini” a unui act](documents-pages.png){#fig-documents-pages}
 
@@ -73,7 +73,7 @@ Pe rândul fiecărei pagini, lipite de marginea din dreapta a listei, sunt „No
 
 „Tip document” spune ce fel de act este, iar tipul hotărăște ce câmpuri are formularul, cum se numesc emitentul, numărul și data și ce roluri pot avea persoanele legate de act. Pe „Act nou”, câmpul pornește gol.
 
-Tipurile care au formular propriu se citesc în listă cu „(F)” după nume — de exemplu „Contract de Vânzare (F)”. „F” înseamnă că tipul are formular: ținând mouse-ul pe el, lista scrie întreg „(are formular)”. Cum alegeți un astfel de tip, formularul crește cu fișele lui. Un tip fără formular păstrează doar câmpurile generale ale actului. Pentru un utilizator cu rol de superutilizator, sub „Tip document” al unui tip fără formular scrie „Acest tip nu are încă formular; formularul se construiește în Distilare Tipizate.”, iar „Distilare Tipizate” deschide instrumentul cu tipul deja ales (secțiunea [[tools-doc-type-engine]]).
+Tipurile care au formular propriu se citesc în listă cu „(F)” după nume — de exemplu „Contract de Vânzare (F)”. „F” înseamnă că tipul are formular: ținând mouse-ul pe el, lista scrie întreg „(are formular)”. Tot cu „(F)” se citesc cele patru tipuri de act de identitate: formularul lor este fișa „Actul oficial” (secțiunea [[documents-identity]]). Cum alegeți un astfel de tip, formularul crește cu fișele lui. Un tip fără formular păstrează doar câmpurile generale ale actului. Pentru un utilizator cu rol de superutilizator, sub „Tip document” al unui tip fără formular scrie „Acest tip nu are încă formular; formularul se construiește în Distilare Tipizate.”, iar „Distilare Tipizate” deschide instrumentul cu tipul deja ales (secțiunea [[tools-doc-type-engine]]).
 
 Fișele care se văd se aleg cu bifele din „Panouri”, ca pe orice obiect (secțiunea [[start-tiles]]), iar alegerea se ține minte pentru fiecare tip: un contract de vânzare-cumpărare și un plan își păstrează fiecare aranjamentul lui. Dacă schimbați tipul unui act, se schimbă și fișele.
 
@@ -90,6 +90,8 @@ Fiecare act începe cu fișa „Identificarea actului”: „Tip document”, ap
 | Certificat de Moștenitor | Notariat | Nr. certificat de moștenitor | Data eliberării |
 
 **Emitentul este o persoană juridică.** Lista lui ține persoanele juridice de un tip de autoritate publică — instanțe, birouri notariale, primării, oficiul de cadastru (secțiunea [[companies-add-public-bodies]]); lupa de lângă ea, „Caută o persoană juridică”, găsește orice persoană juridică după denumire, poreclă, cod sau CUI, întâi autoritățile publice. Când AI-ul importului a citit un emitent pe pagini și actul nu are încă unul, câmpul arată sub căsuță ce a citit — „Citit de AI ca emitent: „…”” — cu un singur buton: „Folosește „…”” când instituția e în arhivă, sau „Adaugă „…” ca persoană juridică” când nu e. Nu se alege nimic până nu apăsați, și nu se păstrează nimic până la „Salvează”. O instituție adăugată astfel primește tipul pe care i-l sugerează numele și o legătură spre ecranul ei, unde îi adăugați CUI-ul și o completați din ANAF (secțiunea [[companies-add-anaf]]).
+
+**Biroul notarial este și o legătură.** La cele cinci tipuri al căror emitent se numește „Notariat” — „Contract de Vânzare”, „Act Adițional”, „Certificat de Moștenitor”, „Act de Donație” și „Testament” —, biroul ales la „Notariat” apare după „Salvează” și pe „Legături”, la persoanele juridice, cu rolul „Notar”. Dacă alegeți alt birou, legătura trece la el. Legătura aceasta nu se scoate din „Legături”: „Dezasociază” răspunde „Biroul notarial se schimbă din „Identificarea actului”.”. Un notar legat de mână, cu „Asociază persoană”, rămâne cum este.
 
 Tot aici stau câmpurile generale: „Etichetă scurtă”, titlul actului — cel din coloana „Titlu” a listei —, „Subiect” și „Note extinse”. Căsuțele în care scrieți text cresc singure cât e nevoie.
 
@@ -108,9 +110,10 @@ Un act de unul dintre cele patru tipuri de act de identitate (secțiunea [[perso
 ![6.2 Fișa „Actul oficial” a unei cărți de identitate](identity-document.png){#fig-identity-document}
 
 - Sus, „Titular:” numește persoana legată de act ca „Titular act de identitate”, cu legătura spre ea.
-- Lângă „Valabil până la” — la pașaport, „Data expirării” — stă starea: „VALABIL”, „EXPIRAT” sau „EXPIRĂ ÎN 30 ZILE”, ca pe persoană. Buletinul vechi nu are această dată, deci nici stare.
+- Sub „Valabil până la” — la pașaport, „Data expirării” — stă starea: „VALABIL”, „EXPIRAT” sau „EXPIRĂ ÎN 30 ZILE”, ca pe persoană. Buletinul vechi nu are această dată, deci nici stare.
 - Un CNP fără cifra de control corectă nu se salvează: „CNP-ul trebuie să aibă 13 cifre și o cifră de control corectă.”. Un CNP care nu se potrivește cu „Sex” sau cu data nașterii se salvează, cu un avertisment sub fișă.
 - La schimbarea tipului între două acte de identitate, „Schimbă tipul…” arată ce câmpuri de identitate se șterg la salvare (secțiunea [[documents-type]]). Un act de identitate nu trece la un tip obișnuit cât timp are date de identitate completate: fereastra o spune și nu are „Confirmă”.
+- „Creează persoane din CI” citește prima pagină a actului și creează titularul și părinții lui (secțiunea [[persons-id-card-document]]). Cât timp actul are un titular, butonul este inactiv; ținut sub mouse, spune „Actul are deja un titular: …”.
 
 Un act de identitate nou se face din „Acte” → „Adaugă act”, alegând tipul, sau de pe persoană, cu „Adaugă act de identitate” (secțiunea [[persons-identity-documents]]). Câmpurile fiecărui fel de act se văd, doar de citit, în „Date de referință” (secțiunea [[admin-reference-data-document-types]]).
 
@@ -152,7 +155,7 @@ Fișele formularului și panourile lor:
 
 În „[Taxe și onorarii]” stau, câte două pe un rând, „Onorariu notarial” și „Impozit transfer”, apoi „Timbru judiciar” și „Taxă timbru și publicitate”.
 
-Câteva câmpuri stau într-o ordine anume. În „[Preț]”, primul rând este „Preț total”, „Monedă” și „Preț declarat real”. În „[Situația în cartea funciară]”, „Marcaj carte funciară” stă singur, iar „Consimțământ radiere” și „Intabulare posibilă” sunt pe rândul de sub el. În „[Excepția de la cadastru]”, „Temei excepție cadastru”, „Termen formalități” și „Completare ulterioară” țin fiecare un rând întreg, iar „Renunțare cercetare OCPI” și „Obligație număr cadastral” stau singure pe rândul lor. În „[Plată]”, „Stare plată” și „Data plății” stau pe un rând, iar „Modalitate plată” pe rândul de sub „Stare plată”. În „[Dosar cadastral]”, „Documentație finalizată” stă sub „Categorie internă”. Declarațiile vânzătorului stau câte două pe un rând, de la „Circuit civil” și „Liber de sarcini”. În „[Garanții]”, „Garanție evicțiune” și „Garanție vicii ascunse” sunt pe un rând, iar „Temei legal evicțiune”, sub ele, cât toată fișa. În „[Cheltuieli]”, „Cheltuieli perfectare” și „Plătitor taxe locale” sunt pe un rând, iar „Taxe locale la zi” pe rândul de sub ele.
+Câteva câmpuri stau într-o ordine anume. În „[Preț]”, „Preț total” și „Monedă” stau pe primul rând, „Preț declarat real” pe rândul de sub ele, iar „Temei preț” și „Alocare preț” țin fiecare un rând întreg. În „[Situația în cartea funciară]”, „Marcaj carte funciară” stă singur, iar „Consimțământ radiere” și „Intabulare posibilă” sunt pe rândul de sub el. În „[Excepția de la cadastru]”, „Temei excepție cadastru”, „Termen formalități” și „Completare ulterioară” țin fiecare un rând întreg, iar „Renunțare cercetare OCPI” și „Obligație număr cadastral” stau singure pe rândul lor. În „[Plată]”, „Stare plată”, „Data plății” și „Modalitate plată” stau una sub alta, fiecare pe rândul ei. În „[Dosar cadastral]”, „Documentație finalizată” stă sub „Categorie internă”. Declarațiile vânzătorului stau câte două pe un rând, de la „Circuit civil” și „Liber de sarcini”. În „[Garanții]”, „Garanție evicțiune” și „Garanție vicii ascunse” sunt pe un rând, iar „Temei legal evicțiune”, sub ele, cât toată fișa. În „[Cheltuieli]”, „Cheltuieli perfectare” și „Plătitor taxe locale” sunt pe un rând, iar „Taxe locale la zi” pe rândul de sub ele.
 
 **Fișa „Părți”** ține vânzătorii și cumpărătorii, după regula din secțiunea [[documents-parties]]. Părțile stau pe grupe, sub numele rolului — „Vânzător” întâi, apoi „Cumpărător” —, fiecare rând cu „Cotă” lui (secțiunea [[documents-parties]]). Un contract fără părți spune „Nicio parte asociată încă. Asociați părțile cu rolul și cota lor.” „Asociază persoană” adaugă o parte: căutați persoana după „Nume” sau „Cod”, alegeți „Rol”, bifați rândul și apăsați „Asociază selecția”. „Dezasociază” scoate partea selectată. Celelalte persoane ale contractului, de pildă notarul, stau pe „Legături”, iar proprietățile vândute se leagă tot de acolo.
 
@@ -182,9 +185,9 @@ Pe contract, antecontractul apare și în formular: în „[Preț]”, „Temei 
 
 Un act adițional modifică un alt act. Are fișele „Identificarea actului” (cu numele notariale, apoi „Calitate exemplar” și „Onorariu notarial” pe un rând și „Exemplare emise” sub ele, cât toată fișa), „Actul modificat”, „Ce modifică” și „Părți”, care ține, ca la contract, vânzătorii și cumpărătorii (secțiunea [[documents-parties]]).
 
-„Actul modificat” leagă actul adițional de contractul pe care îl modifică. Salvați întâi actul adițional, apoi apăsați „Leagă actul modificat”, căutați la „Caută actul modificat” după etichetă sau număr și apăsați „Leagă” pe actul potrivit. Fișa arată atunci actul legat, tipul lui și „Deschide”; „Dezleagă” desface legătura.
+„Actul modificat” leagă actul adițional de contractul pe care îl modifică. Salvați întâi actul adițional, apoi apăsați „Leagă actul modificat”, căutați la „Caută actul modificat” după etichetă sau număr și apăsați „Leagă” pe actul potrivit. Fișa arată atunci actul legat, tipul lui și „Deschide”; „Dezleagă” desface legătura. Fiecare legare și fiecare dezlegare face o versiune nouă a actului adițional (secțiunea [[links-versions]]): o versiune mai veche arată, doar de citit, actul pe care îl modifica atunci, iar „Fă curentă” îl leagă din nou — sau spune de ce nu se poate, de exemplu „Actul „…” nu mai există; legătura nu s-a refăcut.”.
 
-Dacă actul modificat nu este în arhivă, fișa scrie „Actul modificat nu e în arhivă — datele lui, așa cum le dă actul adițional:” și oferă patru câmpuri, întâi „Nr. act părinte”. Când legați actul, câmpurile acestea se ascund, dar nu se golesc; dacă îl dezlegați, reapar cu valorile lor. Un act adițional modifică un singur act: un al doilea este refuzat, cu „Acest act adițional modifică deja „…”. Dezlegați-l întâi.”
+Dacă actul modificat nu este în arhivă, fișa scrie „Actul modificat nu e în arhivă — datele lui, așa cum le dă actul adițional:” și oferă patru câmpuri, întâi „Nr. act părinte”. Când legați actul, câmpurile acestea se ascund, dar nu se golesc — nici linkul fișei cu câmpurile goale nu le mai oferă; dacă îl dezlegați, reapar cu valorile lor. Un act adițional modifică un singur act: un al doilea este refuzat, cu „Acest act adițional modifică deja „…”. Dezlegați-l întâi.”
 
 „Ce modifică” ține „Motiv completare”, „Efect urmărit”, „Preț neschimbat” și clauzele schimbate.
 

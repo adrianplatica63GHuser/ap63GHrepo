@@ -437,12 +437,12 @@
           "id": "b6",
           "section": "admin-reference-data-document-types",
           "ro": {
-            "question": "Care tipuri de document nu pot avea deloc formular?",
-            "explanation": "Cartea de identitate și tipul de rezervă pentru actele neclasificate nu pot avea formular; celelalte pot primi unul cu „Creează formularul”."
+            "question": "Care tipuri de document nu pot primi un formular cu „Creează formularul”?",
+            "explanation": "Cele patru tipuri de act de identitate au formularul lor de sistem, definit de aplicație — de aceea se citesc și ele cu „(F)” —, iar tipul de rezervă pentru actele neclasificate nu poate avea formular. Celelalte pot primi unul cu „Creează formularul”."
           },
           "en": {
-            "question": "Which document types cannot have a form at all?",
-            "explanation": "The identity card and the catch-all type for unclassified documents cannot have a form; the others can be given one with „Creează formularul” (create the form)."
+            "question": "Which document types cannot be given a form with „Creează formularul” (create the form)?",
+            "explanation": "The four identity document types have their system form, set by the application — which is why they read „(F)” too —, and the catch-all type for unclassified documents cannot have a form. The others can be given one with „Creează formularul”."
           },
           "options": [
             {
@@ -466,8 +466,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "Cartea de identitate și tipul pentru acte neclasificate",
-              "en": "The identity card and the type for unclassified documents"
+              "ro": "Actele de identitate și tipul pentru acte neclasificate",
+              "en": "The identity documents and the type for unclassified documents"
             }
           ]
         }
