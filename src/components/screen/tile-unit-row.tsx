@@ -20,10 +20,11 @@ import { useTileWidthWords } from "@/components/tiles/use-tile-width-words";
 import { PANEL_GAP, screenRowStyle } from "@/lib/ui/field-widths";
 import type { ScreenTiles } from "@/lib/ui/screen-tiles";
 
-export function TileUnitRow({ screen, children }: { screen: ScreenTiles; children: ReactNode }) {
+/** `remember` (42.02): false, a dragged tile keeps its place for the visit only — Date de referință's pages. */
+export function TileUnitRow({ screen, children, remember = true }: { screen: ScreenTiles; children: ReactNode; remember?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const words = useTileWidthWords();
-  useTilePacking(ref, { entity: screen.entity, flowUnits: screen.flowUnits, words });
+  useTilePacking(ref, { entity: screen.entity, flowUnits: screen.flowUnits, words, remember });
   return (
     <div style={screenRowStyle(screen.units)}>
       <div ref={ref} className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row data-tile-screen={screen.entity}>

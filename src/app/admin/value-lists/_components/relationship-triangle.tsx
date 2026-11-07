@@ -126,8 +126,11 @@ export function RelationshipTriangle({
   onPress: (id: RelationshipId) => void;
   /** Slice #38.69: a list named in an ⓘ's steps, opened as the column on the left opens it. */
   onOpenList: (key: ListKey) => void;
-  /** The list card's width, so the tile above it lines up with it. */
-  cardUnits: number;
+  /**
+   * The list card's width, so the tile above it lines up with it. 42.02: none, as wide as its tile — on „Roluri și
+   * legături" the whole side, so it is shorter (Adrian: „to Occupy a maximized screen").
+   */
+  cardUnits?: number;
 }) {
   const t = useTranslations("valueList");
   const titleId = useId();
@@ -189,7 +192,8 @@ export function RelationshipTriangle({
       aria-labelledby={titleId}
       data-relationship-triangle=""
       className="@container rounded-xl border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-      style={triangleCardStyle(cardUnits)}
+      style={cardUnits === undefined ? undefined : triangleCardStyle(cardUnits)}
+      data-triangle-wide={cardUnits === undefined ? "" : undefined}
     >
       {/* Slice #38.67: the title and its sentence over the drawing, in a column as wide as the drawing; the six beside
           them from the tile's top edge, a divider between that runs the tile's full height. #38.62's full-width
@@ -324,7 +328,9 @@ export function RelationshipTriangle({
         </div>
 
         <ol
-          className="flex min-w-[18rem] flex-1 flex-col gap-3 border-t border-card-rim px-5 pt-4 pb-5 dark:border-zinc-800 @min-[42rem]:border-t-0 @min-[42rem]:border-l @min-[42rem]:pt-1.5"
+          // 42.02: where the tile is wide (a maximized 1920-px window), the six stand in two columns, 1–3 and 4–6, so
+          // the tile is as tall as three of them, not six.
+          className="flex min-w-[18rem] flex-1 flex-col gap-3 border-t border-card-rim px-5 pt-4 pb-5 dark:border-zinc-800 @min-[42rem]:border-t-0 @min-[42rem]:border-l @min-[42rem]:pt-1.5 @min-[72rem]:grid @min-[72rem]:grid-flow-col @min-[72rem]:grid-rows-3 @min-[72rem]:grid-cols-2 @min-[72rem]:gap-x-8"
           data-triangle-list=""
         >
           {RELATIONSHIPS.map((r, i) => (

@@ -333,9 +333,26 @@ describe("„Vezi: …” on the name line, the six's column 20 % wider (Slice #
     expect(String(triangleCardStyle(units).maxWidth)).toBe(`calc(1.2 * ${unitsCss(units)} - ${(SIX_WIDER - 1) * drawingColumn}rem)`);
     const tile = 1.2 * card - 0.2 * drawingColumn;
     expect(tile - drawingColumn).toBeCloseTo(1.2 * (card - drawingColumn), 6);
-    expect(TILE).toContain("style={triangleCardStyle(cardUnits)}");
+    // 42.02: only where a card width is given — on „Roluri și legături" there is none. It read
+    // `expect(TILE).toContain("style={triangleCardStyle(cardUnits)}")`.
+    expect(TILE).toContain("style={cardUnits === undefined ? undefined : triangleCardStyle(cardUnits)}");
     expect(TILE).not.toContain("style={dialogCardStyle(");
     // The drawing keeps #38.67's size.
     expect(TILE).toContain("style={{ width: rem(DRAWING.w / 16) }}");
+  });
+});
+
+describe("42.02 — as wide as a maximized window allows, so it is shorter", () => {
+  const HUB = fs.readFileSync(path.join(process.cwd(), "src", "app", "admin", "value-lists", "_components", "value-list-hub.tsx"), "utf8");
+
+  it("on „Roluri și legături” it has no card width: the side's whole width (Ask first 5)", () => {
+    expect(HUB).toContain("<RelationshipTriangle marked={marking.links} onPress={pressLink} onOpenList={chooseList} />");
+    expect(TILE).toContain("cardUnits?: number;");
+    expect(TILE).toContain('data-triangle-wide={cardUnits === undefined ? "" : undefined}');
+  });
+
+  it("where the tile is wide the six stand in two columns, 1–3 and 4–6; narrower, one under another as before", () => {
+    expect(TILE).toContain("@min-[72rem]:grid @min-[72rem]:grid-flow-col @min-[72rem]:grid-rows-3 @min-[72rem]:grid-cols-2");
+    expect(TILE).toContain("flex min-w-[18rem] flex-1 flex-col gap-3");
   });
 });

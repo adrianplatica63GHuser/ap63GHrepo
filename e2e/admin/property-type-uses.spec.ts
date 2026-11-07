@@ -151,18 +151,21 @@ test.describe("TC-VL-11 — tipurile de proprietate și folosințele", () => {
             }),
           ),
         );
-      await expect(page.locator('[data-reference-tiles] [data-tile-positions-reset="reference-property-types"]')).toBeVisible();
+      // 42.02 (Ask first 7): no „Implicit" — it read `…[data-tile-positions-reset="reference-property-types"]…toBeVisible()`.
+      await expect(page.locator("[data-tile-positions-reset]")).toHaveCount(0);
       await page.setViewportSize({ width: 1920, height: 1080 });
       await expect.poll(async () => { const t = await at(); return t["use-categories"]?.y === t["property-types"]?.y && t["use-categories"].x > t["property-types"].x; }, { timeout: 15_000 }).toBe(true);
       const wide = await at();
-      expect([wide["property-types"].units, wide["use-categories"].units, wide["type-uses"].units]).toEqual([6, 4, 6]);
+      // 42.02 (Ask first 2): the two lists are their table and two gaps, off the unit grid — 656 and 428 px, measured;
+      // the grid keeps its units. It read `[units] toEqual([6, 4, 6])`.
+      expect([wide["property-types"].w, wide["use-categories"].w, wide["type-uses"].units]).toEqual([656, 428, 6]);
       expect(wide["type-uses"].x).toBe(wide["property-types"].x);
       expect(wide["type-uses"].y).toBeGreaterThan(wide["property-types"].y);
       for (const [k, t] of Object.entries(wide)) expect({ k, even: Math.abs(t.left - t.right) <= 2 }).toEqual({ k, even: true });
       // #39.88: each at „Categorii Folosință"'s gap — 21 px left, right and bottom — the grid included.
       for (const [k, t] of Object.entries(wide))
         expect({ k, left: t.left, right: t.right, bottom: t.bottom, near: [t.left, t.right, t.bottom].every((n) => Math.abs(n - 21) <= 1.5) }).toMatchObject({ k, near: true });
-      await expect(tileOf("property-types")).toHaveCSS("width", "794px"); // 40.98: 6 units of 119 (804, 5 of 148)
+      await expect(tileOf("property-types")).toHaveCSS("width", "656px"); // 42.02: its table and two gaps (794, 6 units, before)
       await page.setViewportSize({ width: 1366, height: 900 });
       await expect.poll(async () => { const t = await at(); return new Set(Object.values(t).map((v) => v.x)).size; }, { timeout: 15_000 }).toBe(1);
     } finally {

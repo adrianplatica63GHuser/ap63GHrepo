@@ -235,9 +235,16 @@ test.describe("TC-VL-05 pasul 5 — „Tipuri de obiecte” fără spațiu irosi
         : [];
       const drifted = sizedFor !== null && !names.includes(sizedFor);
       if (drifted) test.info().annotations.push({ type: "reference data", description: `${list.name}: the name its column is sized for is not in the list as it was — the gap (${g.gap} px) not asked` });
-      expect({ list: list.name, rows: g.rows > 0, cut: g.cut, under24: drifted || g.gap < 24 }, `the longest name ends ${g.gap} px before the next column`).toEqual({
-        list: list.name, rows: true, cut: [], under24: true,
-      });
+      // 42.02 — „Denumire" at about 60 %: the judicial and the document types' longest names are cut now, each whole in
+      // its tooltip (step 1's `notOneLine`); only the property types' — the header's word sets it — still holds them all.
+      // It read, for all three: `{ cut: [], under24: drifted || g.gap < 24 }`.
+      if (list.key === "property-types") {
+        expect({ list: list.name, rows: g.rows > 0, cut: g.cut, under24: drifted || g.gap < 24 }, `the longest name ends ${g.gap} px before the next column`).toEqual({
+          list: list.name, rows: true, cut: [], under24: true,
+        });
+      } else {
+        expect({ list: list.name, rows: g.rows > 0 }).toEqual({ list: list.name, rows: true });
+      }
       if (list.key === "property-types") expect(g.streetLines, "„Street View” on two lines").toBe(2);
       // The slice's pictures, not a step of the case.
       await page.getByRole("region", { name: list.name, exact: true }).screenshot({ path: `playwright-report/value-list-page/types-${list.key}-1366.png` });
@@ -379,10 +386,13 @@ test.describe("TC-VL-05 pasul 9 — listele ca fișe (#39.76)", () => {
             // #39.88: the list's own frame, and the standard gap — „Categorii Folosință"'s 21 px — on every page but the
             // roles' and the links'.
             const list = t.querySelector<HTMLElement>("[data-value-list-table-frame]")?.getBoundingClientRect();
-            const standard = !["triangle", "person-roles", "property-property-roles", "document-document-roles"].includes(t.dataset.tile ?? "");
+            // 42.02: the roles' and the links' too — every tile but the triangle (it read: but the triangle, the roles' and
+            // the two links').
+            const standard = t.dataset.tile !== "triangle";
             const near21 = (n: number) => Math.abs(n - 21) <= 1.5;
             // #39.88: „Cetățenie" and „Relația cu firma" are their list and two gaps, off the unit grid.
-            const offGrid = t.dataset.tile === "citizenships" || t.dataset.tile === "person-relationships";
+            // 42.02: every list of „Tipuri de obiecte" and „Roluri și legături" too — all but „Indicative Tarla".
+            const offGrid = t.dataset.tile !== "tarla";
             return {
               tile: t.dataset.tile,
               units,
@@ -396,7 +406,8 @@ test.describe("TC-VL-05 pasul 9 — listele ca fișe (#39.76)", () => {
       expect(tiles.map((t) => t.tile), list.key).toEqual(list.triangle ? ["triangle", list.key] : [list.key]);
       for (const t of tiles) expect({ list: list.key, ...t }).toEqual({ list: list.key, tile: t.tile, units: t.units, whole: true, even: true, gap: true });
       if (list.triangle) await expect(page.locator('[data-tile="triangle"]')).toHaveAttribute("data-tile-full", "");
-      await expect(page.locator(`[data-tile-positions-reset="reference-${list.key}"]`)).toBeVisible();
+      // 42.02 (Ask first 7): no „Implicit" — it read `…[data-tile-positions-reset="reference-${list.key}"]…toBeVisible()`.
+      await expect(page.locator("[data-tile-positions-reset]")).toHaveCount(0);
     }
 
     // „Editează" on a role: its form in a tile of its own, before the list, with where it applies.
@@ -409,5 +420,57 @@ test.describe("TC-VL-05 pasul 9 — listele ca fișe (#39.76)", () => {
     await expect(list.locator("[data-role-scope]")).toHaveCount(0);
     await form.getByRole("button", { name: "Anulează", exact: true }).click();
     await expect(form).toBeHidden();
+  });
+});
+
+/** 42.02 — „Tipuri de obiecte” and „Roluri și legături”: centred titles, even gaps, tight calm rows. */
+const OBJECT_TYPES_ROLES = [
+  "person-types",
+  "judicial-person-types",
+  "property-types",
+  "use-categories",
+  "document-types",
+  "person-roles",
+  "property-property-roles",
+  "document-document-roles",
+] as const;
+
+test.describe("TC-VL-05 pasul 10 — titluri centrate, spații egale, rânduri strânse și calme (42.02)", () => {
+  test("la 1920 px: pe fiecare listă din cele două grupuri", async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    // A natural persons' row, measured here: the rows of these lists are as high.
+    await page.goto("/natural-persons");
+    await expect(page.locator("table tbody tr").first()).toBeVisible({ timeout: 30_000 });
+    const personRow = await page.locator("table tbody tr").first().evaluate((r) => r.getBoundingClientRect().height);
+    for (const key of OBJECT_TYPES_ROLES) {
+      await page.goto(`/admin/value-lists?list=${key}`);
+      const tile = page.locator(`[data-reference-tiles] [data-tile="${key}"]`);
+      await expect(tile.locator("table[data-width-table] tbody tr").first()).toBeVisible({ timeout: 30_000 });
+      await expect(tile.locator("[data-usage]").first()).not.toHaveText("…", { timeout: 30_000 });
+      await page.mouse.move(1, 1);
+      await page.waitForTimeout(400);
+      const r = await tile.evaluate((t) => {
+        const box = t.getBoundingClientRect();
+        const frame = t.querySelector<HTMLElement>("[data-value-list-table-frame]")!;
+        const f = frame.getBoundingClientRect();
+        const heads = [...t.querySelectorAll<HTMLElement>("thead th")].map((th) => `${getComputedStyle(th).textAlign}/${getComputedStyle(th).verticalAlign}`);
+        const rows = [...t.querySelectorAll<HTMLTableRowElement>("tbody tr")].filter((x) => x.querySelector("[data-row-buttons]"));
+        const buttons = rows[0].querySelector<HTMLElement>("[data-row-buttons]")!;
+        return {
+          heads: [...new Set(heads)],
+          gaps: [f.left - box.left, box.right - f.right, box.bottom - f.bottom].map((n) => Math.round(n)),
+          sideways: frame.scrollWidth - frame.clientWidth,
+          tallest: Math.max(...rows.map((x) => x.getBoundingClientRect().height)),
+          calm: [buttons.dataset.rowButtons, getComputedStyle(buttons).opacity],
+        };
+      });
+      expect({ key, heads: r.heads, sideways: r.sideways <= 1, calm: r.calm }).toEqual({ key, heads: ["center/middle"], sideways: true, calm: ["quiet", "0.35"] });
+      for (const g of r.gaps) expect(Math.abs(g - 21), `${key}: gaps ${r.gaps.join(", ")} px against 21`).toBeLessThanOrEqual(1.5);
+      expect(r.tallest, `${key}: a row against a natural persons' row (${personRow} px)`).toBeLessThanOrEqual(personRow + 0.5);
+      // Hovered, the row's buttons at full colour.
+      await tile.locator("tbody tr").filter({ has: page.locator("[data-row-buttons]") }).first().hover();
+      await expect(tile.locator("[data-row-buttons]").first()).toHaveCSS("opacity", "1");
+    }
   });
 });

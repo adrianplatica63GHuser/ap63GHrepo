@@ -130,11 +130,16 @@ test.describe("TC-VL-10 — triunghiul legăturilor", () => {
       const before = BEFORE[width as 1366 | 1920];
       expect(wide.tileH, `the tile's height against ${before.tileH} px before`).toBeLessThan(before.tileH - 20);
       expect(wide.sideScrolls, "the side scrolls sideways").toBe(false);
+      // 42.02 (Ask first 5) — Adrian: „Wider As to Occupy a maximized screen; This will make it less tall". The tile is
+      // the side's whole width at both; at 1920 the six stand in two columns, 1–3 and 4–6 — measured 1334 × 471 px.
+      // It read: at 1920 `wide.column / before.column >= 1.2 - 0.01` (#38.77's capped width); at 1366 as below.
+      expect(Math.abs(wide.tileW - wide.side), "the tile as wide as the side holding it").toBeLessThanOrEqual(1);
+      expect(wide.column, "the six's column no narrower than before").toBeGreaterThanOrEqual(before.column - 1);
       if (width === 1920) {
-        expect(wide.column / before.column, "the six's column against its width in the card").toBeGreaterThanOrEqual(1.2 - 0.01);
-      } else {
-        expect(Math.abs(wide.tileW - wide.side), "the tile as wide as the side holding it").toBeLessThanOrEqual(1);
-        expect(wide.column, "the six's column no narrower than before").toBeGreaterThanOrEqual(before.column - 1);
+        expect(wide.tileH, "the tile at 1920, the six in two columns").toBeLessThan(540);
+        const lefts = await tile.locator("[data-relationship-entry]").evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().left)));
+        expect(new Set(lefts).size, "the six in two columns").toBe(2);
+        expect(lefts[0], "1–3 on the left, 4–6 on the right").toBeLessThan(lefts[3]);
       }
       // The slice's pictures, light and dark — not a step of the case.
       for (const scheme of ["light", "dark"] as const) {
@@ -307,4 +312,26 @@ test.describe("TC-VL-10 — triunghiul legăturilor", () => {
       await expect(page.locator("[data-relationship-triangle]")).toHaveCount(0);
     });
   }
+});
+
+/** 42.02 (Ask first 6) — the list's tile right under the triangle, not a screen lower. */
+test.describe("TC-VL-10 — lista chiar sub triunghi (42.02)", () => {
+  test("la 1920 px: fiecare listă din „Roluri și legături”, aleasă din meniu, stă la 16 px sub triunghi", async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto("/admin/value-lists?list=person-types");
+    for (const key of ["person-roles", "property-property-roles", "document-document-roles"]) {
+      await page.locator(`button[data-list-key="${key}"]`).click();
+      await expect(page.locator(`[data-tile="${key}"] table[data-width-table] tbody tr`).first()).toBeVisible({ timeout: 30_000 });
+      await page.waitForTimeout(500);
+      const gap = await page.evaluate((k) => {
+        const tri = document.querySelector<HTMLElement>('[data-tile="triangle"]')!.getBoundingClientRect();
+        const list = document.querySelector<HTMLElement>(`[data-tile="${k}"]`)!.getBoundingClientRect();
+        return { under: Math.round(list.top - tri.bottom), sameLeft: Math.abs(list.left - tri.left) <= 1 };
+      }, key);
+      expect({ key, ...gap }).toEqual({ key, under: 16, sameLeft: true });
+      // „Implicit” is gone from every page of Date de referință (Ask first 7).
+      await expect(page.locator("[data-tile-positions-reset]")).toHaveCount(0);
+    }
+  });
 });

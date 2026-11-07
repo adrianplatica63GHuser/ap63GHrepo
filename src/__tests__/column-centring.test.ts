@@ -17,8 +17,10 @@ const REM = 16;
 const content = (n: keyof typeof COLUMN) => (columnRem(n) - columnPadRem(n)) * REM;
 
 describe("the roles list's own widths (#38.60)", () => {
-  it("„Denumire” is as wide as the longest role name (215 px), narrower than a document type's (252)", () => {
-    expect(content("valueRoleName")).toBeGreaterThanOrEqual(215);
+  // 42.02 — Adrian: „the “Name” column, which can be around 60%". It read „as wide as the longest role name (215 px)",
+  // `expect(content("valueRoleName")).toBeGreaterThanOrEqual(215)`: the longest is cut now, whole in its tooltip.
+  it("„Denumire” at about 60 % of #38.60's (128 px), narrower than a document type's (252)", () => {
+    expect(content("valueRoleName")).toBe(128);
     expect(content("valueRoleName")).toBeLessThan(content("valueName"));
     expect(MODAL).toContain('if (listKey === "person-roles") return "valueRoleName";');
   });
@@ -39,13 +41,18 @@ describe("the centred columns (#38.60)", () => {
     expect(MODAL).toMatch(/function centredCell\(cell: FieldMeta\[\]\): boolean \{\s*return cell\.length > 1 \|\| cell\[0\]\.type === "checkbox";\s*\}/);
     expect(MODAL).toContain('const CENTRED = "text-center";');
   });
-  it("centre the header and the cells together", () => {
-    // #38.60 pinned `px-4`; #38.70 draws a compact list's cells `px-2` (`pad`).
-    expect(MODAL).toContain('className={`${pad} py-2 align-bottom${centredCell(cell) ? ` ${CENTRED}` : ""}`} {...columnHead(cellColumn(cell, listKey))}');
+  it("centre the cells of these columns; since 42.02 every header is centred across and down", () => {
+    // #38.60 pinned `px-4`; #38.70 drew a compact list's cells `px-2` (`pad`): it read
+    // 'className={`${pad} py-2 align-bottom${centredCell(cell) ? ` ${CENTRED}` : ""}`} …'. 42.02 — Adrian: „All the column
+    // titles must be aligned to the centre and to the middle of their cell" — every header is `HEAD_CELL`.
+    expect(MODAL).toContain('const HEAD_CELL = "py-2 align-middle text-center";');
+    expect(MODAL).toContain("className={`${valueCellPad(cellColumn(cell, listKey))} ${HEAD_CELL}`} {...columnHead(cellColumn(cell, listKey))}");
+    expect((MODAL.match(/\$\{HEAD_CELL\}/g) ?? []).length).toBe(4); // the cells' headers, the status, „Folosit de", the buttons
+    expect(MODAL).not.toContain("align-bottom");
     expect(MODAL).toContain("centredCell(cell) && CENTRED,");
   });
   it("centre „Folosit de”, header and cells, on every list", () => {
-    expect(MODAL).toContain('<th className={`${pad} py-2 align-bottom ${CENTRED}`} {...columnHead(usageColumn(listKey))}>');
-    expect(MODAL).toMatch(/<td className=\{`\$\{pad\} py-2 text-xs text-fade \$\{ONE_LINE\} \$\{CENTRED\}`\} data-usage=/);
+    expect(MODAL).toContain('<th className={`${valueCellPad(usageColumn(listKey))} ${HEAD_CELL}`} {...columnHead(usageColumn(listKey))}>');
+    expect(MODAL).toMatch(/<td className=\{`\$\{valueCellPad\(usageColumn\(listKey\)\)\} \$\{ROW_CELL\} text-xs text-fade \$\{ONE_LINE\} \$\{CENTRED\}`\} data-usage=/);
   });
 });

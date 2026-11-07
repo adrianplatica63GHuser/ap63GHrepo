@@ -457,6 +457,7 @@ function spillOf(el: HTMLElement, inner: number): { name: string; right: number 
  * `flowUnits`: the most units the flow takes across (#38.12); none, the row's.
  * `right`: the right-hand tiles' names, top to bottom (`placement.right`, Slice 40.32) — boxes like the others, each
  * starting against the row's right edge while nothing is stored for it.
+ * `remember` (42.02): false, a dragged place holds for the visit only — nothing is read or written under `entity`.
  */
 export function useTilePacking(
   ref: RefObject<HTMLElement | null>,
@@ -466,7 +467,15 @@ export function useTilePacking(
     right,
     flowUnits,
     words: wordsGiven,
-  }: { fitWidest?: boolean; entity?: string; right?: readonly string[]; flowUnits?: number; words?: TileWidthWords } = {},
+    remember = true,
+  }: {
+    fitWidest?: boolean;
+    entity?: string;
+    right?: readonly string[];
+    flowUnits?: number;
+    words?: TileWidthWords;
+    remember?: boolean;
+  } = {},
 ): void {
   // A stable dependency: the screens pass a fresh array on every render.
   const rightKey = (right ?? []).join("|");
@@ -482,7 +491,7 @@ export function useTilePacking(
     if (!container || typeof ResizeObserver === "undefined") return;
     // 39.92: the make-room delay saved in „Setări", read once per page load — long before anyone holds a tile.
     void loadMakeRoomDelay();
-    const key = entity ? tilePositionsKey(entity) : null;
+    const key = entity && remember ? tilePositionsKey(entity) : null;
     const rightNames = rightKey ? rightKey.split("|") : [];
     // A box's tile: its id, or — a panel inside a `display: contents` tile wrapper, the Property's map and corners —
     // the tile's name before its place inside it („map#0"); a right-hand tile started under the left ones is
@@ -639,9 +648,11 @@ export function useTilePacking(
       const { unit, gap } = metrics();
       boxes = findBoxes(container);
       // 41.17: every width a stored one forced goes back to the screen's own before anything is measured; `apply` sets
-      // it again.
+      // it again. 42.02: never a `full` box's — it is still `position: absolute` from the last apply, so without its
+      // 100 % it shrinks to its narrowest (the triangle: 2 px wide, 1,669 px tall) and the tiles under it are packed a
+      // screen lower. A full box is never forced, so there is nothing of a stored width to undo.
       for (const b of boxes) {
-        styles.reset(b.el, "width");
+        if (!b.full) styles.reset(b.el, "width");
         styles.reset(b.el, TILE_INNER_VAR);
       }
       forced.clear();
@@ -1631,5 +1642,5 @@ export function useTilePacking(
       window.removeEventListener(TILE_DIAGRAM_DRAG, onDiagram);
       document.removeEventListener("visibilitychange", shown);
     };
-  }, [ref, fitWidest, entity, rightKey, flowUnits]);
+  }, [ref, fitWidest, entity, rightKey, flowUnits, remember]);
 }

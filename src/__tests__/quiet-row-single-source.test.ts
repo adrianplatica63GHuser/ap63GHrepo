@@ -37,3 +37,12 @@ describe("41.90 — the calm row, written once", () => {
     expect(read("src", "components", "tiles", "one-line-rows.tsx")).toContain("data-row-buttons={quiet ? QUIET_ROW_MARK : undefined}");
   });
 });
+
+describe("42.02 — „Date de referință”'s lists are calm too", () => {
+  it("each row is the group, its buttons the recipe, marked as the others are", () => {
+    const modal = read("src", "app", "admin", "value-lists", "_components", "value-list-modal.tsx");
+    expect(modal).toContain('import { QUIET_ROW, QUIET_ROW_BUTTONS, QUIET_ROW_MARK } from "@/lib/ui/quiet-row";');
+    expect(modal).toContain("className={`${QUIET_ROW} hover:bg-cta-pale");
+    expect(modal).toContain('<div className={`flex flex-nowrap gap-2 ${QUIET_ROW_BUTTONS}`} data-row-actions="" data-row-buttons={QUIET_ROW_MARK}>');
+  });
+});

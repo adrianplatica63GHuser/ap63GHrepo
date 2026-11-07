@@ -9,7 +9,7 @@
  */
 import fs from "fs";
 import path from "path";
-import { COLUMN, CORNER_COLUMNS, CORNER_DMS_EXTRA_REM, SCALE, columnRem, cornerCoordinateColumn, rem, tightCornerColumn, unitsInnerRem, unitsRem } from "@/lib/ui/field-widths";
+import { COLUMN, CORNER_COLUMNS, CORNER_DMS_EXTRA_REM, SCALE, columnPadRem, columnRem, cornerCoordinateColumn, rem, tightCornerColumn, unitsInnerRem, unitsRem } from "@/lib/ui/field-widths";
 import { TARLA_HALF_UNITS, TARLA_SCREEN, TARLA_THIRD_UNITS } from "@/lib/ui/screen-tiles";
 
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
@@ -30,7 +30,8 @@ describe("„Indicative Tarla” — a small gap after the code, the list ending
   });
 
   it("its buttons' column holds the four it draws (179 px measured), not the document types' 21rem", () => {
-    expect((columnRem("valueActionsTarla") - 2) * REM).toBeGreaterThanOrEqual(179);
+    // 42.02: less its own padding (half since 42.02) — it read `(columnRem("valueActionsTarla") - 2) * REM`.
+    expect((columnRem("valueActionsTarla") - columnPadRem("valueActionsTarla")) * REM).toBeGreaterThanOrEqual(179);
     expect(columnRem("valueActionsTarla")).toBeLessThan(columnRem("valueActionsDocTypes"));
   });
 });

@@ -32,14 +32,17 @@ describe("the menu item (Ask first 1)", () => {
 
 describe("the widths — whole units, the fewest that hold each table (Ask first 2)", () => {
   // 40.98: on the 119-px unit, four units — 524 px, where three of 148 were 476. Was „three units: 29.75rem".
-  it("„Categorii Folosință” at the compact padding is four units: 32.75rem, its 27rem table and the card", () => {
+  // 42.02: its name at the header's word and half the padding, „Folosit de" and the buttons too — a 24rem table, and its
+  // tile the table and two gaps, off the grid (Ask first 2): 26.75rem, 428 px. It read „four units: 32.75rem, its 27rem
+  // table" — `columnsRem(["valueNameShort", "valueUsageRoles", "valueActionsRoles"])` 27, 4 units, 40 % of 1296.
+  it("„Categorii Folosință” at the compact padding: a 24rem table, its tile 26.75rem (428 px) — the table and two gaps", () => {
     expect(MODAL).toMatch(/const COMPACT_LISTS: ReadonlySet<ListKey> = new Set\(\["person-roles", "use-categories"\]\);/);
-    const table = columnsRem(["valueNameShort", "valueUsageRoles", "valueActionsRoles"]);
-    expect(table).toBe(27);
+    const table = columnsRem(["valueUseCategoryName", "valueUsageRoles", "valueActionsRoles"]);
+    expect(table).toBe(24);
+    expect(referenceTileRem(table)).toBe(26.75);
+    // Adrian's „about 35 %" of the 1296 px the one card had: 33 %.
+    expect(Math.round(((referenceTileRem(table) * 16) / BEFORE_PX) * 100)).toBe(33);
     expect(dialogUnits(table, CARD)).toBe(4);
-    expect(unitsRem(4)).toBe(32.75);
-    // Adrian's „about 35 %" of the 1296 px the one card had: 476 px was 37 %, 524 is 40 %.
-    expect(Math.round(((unitsRem(4) * 16) / BEFORE_PX) * 100)).toBe(40);
   });
 
   it("each list's card on a tiled page is its own (`valueListCardUnits`), filling its tile, its list centred", () => {
@@ -81,8 +84,10 @@ describe("every page but „Indicative Tarla” as tiles (Slice #39.76)", () => 
     expect(HUB).toMatch(/const tiles: ReferenceTile\[\] \| null =\s*selected === null\s*\? null/);
   });
 
-  it("on „Roluri și legături” the triangle is a line of its own across the row, at #38.77's width", () => {
-    expect(HUB).toMatch(/\{ key: "triangle", units: TRIANGLE_UNITS, full: true, node: <RelationshipTriangle [^>]*cardUnits=\{VALUE_LIST_CARD_UNITS\} \/> \}/);
+  // 42.02: as wide as the side — no `cardUnits` (relationship-triangle.test.ts). It read „at #38.77's width",
+  // `<RelationshipTriangle [^>]*cardUnits=\{VALUE_LIST_CARD_UNITS\} \/>`.
+  it("on „Roluri și legături” the triangle is a line of its own across the row, as wide as the side", () => {
+    expect(HUB).toContain('{ key: "triangle", units: TRIANGLE_UNITS, full: true, node: <RelationshipTriangle marked={marking.links} onPress={pressLink} onOpenList={chooseList} /> }');
     const s = referenceScreen("person-roles", [
       { key: "triangle", units: 8, full: true },
       { key: "role-form", units: 5 },
@@ -123,16 +128,27 @@ describe("one gap on every page: „Categorii Folosință”'s (Slice #39.88)", 
     expect(PANEL_BORDER_REM).toBe(1 / 16);
   });
 
-  it("the roles' and the links' pages are not touched (Ask first 1)", () => {
-    expect(MODAL).toContain('export const REFERENCE_LISTS_UNTOUCHED: ReadonlySet<ListKey> = new Set(["person-roles", "property-property-roles", "document-document-roles"]);');
+  // 42.02 — Adrian: „let's have proper gaps same regular value left right and bottom". #39.88's „the roles' and the links'
+  // pages are not touched (Ask first 1)" — `REFERENCE_LISTS_UNTOUCHED` — is gone: every list of „Tipuri de obiecte" and
+  // „Roluri și legături" is its list and two gaps, as „Cetățenie".
+  it("42.02: every list of „Tipuri de obiecte” and „Roluri și legături” is its table and two gaps — nothing untouched", () => {
+    expect(MODAL).not.toContain("REFERENCE_LISTS_UNTOUCHED");
+    const at = MODAL.indexOf("export const REFERENCE_TILE_FOLLOWS_LIST");
+    const follows = MODAL.slice(at, MODAL.indexOf("]);", at));
+    for (const k of ["person-types", "judicial-person-types", "property-types", "use-categories", "document-types", "person-roles", "property-property-roles", "document-document-roles"]) {
+      expect([k, follows.includes(`"${k}"`)]).toEqual([k, true]);
+    }
+    expect(MODAL).toContain("if (REFERENCE_TILE_FOLLOWS_LIST.has(listKey)) return undefined;");
   });
 
   it("„Cetățenie” and „Relația cu firma” keep their list and narrow their tile, off the grid where units miss (Ask first 3)", () => {
     // 41.51: „Țara adresei" too, its sister's shape (it read new Set(["citizenships", "person-relationships"])).
-    expect(MODAL).toContain('export const REFERENCE_TILE_FOLLOWS_LIST: ReadonlySet<ListKey> = new Set(["citizenships", "address-countries", "person-relationships"]);');
-    // Their tables, measured at 1920 px when the slice started: 464 and 600 px.
-    for (const [table, tile] of [[29, 508], [37.5, 644]] as const) {
-      expect(columnsRem(table === 29 ? ["valueNameShort", "valueUsage", "valueActions"] : ["valueName", "valueUsage", "valueActions"])).toBe(table);
+    // 42.02: the set grew by the lists of „Tipuri de obiecte" and „Roluri și legături" (above).
+    expect(MODAL).toMatch(/export const REFERENCE_TILE_FOLLOWS_LIST: ReadonlySet<ListKey> = new Set\(\[\s*"citizenships",\s*"address-countries",\s*"person-relationships",/);
+    // Their tables, measured at 1920 px when the slice started: 464 and 600 px. 42.02: „Folosit de" and the buttons at
+    // their narrower widths, 436 and 572 px — it read [[29, 508], [37.5, 644]].
+    for (const [table, tile] of [[27.25, 480], [35.75, 616]] as const) {
+      expect(columnsRem(table === 27.25 ? ["valueNameShort", "valueUsage", "valueActions"] : ["valueName", "valueUsage", "valueActions"])).toBe(table);
       expect(referenceTileRem(table) * 16).toBe(tile);
       for (let n = 1; n <= 6; n++) expect(referenceTableRem(unitsRem(n))).not.toBe(table); // no whole units land on it
     }
@@ -153,5 +169,24 @@ describe("one gap on every page: „Categorii Folosință”'s (Slice #39.88)", 
     expect(USES).toContain('fill ? "pb-5 pt-3" : "py-3"');
     expect(USES).toContain("const own = el.offsetWidth - extraRef.current;");
     expect((USES.match(/style=\{namePad\}/g) ?? []).length).toBe(2);
+  });
+});
+
+describe("42.02 — no „Implicit” on Date de referință; the list right under the triangle", () => {
+  const TILES = code(read("src", "app", "admin", "value-lists", "_components", "reference-tiles.tsx"));
+  const PACKING = code(read("src", "components", "tiles", "use-tile-packing.ts"));
+  const ROW = code(read("src", "components", "screen", "tile-unit-row.tsx"));
+
+  it("draws no reset: a dragged place holds for the visit only, so there is nothing to put back (Ask first 7)", () => {
+    expect(TILES).not.toContain("TilePositionsReset");
+    expect(TILES).toContain("<TileUnitRow screen={screen} remember={false}>");
+    expect(ROW).toContain("useTilePacking(ref, { entity: screen.entity, flowUnits: screen.flowUnits, words, remember });");
+    // Nothing read or written under `reference-<page>`: the key is null.
+    expect(PACKING).toContain("const key = entity && remember ? tilePositionsKey(entity) : null;");
+    expect(PACKING).toContain("}, [ref, fitWidest, entity, rightKey, flowUnits, remember]);");
+  });
+
+  it("the packing keeps a full box's width while it measures — the triangle is not shrunk to 2 px and 1,669 px tall (Ask first 6)", () => {
+    expect(PACKING).toMatch(/for \(const b of boxes\) \{\s*if \(!b\.full\) styles\.reset\(b\.el, "width"\);/);
   });
 });

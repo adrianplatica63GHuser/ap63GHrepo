@@ -57,6 +57,7 @@ const LIST_MIN_UNITS = 7; // 40.98: re-pinned (6 of 148 px)
  * gave it (`triangleCardStyle`, capped by the side). As a five-unit tile it measured 969 px tall at 1920 px against
  * 699 px at its own width (TC-VL-10): #38.77 widened its six names precisely to make it shorter, so it keeps that width
  * and stays where it stood, above the list. Its units only name it; a full tile is not sized by them.
+ * 42.02: no longer capped at #38.77's width — the whole side, the six in two columns, so it is shorter (Ask first 5).
  */
 const TRIANGLE_UNITS = VALUE_LIST_CARD_UNITS;
 /** Slice #39.76 — the list whose add/edit form is a tile of its own: a role's fields, scope and document types. */
@@ -110,6 +111,9 @@ export function ValueListHub({
   // Slice #39.76: the role form's tile — its element (the form is drawn into it), and whether a form is open.
   const [formSlot, setFormSlot] = useState<HTMLElement | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  // 42.02: each list's scroll bar — its tile, the table and two gaps, widens by it (`onScrollbar`).
+  const [scrollbars, setScrollbars] = useState<Partial<Record<ListKey, number>>>({});
+  const scrollbarOf = (key: ListKey) => (px: number) => setScrollbars((s) => (s[key] === px ? s : { ...s, [key]: px }));
 
   const listCard = (key: ListKey, fill: boolean) => (
     <ValueListModal
@@ -123,6 +127,7 @@ export function ValueListHub({
       titleMarked={marking.list === key}
       // 41.83: a list of „Tipuri de obiecte" or „Liste de valori" titled in #C00000; „Roluri și legături"'s keep theirs.
       adminTitle={categoryOfList(key) !== "rolesLinks"}
+      onScrollbar={fill ? scrollbarOf(key) : undefined}
     />
   );
 
@@ -136,13 +141,14 @@ export function ValueListHub({
       ? null
       : [
           ...(categoryOfList(selected) === "rolesLinks"
-            ? [{ key: "triangle", units: TRIANGLE_UNITS, full: true, node: <RelationshipTriangle marked={marking.links} onPress={pressLink} onOpenList={chooseList} cardUnits={VALUE_LIST_CARD_UNITS} /> }]
+            ? [{ key: "triangle", units: TRIANGLE_UNITS, full: true, node: <RelationshipTriangle marked={marking.links} onPress={pressLink} onOpenList={chooseList} /> }]
             : []),
           ...(listsOnPage(selected).includes(ROLE_FORM_LIST)
             ? [{ key: "role-form", units: ROLE_FORM_UNITS, hidden: !formOpen, node: <div ref={setFormSlot} data-role-form-slot="" /> }]
             : []),
           // Slice #39.88: „Cetățenie" and „Relația cu firma" narrower, off the grid where whole units miss the gap.
-          ...listsOnPage(selected).map((key) => ({ key, ...referenceTileWidth(key), node: listCard(key, true) })),
+          // 42.02: and as wide again as the list's scroll bar, where it has one.
+          ...listsOnPage(selected).map((key) => ({ key, ...referenceTileWidth(key), extraPx: scrollbars[key] ?? 0, node: listCard(key, true) })),
           ...(selected === "property-types"
             ? [{ key: "type-uses", units: usesUnits, node: <PropertyTypeUses cardUnits={VALUE_LIST_CARD_UNITS} fill onUnits={setUsesUnits} /> }]
             : []),

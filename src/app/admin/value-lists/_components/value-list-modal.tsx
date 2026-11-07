@@ -14,7 +14,8 @@ import { LIST_META, VALID_LIST_KEYS, type FieldMeta, type ListKey } from "@/lib/
 import { LINK_MARK_BOX } from "@/lib/ui/link-mark";
 import { ONE_LINE, columnHead, type TileFill } from "@/components/table/fixed-columns";
 import { FixedTable } from "@/components/table/column-resize";
-import { columnsRem, dialogCardStyle, dialogUnits, referenceTableRem, referenceTileRem, screenBox, unitsFor, unitsRem, type ColumnName } from "@/lib/ui/field-widths";
+import { columnPadRem, columnsRem, dialogCardStyle, dialogUnits, referenceTableRem, referenceTileRem, screenBox, unitsFor, unitsRem, type ColumnName } from "@/lib/ui/field-widths";
+import { QUIET_ROW, QUIET_ROW_BUTTONS, QUIET_ROW_MARK } from "@/lib/ui/quiet-row";
 import {
   isInUseBody,
   type InUseBody,
@@ -147,6 +148,11 @@ const SHORT_NAME_LISTS: ReadonlySet<ListKey> = new Set(["use-categories", "citiz
  * company type.
  */
 const OWN_COLUMNS: Partial<Record<ListKey, Readonly<Record<string, ColumnName>>>> = {
+  // 42.02: „Denumire" at about 60 % on „Tipuri de obiecte" and „Roluri și legături" — columns of their own.
+  "person-types": { name: "valuePersonTypeName" },
+  "use-categories": { name: "valueUseCategoryName" },
+  "property-property-roles": { name: "valueLinkName" },
+  "document-document-roles": { name: "valueLinkName" },
   "judicial-person-types": { name: "valueJudicialTypeName" },
   "property-types": {
     name: "valuePropertyTypeName",
@@ -163,12 +169,21 @@ const OWN_COLUMNS: Partial<Record<ListKey, Readonly<Record<string, ColumnName>>>
 
 /**
  * Slice #38.70: the lists whose cells are drawn with half the side padding (`px-2`) — „Roluri Persoane", so its table
- * fits the 924 px its frame has at 1366 px. Every column it draws carries the same `pad` (field-widths.ts).
+ * fits the 924 px its frame has at 1366 px. Since 42.02 every cell takes its own column's padding (`valueCellPad`).
  * Slice #39.75: „Categorii Folosință" too — at that padding its tile is three units (four of 119 px since 40.98; 29.75rem, its 27rem table and the
  * card's padding), not four, so it stands beside the five-unit types at 1920 px (Adrian: „about 35 %" of the eight
  * units it had).
  */
 const COMPACT_LISTS: ReadonlySet<ListKey> = new Set(["person-roles", "use-categories"]);
+
+/**
+ * 42.02: a cell's side padding is its column's (`COLUMN[…].pad`) — half (`px-2`) on most columns since 42.02, `px-3` on
+ * „Folosit de", `px-4` elsewhere — so a column narrowed by its padding is drawn as narrow as it is sized.
+ */
+const PAD_CLASS: Readonly<Record<number, string>> = { 1: "px-2", 1.5: "px-3", 2: "px-4" };
+export function valueCellPad(column: ColumnName): string {
+  return PAD_CLASS[columnPadRem(column)] ?? "px-4";
+}
 
 /** A field's column: its width from `COLUMN`, by what the field holds. */
 function fieldColumn(f: FieldMeta, listKey: ListKey): ColumnName {
@@ -192,6 +207,16 @@ function centredCell(cell: FieldMeta[]): boolean {
   return cell.length > 1 || cell[0].type === "checkbox";
 }
 const CENTRED = "text-center";
+/**
+ * 42.02 — Adrian: „All the column titles must be aligned to the centre and to the middle of their cell". Every header
+ * cell, the two-line ones („Folosit de" over „(n obiecte)", „Rol invers" over „(bărbat, femeie)") included.
+ */
+const HEAD_CELL = "py-2 align-middle text-center";
+/**
+ * 42.02 — „make the row as high as the rows from principal objects lists": a principal list's cells are `py-1`
+ * (src/app/natural-persons/list-view.tsx), so a row is its xs buttons (26 px) and 8 px — under `LIST_ROW_PX`'s 37.
+ */
+const ROW_CELL = "py-1";
 
 /** A field's box in the add/edit form, at its step (`SCREEN`). */
 function formBox(f: FieldMeta): "valueName" | "valueText" | "valueDescription" {
@@ -313,14 +338,29 @@ export function valueListCardUnits(listKey: ListKey): number {
  * description field; however for the citizenship tile and for the relationship to business tile we should make the tile
  * narrower … and leave the list with unchanged").
  *
- * - The roles' and the two links' pages are „fine" and are not touched (Ask first 1).
  * - „Cetățenie" and „Relația cu firma" keep their list; their tile is the list and two gaps — whole units where that
  *   lands exactly, otherwise off the grid (Ask first 3). Neither lands: 464 px in 476 or 640, 600 in 640 or 804.
  * - Every other list keeps its tile's units and grows to the gap, the width going to its description, or to its name
  *   where it has none (Ask first 2).
+ *
+ * 42.02 — Adrian: „let's have proper gaps same regular value left right and bottom … it is not necessary" to match the
+ * triangle's width. Every list of „Tipuri de obiecte" and „Roluri și legături" is now its list and two gaps, as
+ * „Cetățenie" (Ask first 2): the table is no longer stretched to whole units. The roles' and the links' pages, which
+ * #39.88 left untouched, are among them.
  */
-export const REFERENCE_LISTS_UNTOUCHED: ReadonlySet<ListKey> = new Set(["person-roles", "property-property-roles", "document-document-roles"]);
-export const REFERENCE_TILE_FOLLOWS_LIST: ReadonlySet<ListKey> = new Set(["citizenships", "address-countries", "person-relationships"]);
+export const REFERENCE_TILE_FOLLOWS_LIST: ReadonlySet<ListKey> = new Set([
+  "citizenships",
+  "address-countries",
+  "person-relationships",
+  "person-types",
+  "judicial-person-types",
+  "property-types",
+  "use-categories",
+  "document-types",
+  "person-roles",
+  "property-property-roles",
+  "document-document-roles",
+]);
 
 /** The column that takes the width a list gains: its description, else its first column, the name. */
 export function referenceFillColumn(listKey: ListKey): ColumnName {
@@ -340,7 +380,7 @@ export function referenceTileWidth(listKey: ListKey): { units: number; widthRem?
 
 /** The table's fill in its tile, or nothing for a list whose table keeps its own width. */
 export function referenceTileFill(listKey: ListKey): TileFill | undefined {
-  if (REFERENCE_LISTS_UNTOUCHED.has(listKey) || REFERENCE_TILE_FOLLOWS_LIST.has(listKey)) return undefined;
+  if (REFERENCE_TILE_FOLLOWS_LIST.has(listKey)) return undefined;
   const units = valueListCardUnits(listKey);
   return { units, column: referenceFillColumn(listKey), tableRem: referenceTableRem(unitsRem(units)) };
 }
@@ -938,8 +978,14 @@ export function ValueListModal({
   formSlot = null,
   onFormOpen,
   adminTitle = false,
+  onScrollbar,
 }: {
   listKey: ListKey;
+  /**
+   * 42.02: the width the list's frame gives to its vertical scroll bar, in px (0 while it has none) — a tile that is its
+   * table and two gaps (`REFERENCE_TILE_FOLLOWS_LIST`) widens by it, so a long list does not scroll sideways too.
+   */
+  onScrollbar?: (px: number) => void;
   /** Slice #39.75: a tile's card — as wide as its tile (`ReferenceTiles` gives the tile its units), not capped. */
   /** Slice 41.83: under „Tipuri de obiecte" or „Liste de valori", its title in #C00000; „Roluri și legături" not. */
   adminTitle?: boolean;
@@ -1221,14 +1267,17 @@ export function ValueListModal({
   const tileFill = fill ? referenceTileFill(listKey) : undefined;
   const cells = listCells(listKey);
   const nameTip = nameTipField(listKey);
-  // Slice #38.70: the cells' side padding — `px-2` on a compact list, `px-4` elsewhere.
-  const pad = COMPACT_LISTS.has(listKey) ? "px-2" : "px-4";
   // Slice #38.56: the list's frame scrolls — in both directions — and its header row stays at its top.
   const frameRef = useRef<HTMLDivElement | null>(null);
   // Slice #38.78: the frame's width, so the title line's right-hand group ends where the table does.
   const columnRef = useRef<HTMLDivElement | null>(null);
   const columnWidth = useWidthOf(columnRef);
   const frameHeight = useFrameHeight(frameRef);
+  // 42.02: the frame's scroll bar, told to the page while it changes (`onScrollbar`). Its border is 1 px a side.
+  const scrollbarTo = useRef(onScrollbar);
+  useLayoutEffect(() => {
+    scrollbarTo.current = onScrollbar;
+  });
 
   // ── Slice #26.12: the Document Types list, and only that one ───────────────
   //
@@ -1549,6 +1598,22 @@ export function ValueListModal({
       : query.data;
   // Slice #38.35 (Ask first 2): the values nothing uses last, greyed.
   const visibleRows = filteredRows && usedFirst(filteredRows, usage.data);
+  // 42.02: measured again whenever the rows or the frame's height change — the scroll bar comes with the rows.
+  useLayoutEffect(() => {
+    const frame = frameRef.current;
+    if (!frame || !scrollbarTo.current || typeof ResizeObserver === "undefined") return;
+    let told = -1;
+    const tell = () => {
+      const px = Math.max(0, Math.round(frame.offsetWidth - frame.clientWidth - 2));
+      if (px !== told) scrollbarTo.current?.((told = px));
+    };
+    tell();
+    const sizes = new ResizeObserver(tell);
+    sizes.observe(frame);
+    const table = frame.firstElementChild;
+    if (table) sizes.observe(table);
+    return () => sizes.disconnect();
+  }, [frameHeight, visibleRows?.length]);
   /**
    * Should the checkbox be on screen at all?                     (Slice #34.02)
    *
@@ -1806,7 +1871,7 @@ export function ValueListModal({
                   <tr>
                     {/* Slice #38.50: a header may take two lines; a row never does. */}
                     {cells.map((cell) => (
-                      <th key={cell[0].key} className={`${pad} py-2 align-bottom${centredCell(cell) ? ` ${CENTRED}` : ""}`} {...columnHead(cellColumn(cell, listKey))}>
+                      <th key={cell[0].key} className={`${valueCellPad(cellColumn(cell, listKey))} ${HEAD_CELL}`} {...columnHead(cellColumn(cell, listKey))}>
                         {/* Slice #38.55: a joined cell's header is two lines, „Rol invers" over „(bărbat, femeie)" —
                             #37.28 stacked the three fields' own labels. */}
                         {cell.length > 1 && JOINED_HEADS[listKey] ? (
@@ -1825,15 +1890,15 @@ export function ValueListModal({
                         Slice #37.37 — it was a w-32 beside a w-28 actions column
                         in a max-w-2xl panel. */}
                     {review && (
-                      <th className={`${pad} py-2`} {...columnHead("valueStatus")}>{t("fields.status")}</th>
+                      <th className={`${valueCellPad("valueStatus")} ${HEAD_CELL}`} {...columnHead("valueStatus")}>{t("fields.status")}</th>
                     )}
                     {/* Slice #38.59: two lines, Adrian's words — „Folosit de" over „(n obiecte)"; each row reads
                         „3 obiecte", where #38.35 read „folosit de 3 înregistrări". */}
-                    <th className={`${pad} py-2 align-bottom ${CENTRED}`} {...columnHead(usageColumn(listKey))}>
+                    <th className={`${valueCellPad(usageColumn(listKey))} ${HEAD_CELL}`} {...columnHead(usageColumn(listKey))}>
                       <span className="block">{t("usage.column")}</span>
                       <span className="block">{t("usage.columnSub")}</span>
                     </th>
-                    <th className={`${pad} py-2`} {...columnHead(actionsColumn(listKey))} />
+                    <th className={`${valueCellPad(actionsColumn(listKey))} ${HEAD_CELL}`} {...columnHead(actionsColumn(listKey))} />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-crease bg-raised">
@@ -1890,7 +1955,7 @@ export function ValueListModal({
                     <tr
                       key={row.id}
                       data-unused={usage.data?.[row.id] === 0 ? "" : undefined}
-                      className={`hover:bg-cta-pale${usage.data?.[row.id] === 0 ? " opacity-60" : ""}`}
+                      className={`${QUIET_ROW} hover:bg-cta-pale${usage.data?.[row.id] === 0 ? " opacity-60" : ""}`}
                     >
                       {cells.map((cell) => (
                         <td
@@ -1899,7 +1964,7 @@ export function ValueListModal({
                           // a `nameTip` field says it in its own tooltip, the field under it — one tooltip, not two.
                           title={nameTip && cell[0].key === "name" ? undefined : (tieIn(cell, row) ?? cellText(cell, row))}
                           className={[
-                            `${pad} py-2`,
+                            `${valueCellPad(cellColumn(cell, listKey))} ${ROW_CELL}`,
                             // Slice #26.12: the type's name carries the colour
                             // coding; every other cell keeps the table's body
                             // colour. `documentTypeNameClass` returns exactly
@@ -1943,7 +2008,7 @@ export function ValueListModal({
                       ))}
                       {review && (
                         <td
-                          className={`${pad} py-2 text-ink ${ONE_LINE}`}
+                          className={`${valueCellPad("valueStatus")} ${ROW_CELL} text-ink ${ONE_LINE}`}
                           title={t(`${review.statusPrefix}.${review.statusOf(row)}` as Parameters<typeof t>[0])}
                           data-row-status={review.statusOf(row)}
                         >
@@ -1954,17 +2019,17 @@ export function ValueListModal({
                           )}
                         </td>
                       )}
-                      <td className={`${pad} py-2 text-xs text-fade ${ONE_LINE} ${CENTRED}`} data-usage={usage.data?.[row.id] ?? ""}>
+                      <td className={`${valueCellPad(usageColumn(listKey))} ${ROW_CELL} text-xs text-fade ${ONE_LINE} ${CENTRED}`} data-usage={usage.data?.[row.id] ?? ""}>
                         {usage.data === undefined
                           ? "…"
                           : (usage.data[row.id] ?? 0) === 0
                             ? t("usage.unused")
                             : t("usage.usedBy", { count: usage.data[row.id] })}
                       </td>
-                      <td className={`${pad} py-2`}>
+                      <td className={`${valueCellPad(actionsColumn(listKey))} ${ROW_CELL}`}>
                         {/* Slice #37.37 had „the buttons wrap inside the fixed actions column" — stacked, a row two
                             lines tall. Slice #38.50: side by side, always (`valueActions`, measured). */}
-                        <div className="flex flex-nowrap gap-2" data-row-actions="">
+                        <div className={`flex flex-nowrap gap-2 ${QUIET_ROW_BUTTONS}`} data-row-actions="" data-row-buttons={QUIET_ROW_MARK}>
                           {/* Slice #38.39: a document type is edited on its own page —
                               General, Formular, Roluri — so its row opens that page
                               instead of the inline form. Adding one still uses it. */}

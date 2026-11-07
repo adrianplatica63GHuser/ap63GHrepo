@@ -1695,12 +1695,15 @@ export const COLUMN = {
   // Slice #38.50: a reference list's buttons, side by side on one line, never stacked —
   // measured at 1920 px: pencil, „Unește", bin = 146 px; on a document type „Deschide",
   // „Formular (n)", „Unește", bin = 331 px.
-  valueActions: { content: 9.25, kind: "fixed" },
-  valueActionsDocTypes: { content: 21, kind: "fixed" },
+  // 42.02 — Adrian: „Most of the columns should be more narrow". Every column below keeps its content and takes
+  // half the padding (`pad: 1`, `px-2`), where its header's longest word or its values set the content: 10.25 rem
+  // (0.91 of 11.25) and 22 (0.96 of 23). The cells' padding follows the column's (`valueCellPad`).
+  valueActions: { content: 9.25, kind: "fixed", pad: 1 },
+  valueActionsDocTypes: { content: 21, kind: "fixed", pad: 1 },
   // Slice #39.77 — „Indicative Tarla"'s buttons: „Deschide pagina tarlalei", pencil, „Unește", bin = 179 px, measured at
   // 1920 px. It had the document types' 21rem (#39.67), and the list ran 157 px past its last button (Adrian: „it
   // should only be as wide as to accommodate the last buttons").
-  valueActionsTarla: { content: 11.25, kind: "fixed" },
+  valueActionsTarla: { content: 11.25, kind: "fixed", pad: 1 },
   groupCode: { content: "M", kind: "fixed" }, //            „AA 01 (12)", and the group's target under it
   description: { content: "XXL", kind: "wraps" }, //        a group's description; a stamp's code, short description and notes
   tag: { content: "L", kind: "wraps" }, //                  a tag, in mono
@@ -1734,19 +1737,23 @@ export const COLUMN = {
   // 1436. Every column below is as wide as what it holds, measured at 1366 px on the archive (2026-10-10), with HALF
   // the usual cell padding (`pad: 1` — the roles' cells are `px-2`), and the description is read in the name's tooltip
   // (`nameTip`, as #38.53 reads a document type's key): 14.75 + 2 × 6.5 + 12.25 + 6.25 + 10.25 = 56.5rem, 904 px.
-  valueRoleName: { content: 13.75, kind: "fixed", pad: 1 }, // a role's „Denumire" — „Reprezentant al instituției emitente" (214.8 px)
+  // 42.02 — Adrian: „the “Name” column, which can be around 60% of what it is now". 14.75 rem → 9 (0.61): the longest
+  // names are cut with „…" and whole in their tooltip (#38.53), as every reference cell is (#38.50).
+  valueRoleName: { content: 8, kind: "fixed", pad: 1 }, // a role's „Denumire" — „Reprezentant al instituției emitente" (214.8 px) is cut
   // „Reprezentat(ă) / Mandant(ă)" (176.6 px) once migration_104 lands; until then „Reprezentat / Mandant, Reprezentată /
   // Mandantă" (308 px) and „Bunic / Unchi, Bunică / Mătușă" (191) are cut with „…" and whole on hover. Was 19.5 (#38.60).
   valueConverse: { content: 11.25, kind: "fixed", pad: 1 },
   valueRoleFlag: { content: 5.5, kind: "fixed", pad: 1 }, //  ✓ / – under „PERSOANĂ →" over „PROPRIETATE" (86.9 px); was valueFlag at full padding
-  valueUsageRoles: { content: 5.25, kind: "fixed", pad: 1 }, // valueUsage's „999 de obiecte" (79 px), at the roles' padding
+  valueUsageRoles: { content: 5, kind: "fixed", pad: 1 }, // valueUsage's „999 de obiecte" (79 px), at the roles' padding — 42.02: 6 rem (0.96 of 6.25)
   valueActionsRoles: { content: 9.25, kind: "fixed", pad: 1 }, // valueActions' three buttons (146 px), at the roles' padding
-  valueFlag: { content: 5.5, kind: "fixed" }, //            a checkbox field, „✓" or „–" — as wide as its header's longest word, „PROPRIETATE" (86 px)
+  valueFlag: { content: 5.5, kind: "fixed", pad: 1 }, //    a checkbox field, „✓" or „–" — as wide as its header's longest word, „PROPRIETATE" (86 px); 42.02: 6.5 rem (0.87)
   valueDescription: { content: "XL", kind: "fixed" }, //    a list's description — cut, whole on hover
   // Slice #38.66: the review lists' status — the longest word any of the three can show is „Adăugat manual" (102 px, the
   // document types' „new" and the tarla's and institutions' „manual"); was 6.75 for „Fără formular" / „De revizuit".
-  valueStatus: { content: 6.5, kind: "fixed" },
-  valueUsage: { content: 5.25, kind: "fixed" }, //          „999 de obiecte" (79 px) under „FOLOSIT DE" over „(N OBIECTE)" (77) — Slice #38.59; was 9 for „folosit de 12 înregistrări" (141)
+  valueStatus: { content: 6.5, kind: "fixed", pad: 1 }, //  42.02: 7.5 rem (0.88 of 8.5)
+  // „999 de obiecte" (79 px) under „FOLOSIT DE" over „(N OBIECTE)" (77) — Slice #38.59; was 9 for „folosit de 12
+  // înregistrări" (141). 42.02 — Adrian: „“Used by (n objects)” can be 90%": 7.25 rem → 6.5 (0.90), at `px-3`.
+  valueUsage: { content: 5, kind: "fixed", pad: 1.5 },
   // Slice #38.66 — „Tipuri de obiecte": three lists with columns of their own where the shared one was too wide (Adrian:
   // „too much wasted space"). Each as wide as its longest value or its header's longest word, whichever is wider —
   // measured in the runner's Chromium at 1366 px on the archive, 2026-10-10 (Arial: 14 px cells, 12 px uppercase
@@ -1756,20 +1763,31 @@ export const COLUMN = {
   // the sync file's) the longest — measured in the browser pane at 1366 px, 14 px cells. Was 14 for „Cabinet sau
   // societate de avocatură" (219.5 px, #39.72, from TC-VL-05's gap of -111.5 at 5.75 rem), 5.75 for „Consiliu Local"
   // (87.2 px) before that, and valueName's XL (272) before #38.66.
-  valueJudicialTypeName: { content: 12.5, kind: "fixed" },
+  // 42.02 — „Denumire" at about 60 %: 14.5 rem → 8.75 (0.60), the header's „DENUMIRE" (104 px) the floor; „Birou de
+  // executor judecătoresc" is cut, whole on hover.
+  valueJudicialTypeName: { content: 6.75, kind: "fixed" },
   // Slice #39.23: „Teren pentru Construcții" (148.6 px), the property type the big dev seed added, was cut at 8 rem.
   // #39.66 folded it into „Teren intravilan"; the width stays, for a type Adrian names longer.
   // Slice #39.70 (fixing #39.66's names): the nine agreed types are shorter — at 9.5 rem TC-VL-05 measured the longest
   // ending 64.5 px before the next column. Now the header's „DENUMIRE" (104 px) is the widest, „Spațiu comercial"
   // 103.4. Was 9.5 for „Teren pentru Construcții" (148.6 px), and 8 for „Vegetație Forestieră" (125.3) before that.
-  valuePropertyTypeName: { content: 6.75, kind: "fixed" },
-  valueFlagTarlaParcela: { content: 4, kind: "fixed" }, //   ✓ / – under „TARLA /" over „PARCELĂ" (59.2 px); was valueFlag (88)
-  valueFlagAddress: { content: 3.5, kind: "fixed" }, //      ✓ / – under „ADRESĂ" (52.5 px)
-  valueFlagStreetView: { content: 3.25, kind: "fixed" }, //  ✓ / – under „STREET" over „VIEW" (49.1 px): the header takes two lines
+  // 42.02: the header's „DENUMIRE" (104 px) is the floor, so 60 % (5.25 rem) cannot be had — the padding halves instead,
+  // 8.75 rem → 7.75 (0.89). The three checkmarks („80 %") the same way: their headers' words set their content.
+  valuePropertyTypeName: { content: 6.75, kind: "fixed", pad: 1 },
+  valueFlagTarlaParcela: { content: 4, kind: "fixed", pad: 1 }, //   ✓ / – under „TARLA /" over „PARCELĂ" (59.2 px); was valueFlag (88) — 42.02: 5 rem (0.83 of 6)
+  valueFlagAddress: { content: 3.5, kind: "fixed", pad: 1 }, //      ✓ / – under „ADRESĂ" (52.5 px) — 42.02: 4.5 rem (0.82 of 5.5)
+  valueFlagStreetView: { content: 3.25, kind: "fixed", pad: 1 }, //  ✓ / – under „STREET" over „VIEW" (49.1 px): the header takes two lines — 42.02: 4.25 (0.81 of 5.25)
   // Slice 41.03 (FU-374): „Plan de Amplasament și Delimitare" has no form — Adrian recreated the type without one — so its
   // name is regular, 217.9 px (the pane, 1366). Was 14.75 for the same name in bold (232.6 px), XL (272) before that.
-  valueDocTypeName: { content: 14, kind: "fixed" },
-  valueDocTypeShortName: { content: 6.25, kind: "fixed" }, // „Doc. cadastrală" (97.3 px); was valueText's 10 rem (160)
+  // 42.02 — „Denumire" at about 60 %: 16 rem → 9.5 (0.59); the longer names cut, whole in their tooltip (#38.53).
+  valueDocTypeName: { content: 7.5, kind: "fixed" },
+  valueDocTypeShortName: { content: 6.25, kind: "fixed", pad: 1 }, // „Doc. cadastrală" (97.3 px); was valueText's 10 rem (160) — 42.02: 7.25 (0.88)
+  // 42.02 — „Denumire" at about 60 % on „Tipuri de Persoană Fizică" and the two links' lists: valueName's 19 rem → 11.5
+  // (0.61), in columns of their own so the lists that share valueName keep it. „Categorii Folosință"'s name: the header's
+  // „DENUMIRE" (104 px) the floor, 10.5 rem → 7.75 (0.74).
+  valuePersonTypeName: { content: 9.5, kind: "fixed" },
+  valueLinkName: { content: 9.5, kind: "fixed" },
+  valueUseCategoryName: { content: 6.75, kind: "fixed", pad: 1 },
   // Slice #38.57 — the four main lists (Proprietăți, Persoane fizice, Persoane juridice, Acte) on #38.50's rule: one line
   // per row, a long cell cut with „…" and whole on hover, the row's buttons side by side. Each column as wide as its
   // content, measured at 1920 px on the archive (the slice's probe): a short value its longest, a free text — a name, a
