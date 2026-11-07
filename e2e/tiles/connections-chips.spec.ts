@@ -49,7 +49,8 @@ test.describe("TC-TILES-10 — etichete mici, „×” doar la mouse sau la foca
         expect(res.ok()).toBeTruthy();
       }
 
-      // Step 1 — three chips, no „×" drawn, padding 4–8 px every side.
+      // Step 1 — three chips, no „×" drawn. 41.95 rewritten in place — was „padding 4–8 px every side": 2 px above and
+      // below, 6 a side, the text 12 px (Adrian: „from size 12 to size 10, and the bubble should be smaller as well").
       await page.setViewportSize({ width: 1366, height: 900 });
       await page.goto(`/natural-persons/${person}?tab=metadata`);
       const con = page.getByRole("region", { name: "Etichete și grupuri", exact: true });
@@ -71,12 +72,9 @@ test.describe("TC-TILES-10 — etichete mici, „×” doar la mouse sau la foca
       for (const r of removes) await expect.poll(() => opacity(r)).toBe(0);
       for (const pad of await chips.evaluateAll((els) => els.map((e) => {
         const s = getComputedStyle(e);
-        return [s.paddingTop, s.paddingRight, s.paddingBottom, s.paddingLeft].map((v) => parseFloat(v));
+        return [s.paddingTop, s.paddingRight, s.paddingBottom, s.paddingLeft, s.fontSize].map((v) => parseFloat(v));
       }))) {
-        for (const v of pad) {
-          expect(v).toBeGreaterThanOrEqual(4);
-          expect(v).toBeLessThanOrEqual(8);
-        }
+        expect(pad).toEqual([2, 6, 2, 6, 12]);
       }
       const atRest = await boxes(chips);
 
@@ -168,6 +166,83 @@ test.describe("TC-TILES-10 (41.39) — alegerea grupului se închide, dala se î
       await expect(con.getByRole("button", { name: /^\+ / })).toHaveCount(0);
     } finally {
       if (groupId) await page.request.delete(`/api/groups/${encodeURIComponent(groupId)}`);
+      await removeRecord(page.request, "person", person);
+    }
+  });
+});
+
+// Slice 41.95 — Adrian: „The Groups section: • should not display the numbers of items in the group … the system should
+// display the remove button in the top right corner of the rectangle - in the same way it does that for the tags … the
+// description of the group will only display a maximum of three rows and …; it will display the entire description when
+// the mouse hovers over the description … The Stamps section: [the same, two rows] … The “Add to Group” or “Apply stamp”
+// buttons should look like the Add button for tags, They should be a white button". On an invented person, an invented
+// group and an invented stamp, each with a long description.
+test.describe("TC-TILES-10 (41.95) — grupuri și ștampile: codul singur, „×” pe colțul lui, descrierea tăiată", () => {
+  test("codul fără număr, „×” pe dreptunghi la mouse, trei rânduri (două) și bula, butoanele albe", async ({ page }) => {
+    test.slow();
+    const M = `${MARK}-RAND`;
+    await removeLeftovers(page.request, M);
+    await page.setViewportSize({ width: 1366, height: 900 });
+    const person = await createNaturalPerson(page.request, { lastName: M, firstName: "Ion" });
+    const long = `${M} ${"o descriere destul de lungă ca să treacă de câteva rânduri ".repeat(6).trim()}`;
+    let groupId: string | undefined;
+    let stampId: string | undefined;
+    try {
+      const po = ((await (await page.request.get(`/api/people/${person}/entity-references`)).json()) as { principalObjectId: string }).principalObjectId;
+      const g = await page.request.post("/api/groups", { data: { targetType: "PHYSICAL_PERSON", description: long } });
+      expect(g.status()).toBe(201);
+      groupId = ((await g.json()) as { id: string }).id;
+      expect((await page.request.post(`/api/metadata/${po}/groups`, { data: { groupId } })).ok()).toBeTruthy();
+      const s = await page.request.post("/api/stamps", { data: { shortDescription: long, notes: "" } });
+      expect(s.status()).toBe(201);
+      stampId = ((await s.json()) as { id: string }).id;
+      expect((await page.request.post(`/api/metadata/${po}/stamps`, { data: { stampId } })).ok()).toBeTruthy();
+
+      await page.goto(`/natural-persons/${person}?tab=metadata`);
+      const con = await editConnections(page);
+      for (const [kind, lines, name] of [["group", 3, /^Elimină din grup /], ["stamp", 2, /^Elimină ștampila /]] as const) {
+        const row = con.locator(`[data-${kind}-row]`).first();
+        await expect(row).toBeVisible({ timeout: 30_000 });
+        const chip = row.locator("[data-code-chip]");
+        const rect = chip.locator("> span").first();
+        // The code alone, no count, no tooltip.
+        await expect(rect).toHaveText(/^[A-Z0-9-]+$/);
+        expect(await rect.getAttribute("title")).toBeNull();
+        await expect(row.locator("[data-group-member-count]")).toHaveCount(0);
+        // The „×" is the rectangle's: hidden at rest, drawn on its corner under the pointer; none at the row's right.
+        const remove = row.getByRole("button", { name });
+        await expect(remove).toHaveCount(1);
+        await page.mouse.move(2, 2);
+        await expect.poll(() => opacity(remove)).toBe(0);
+        await rect.hover();
+        await expect.poll(() => opacity(remove)).toBe(1);
+        const [xb, cb, rb] = await Promise.all([remove.boundingBox(), rect.boundingBox(), row.boundingBox()]);
+        expect(xb!.x + xb!.width, "on the rectangle's right corner").toBeGreaterThan(cb!.x + cb!.width - 4);
+        expect(xb!.x, "not at the row's right").toBeLessThan(cb!.x + cb!.width + 16);
+        expect(xb!.y).toBeLessThan(cb!.y + 4);
+        // The description: to the tile's inner edge, cut after `lines` lines, whole in the bubble under the pointer.
+        const desc = row.locator("[data-row-description]");
+        const d = await desc.evaluate((el) => {
+          const lh = parseFloat(getComputedStyle(el).lineHeight);
+          return { lines: Math.round(el.getBoundingClientRect().height / lh), cut: el.scrollHeight > el.clientHeight + 0.5, right: el.getBoundingClientRect().right };
+        });
+        expect(d).toMatchObject({ lines, cut: true });
+        expect(rb!.x + rb!.width - d.right, "to the row's edge").toBeLessThanOrEqual(2);
+        await expect(desc).toHaveAttribute("href", kind === "group" ? /\/admin\/groups\// : /\/admin\/stamps\//);
+        await desc.hover();
+        await expect(page.getByRole("tooltip").filter({ hasText: long })).toBeVisible();
+        await page.mouse.move(2, 2);
+      }
+      // The two add buttons: white, bordered — the secondary face.
+      for (const label of ["+ Adaugă în grup", "+ Aplică ștampilă"]) {
+        const b = con.getByRole("button", { name: label, exact: true });
+        await expect(b).toBeVisible();
+        await expect(b).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+        await expect(b).toHaveCSS("border-top-style", "solid");
+      }
+    } finally {
+      if (groupId) await page.request.delete(`/api/groups/${encodeURIComponent(groupId)}`);
+      if (stampId) await page.request.delete(`/api/stamps/${encodeURIComponent(stampId)}`);
       await removeRecord(page.request, "person", person);
     }
   });

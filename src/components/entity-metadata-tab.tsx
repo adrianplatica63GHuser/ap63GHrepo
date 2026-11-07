@@ -22,6 +22,7 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { SCALE, boxRem, rem, screenBox } from "@/lib/ui/field-widths";
 import { daysSince, oldestStamp, updatedToday as isUpdatedToday } from "@/lib/metadata/updated-days";
 import { HintBubble } from "@/lib/ui/hint-bubble";
+import { TextTooltip } from "@/lib/ui/text-tooltip";
 import { pickerOptionText, usePickerDismiss } from "@/lib/ui/picker-dismiss";
 import { Divider } from "@/lib/ui/divider";
 import { MAX_GROUPS_PER_ITEM, MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/validation";
@@ -252,9 +253,79 @@ const REMOVE_REVEAL =
 const CHIP_REMOVE_PLACE =
   "absolute -right-2.5 -top-2.5 z-10 rounded-md bg-white shadow-sm ring-1 ring-card-rim dark:bg-zinc-900 dark:ring-zinc-600";
 
-/** A tag chip: it only wraps its text — 4 px above and below, 8 px a side (Slice #37.69). */
-const TAG_CHIP =
-  "group relative inline-flex items-center rounded-full border border-slate-300 bg-slate-50 px-2 py-1 text-sm leading-tight text-ink dark:border-slate-600 dark:bg-zinc-800 dark:text-zinc-100";
+/**
+ * A tag chip: it only wraps its text (Slice #37.69). Slice 41.95 — Adrian: „The “Tags / Keywords” bubbles should have
+ * their smaller, for example from size 12 to size 10, and the bubble should be smaller as well": 12 px (`text-xs`, was
+ * 14), 2 px above and below and 6 a side (was 4 and 8) — two px down, as his 12 → 10. Its „×" keeps CHIP_REMOVE_PLACE,
+ * still on the corner.
+ */
+export const TAG_CHIP =
+  "group relative inline-flex items-center rounded-full border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs leading-tight text-ink dark:border-slate-600 dark:bg-zinc-800 dark:text-zinc-100";
+
+/** Slice 41.95: the grey rectangle a group's or a stamp's code stands in (41.96: a reference's kind too). */
+export const CODE_RECT =
+  "inline-flex items-center gap-1 rounded border border-card-rim bg-card px-1.5 py-0.5 font-mono text-xs text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400";
+
+/**
+ * Slice 41.95 — a group's or a stamp's code in its grey rectangle, its remove „×" on the rectangle's top-right corner,
+ * drawn under the pointer or with the focus, as a tag's. Adrian: „when hovering over the Grey rectangle that contains
+ * the ID of the group the system should display the remove button in the top right corner of the rectangle - in the same
+ * way it does that for the tags; therefore, the remove button disappears from the right side of the group description".
+ * The rectangle is its own `group relative` box, not inside the description's link — a button cannot be.
+ */
+export function CodeChip({
+  children,
+  remove,
+  className,
+  ...rest
+}: {
+  children: React.ReactNode;
+  /** The „×": only where the record can be changed. */
+  remove?: { label: string; onClick: () => void; disabled?: boolean };
+  /** The rectangle's own classes, when not CODE_RECT. */
+  className?: string;
+  [data: `data-${string}`]: string | undefined;
+}) {
+  return (
+    <span className="group relative inline-flex shrink-0" data-code-chip="" {...rest}>
+      <span className={className ?? CODE_RECT}>{children}</span>
+      {remove && (
+        <IconButton
+          icon={X}
+          label={remove.label}
+          variant="bare-danger"
+          size="xs"
+          className={`${CHIP_REMOVE_PLACE} ${REMOVE_REVEAL}`}
+          onClick={remove.onClick}
+          disabled={remove.disabled}
+        />
+      )}
+    </span>
+  );
+}
+
+/**
+ * Slice 41.95 — a group's or a stamp's description beside its code, to the tile's inner edge, cut with „…" after
+ * `lines` lines (three for a group, two for a stamp) and whole in the app's bubble under the pointer and on focus — so
+ * the rows below never move. When it is not cut there is no bubble (TextTooltip measures). Still the link to the group
+ * or the stamp. Adrian: „the description of the group will only display a maximum of three rows and …; it will display
+ * the entire description when the mouse hovers over the description; the description keeps being a link, as now".
+ */
+const DESCRIPTION_CLAMP = { 2: "line-clamp-2", 3: "line-clamp-3" } as const;
+
+function RowDescription({ href, text, lines }: { href: string; text: string | null | undefined; lines: 2 | 3 }) {
+  return (
+    <TextTooltip
+      as={Link}
+      href={href}
+      text={text ?? undefined}
+      className={`min-w-0 flex-1 break-words text-sm text-ink underline-offset-2 hover:underline dark:text-zinc-100 ${DESCRIPTION_CLAMP[lines]}`}
+      data-row-description={lines}
+    >
+      {text}
+    </TextTooltip>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // ClassificationItem — one value, read as text or edited     (Slice 41.10)
@@ -561,7 +632,6 @@ function InlineGroupsSection({
   labelLimit,
   labelLimitReached,
   labelNoneAvailable,
-  labelMembers,
 }: {
   principalObjectId: string;
   currentGroups:     GroupTag[];
@@ -587,8 +657,6 @@ function InlineGroupsSection({
   labelLimitReached: string;
   /** The picker's placeholder when no group is left to join under the cap. */
   labelNoneAvailable: string;
-  /** Slice #38.11: a chip's tooltip — „2 membri". */
-  labelMembers:      (count: number) => string;
 }) {
   const queryClient  = useQueryClient();
   const availKey     = `${mainQueryKey}-avail-groups`;
@@ -702,36 +770,17 @@ function InlineGroupsSection({
       ) : (
         <ul className="flex flex-col gap-2">
           {currentGroups.map((g) => (
-            <li key={g.code} className="group flex items-center gap-2">
-              <Link
-                href={groupFromRecordHref(g.id, withBack)}
-                className="inline-flex items-center gap-3 rounded-md px-2 py-1 text-sm transition-colors hover:bg-canvas dark:hover:bg-zinc-800"
+            // Slice 41.95 (Ask first 2, 3): the code alone in its rectangle — no member count, no tooltip (Adrian:
+            // „should not display the numbers of items in the group") — its „×" on the rectangle's corner, and the
+            // description, the link, to the tile's inner edge, cut after three lines.
+            <li key={g.code} className="flex items-baseline gap-2" data-group-row="">
+              <CodeChip
+                data-group-code={g.code}
+                remove={isOnLatest ? { label: `${labelRemove} ${g.code}`, onClick: () => void handleRemove(g.id), disabled: removing === g.id } : undefined}
               >
-                {/* Slice #38.11: how many members the group has now — not this
-                    record's position in it, a high-water counter (11 and 12 in a
-                    group of two). Unpadded, its words as the tooltip. */}
-                <span
-                  className="font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
-                  title={labelMembers(g.memberCount)}
-                  data-group-member-count={g.memberCount}
-                >
-                  {g.code}&nbsp;[{g.memberCount}]
-                </span>
-                <span className="text-ink underline-offset-2 hover:underline dark:text-zinc-100">
-                  {g.description}
-                </span>
-              </Link>
-              {isOnLatest && (
-                <IconButton
-                  icon={X}
-                  label={`${labelRemove} ${g.code}`}
-                  variant="bare-danger"
-                  size="xs"
-                  className={`ml-auto ${REMOVE_REVEAL}`}
-                  onClick={() => handleRemove(g.id)}
-                  disabled={removing === g.id}
-                />
-              )}
+                {g.code}
+              </CodeChip>
+              <RowDescription href={groupFromRecordHref(g.id, withBack)} text={g.description} lines={3} />
             </li>
           ))}
         </ul>
@@ -879,29 +928,15 @@ function InlineStampsSection({
       ) : (
         <ul className="flex flex-col gap-2">
           {currentStamps.map((s) => (
-            <li key={s.code} className="group flex items-center gap-2">
-              <Link
-                href={stampFromRecordHref(s.id, withBack)}
-                className="inline-flex items-center gap-3 rounded-md px-2 py-1 text-sm transition-colors hover:bg-canvas dark:hover:bg-zinc-800"
+            // Slice 41.95: as a group's row — the „×" on the code's rectangle, the description cut after two lines.
+            <li key={s.code} className="flex items-baseline gap-2" data-stamp-row="">
+              <CodeChip
+                data-stamp-code={s.code}
+                remove={isOnLatest ? { label: `${labelRemove} ${s.code}`, onClick: () => void handleRemove(s.id), disabled: removing === s.id } : undefined}
               >
-                <span className="font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-                  {s.code}
-                </span>
-                <span className="text-ink underline-offset-2 hover:underline dark:text-zinc-100">
-                  {s.shortDescription}
-                </span>
-              </Link>
-              {isOnLatest && (
-                <IconButton
-                  icon={X}
-                  label={`${labelRemove} ${s.code}`}
-                  variant="bare-danger"
-                  size="xs"
-                  className={`ml-auto ${REMOVE_REVEAL}`}
-                  onClick={() => handleRemove(s.id)}
-                  disabled={removing === s.id}
-                />
-              )}
+                {s.code}
+              </CodeChip>
+              <RowDescription href={stampFromRecordHref(s.id, withBack)} text={s.shortDescription} lines={2} />
             </li>
           ))}
         </ul>
@@ -1690,7 +1725,6 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           labelLimit={t("groups.limit", { max: groupCap })}
           labelLimitReached={t("groups.limitReached", { max: groupCap })}
           labelNoneAvailable={t("groups.noneAvailable")}
-          labelMembers={(count) => t("groups.members", { count })}
         />
     ) : (
         <section className="flex flex-col gap-1">

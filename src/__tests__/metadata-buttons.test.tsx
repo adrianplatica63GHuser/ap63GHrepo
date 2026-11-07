@@ -59,6 +59,16 @@ describe("AddToggleButton — Plus / ChevronUp", () => {
     expect(b).toHaveAttribute("aria-expanded", "true");
   });
 
+  // Slice 41.95 — Adrian: „The “Add to Group” or “Apply stamp” buttons should look like the Add button for tags, They
+  // should be a white button". `secondary`, the white bordered face; it was `bare`.
+  it("white: the secondary face, as the tags' „Adaugă” at rest", () => {
+    render(<AddToggleButton open={false} icon={Plus} labelAdd="+ Aplică ștampilă" labelHide="Ascunde" onClick={() => {}} />);
+    const b = screen.getByRole("button", { name: "+ Aplică ștampilă" });
+    expect(b.className).toContain("border-cta");
+    expect(b.className).toContain("bg-cta-pale");
+    expect(b.className).not.toContain("bg-transparent");
+  });
+
   it("a cross-reference's closed icon is Link", () => {
     render(<AddToggleButton open={false} icon={LinkIcon} labelAdd="+ Adaugă trimitere" labelHide="Ascunde" onClick={() => {}} />);
     expect(iconClass(screen.getByRole("button", { name: "+ Adaugă trimitere" }))).toContain("lucide-link");

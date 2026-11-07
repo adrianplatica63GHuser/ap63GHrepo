@@ -13,6 +13,9 @@
  *  - The add buttons of Grupuri, Ștampile and „Vezi și" are their icon while
  *    closed (Plus; Link for a cross-reference, A039) and ChevronUp while their
  *    picker is open — where they showed „▲", which now has a name of its own.
+ *  - Slice 41.95 — Adrian: „The “Add to Group” or “Apply stamp” buttons should look like the Add button for tags, They
+ *    should be a white button". Each is `secondary` (white, bordered) at md, the face the tags' „Adaugă" has at rest;
+ *    „Vezi și"'s add is the same component, so it changed with them. They were `bare`.
  */
 
 import { BadgeCheck, ChevronUp, type LucideIcon, type LucideProps } from "lucide-react";
@@ -81,7 +84,7 @@ export function AddToggleButton({
     <IconButton
       icon={open && !disabled ? ChevronUp : icon}
       label={disabled && labelDisabled ? labelDisabled : open ? labelHide : labelAdd}
-      variant="bare"
+      variant="secondary"
       size="md"
       aria-expanded={open && !disabled}
       onClick={onClick}

@@ -64,14 +64,18 @@ const wrapperOf = (button: HTMLElement): HTMLElement => button.parentElement as 
 const REVEAL = ["opacity-0", "group-hover:opacity-100", "group-focus-within:opacity-100"];
 
 describe("„Conexiuni”: small tag chips, the „×” only on hover or focus (Slice #37.69)", () => {
-  it("a chip only wraps its text: 4 px above and below, 8 px a side, the chips 6 px apart", async () => {
+  // 41.95 inverted in place — was „4 px above and below, 8 px a side" (px-2 py-1 text-sm). Adrian: „The “Tags /
+  // Keywords” bubbles should have their smaller, for example from size 12 to size 10, and the bubble should be smaller
+  // as well".
+  it("a chip only wraps its text: 2 px above and below, 6 px a side, 12 px text, the chips 6 px apart", async () => {
     renderTile();
     const remove = await screen.findByRole("button", { name: "tags.remove arendă" });
     const chip = remove.closest<HTMLElement>("[data-tag-chip]");
     expect(chip).not.toBeNull();
-    expect(chip!.className).toMatch(/(^| )px-2( |$)/);
-    expect(chip!.className).toMatch(/(^| )py-1( |$)/);
-    expect(chip!.className).toMatch(/(^| )text-sm( |$)/);
+    expect(chip!.className).toMatch(/(^| )px-1\.5( |$)/);
+    expect(chip!.className).toMatch(/(^| )py-0\.5( |$)/);
+    expect(chip!.className).toMatch(/(^| )text-xs( |$)/);
+    expect(chip!.className).not.toMatch(/(^| )(text-sm|px-2|py-1)( |$)/);
     expect(chip!.className).not.toMatch(/px-3/);
     expect(chip!.closest("[data-tag-chips]")!.className).toMatch(/(^| )gap-1\.5( |$)/);
     expect(document.querySelectorAll("[data-tag-chip]")).toHaveLength(3);
@@ -102,9 +106,29 @@ describe("„Conexiuni”: small tag chips, the „×” only on hover or focus 
     expect(JSON.parse(del.body!)).toEqual({ tag: "moștenire" });
   });
 
-  it("Grupuri, Ștampile and Vezi și: each row's „×” shows only while its row is hovered or focused", async () => {
+  // 41.95 rewritten in place for Grupuri and Ștampile — was „each row's „×” shows only while its row is hovered": the
+  // „×" sits on the code's rectangle (`[data-code-chip]`, the `group`), over its top-right corner as a tag's, and the
+  // row has no „×" at its right.
+  it("Grupuri and Ștampile: the „×” on the code's rectangle, over its corner, drawn only while it is hovered or focused", async () => {
     renderTile();
-    for (const name of ["groups.remove GRP-001", "stamps.remove URGENT", "crossRef.remove"]) {
+    for (const name of ["groups.remove GRP-001", "stamps.remove URGENT"]) {
+      const remove = await screen.findByRole("button", { name });
+      const chip = remove.closest<HTMLElement>("[data-code-chip]")!;
+      expect(chip).not.toBeNull();
+      expect(chip.className).toMatch(/(^| )group( |$)/);
+      expect(chip.className).toMatch(/(^| )relative( |$)/);
+      for (const c of [...REVEAL, "absolute", "-right-2.5", "-top-2.5"]) expect(wrapperOf(remove).classList).toContain(c);
+      expect(remove.closest("li")!.className).not.toMatch(/(^| )group( |$)/);
+      expect(wrapperOf(remove).classList).not.toContain("ml-auto");
+      // The code alone; the description is the link, beside it.
+      expect(chip.firstElementChild!.textContent).toMatch(/^(GRP-001|URGENT)$/);
+      expect(remove.closest("a")).toBeNull();
+    }
+  });
+
+  it("Vezi și: each row's „×” shows only while its row is hovered or focused", async () => {
+    renderTile();
+    for (const name of ["crossRef.remove"]) {
       const remove = await screen.findByRole("button", { name });
       const row = remove.closest("li")!;
       expect(row.className).toMatch(/(^| )group( |$)/);
