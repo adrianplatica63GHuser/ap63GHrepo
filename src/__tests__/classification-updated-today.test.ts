@@ -30,7 +30,9 @@ describe("updated today (41.28)", () => {
     expect([ro.lastChangedToday, ro.lastChangedYesterday, ro.lastChangedDays]).toEqual(["(actualizat azi)", "(actualizat ieri)", "(actualizat acum {days} zile)"]);
     expect([en.lastChangedToday, en.lastChangedYesterday, en.lastChangedDays]).toEqual(["(updated today)", "(updated yesterday)", "(updated {days} days ago)"]);
     expect([ro.markReviewed.today, en.markReviewed.today]).toEqual(["Verificat azi", "Reviewed today"]);
-    expect(ro.provenance.historyNote).toMatch(/^Fiecare schimbare de proveniență/);
+    // 41.94 inverted in place — was `expect(ro.provenance.historyNote).toMatch(/^Fiecare schimbare de proveniență/)`.
+    // „Istoric" went from „Clasificare" (Adrian: „Remove the History section at the bottom"), its three keys with it.
+    for (const m of [ro, en]) expect(Object.keys(m.provenance).filter((k) => k.startsWith("history"))).toEqual([]);
   });
 });
 
