@@ -50,3 +50,62 @@ const CHOICES = new Set<string>(GROUP_WIZARD.flatMap((h) => h.choices));
 export function readGroupWizardChoice(raw: string | null | undefined): GroupWizardChoice | null {
   return raw && CHOICES.has(raw) ? (raw as GroupWizardChoice) : null;
 }
+
+// ── Ștampile (Slice 41.99) ─────────────────────────────────────────────────────
+
+/**
+ * Slice 41.99 — Adrian: „Everything that I have requested for the group's functionality should be applied very similarly
+ * to the stems functionality including … Turning the tile how you work with stamps into a radio button type of wizard".
+ * Two headings — the stamp itself, and the objects it is on; no map, since stamps are not on the map (Ask first 1).
+ */
+export type StampWizardHeading = "self" | "records";
+export type StampWizardChoice = "find" | "create" | "describe" | "delete" | "apply";
+/** A step's words: four of 41.44's under `stamp.workflows.steps` („members" is applying and removing), one new. */
+export type StampWizardStep = "find" | "create" | "describe" | "delete" | "members";
+
+export const STAMP_WIZARD: readonly { heading: StampWizardHeading; choices: readonly StampWizardChoice[] }[] = [
+  { heading: "self", choices: ["find", "create", "describe", "delete"] },
+  { heading: "records", choices: ["apply"] },
+];
+
+export const STAMP_WIZARD_STEPS: Readonly<Record<StampWizardChoice, readonly StampWizardStep[]>> = {
+  find: ["find"],
+  create: ["find", "create"],
+  describe: ["find", "describe"],
+  delete: ["find", "delete"],
+  apply: ["find", "members"],
+};
+
+/** Applying carries the note that a record's „Etichete și grupuri" applies and removes one too (41.44's „record"). */
+export const STAMP_WIZARD_NOTE: Readonly<Partial<Record<StampWizardChoice, "record">>> = { apply: "record" };
+
+export const STAMP_STEPS_OF_41_44: readonly StampWizardStep[] = ["find", "create", "members", "delete"];
+
+/** Each kind's choice kept apart (Ask first 2). */
+export const STAMP_WIZARD_KEY = "ga40-stamp-wizard-v1";
+
+/**
+ * ONE WIZARD FOR BOTH KINDS (41.99, Ask first 2): what each kind asks, which steps each choice shows, its note, which
+ * steps 41.44 already words, and where the choice is kept — so the two tiles cannot drift. The component is
+ * src/components/screen/group-workflows-wizard.tsx (`WorkflowsWizard`).
+ */
+export interface WorkflowWizard {
+  /** The messages' namespace: `<kind>.workflows`. */
+  namespace: "group.workflows" | "stamp.workflows";
+  headings: readonly { heading: string; choices: readonly string[] }[];
+  steps: Readonly<Record<string, readonly string[]>>;
+  note: Readonly<Partial<Record<string, "record">>>;
+  /** The steps worded under `<kind>.workflows.steps`; the others under `<kind>.workflows.wizard.steps`. */
+  of4144: readonly string[];
+  storageKey: string;
+}
+
+export const WORKFLOW_WIZARDS: Readonly<Record<"group" | "stamp", WorkflowWizard>> = {
+  group: { namespace: "group.workflows", headings: GROUP_WIZARD, steps: GROUP_WIZARD_STEPS, note: GROUP_WIZARD_NOTE, of4144: GROUP_STEPS_OF_41_44, storageKey: GROUP_WIZARD_KEY },
+  stamp: { namespace: "stamp.workflows", headings: STAMP_WIZARD, steps: STAMP_WIZARD_STEPS, note: STAMP_WIZARD_NOTE, of4144: STAMP_STEPS_OF_41_44, storageKey: STAMP_WIZARD_KEY },
+};
+
+/** A stored choice of `w`, or none. */
+export function readWizardChoice(w: WorkflowWizard, raw: string | null | undefined): string | null {
+  return raw && w.headings.some((h) => h.choices.includes(raw)) ? raw : null;
+}

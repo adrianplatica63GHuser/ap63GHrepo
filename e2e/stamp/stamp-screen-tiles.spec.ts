@@ -16,7 +16,7 @@
  */
 
 import { test, expect, type Page } from "../helpers/test";
-import { expectPanouriRoundTrip, tilesMenuButton } from "../helpers/tiles";
+import { closeTiles, expectPanouriRoundTrip, openTiles, tilesMenuButton } from "../helpers/tiles";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord, removeStampLeftovers } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}STAMP-02`;
@@ -132,10 +132,11 @@ test.describe("TC-STAMP-02 (41.41) — „Panouri” pe Ștampile și pe ecranul
     try {
       await page.goto("/admin/stamps");
       await expectPanouriRoundTrip(page, "Ce este o Ștampilă?", "about");
-      // 41.44: „Cum lucrezi cu ștampilele", beside it; „Panouri" hides it too.
+      // 41.44: „Cum lucrezi cu ștampilele", beside it; „Panouri" hides it too. 41.99 rewrote this in place — it read
+      // `toContainText("„‹ Aplică ștampila”")` and five [data-workflow-step]: the tile now asks first, and shows no step yet.
       const workflows = page.getByRole("region", { name: "Cum lucrezi cu ștampilele", exact: true });
-      await expect(workflows).toContainText("„‹ Aplică ștampila”");
-      await expect(workflows.locator("[data-workflow-step]")).toHaveCount(5);
+      await expect(workflows).toContainText("Ce vrei să faci?");
+      await expect(workflows.locator("[data-workflow-step]")).toHaveCount(0);
       await expectPanouriRoundTrip(page, "Cum lucrezi cu ștampilele", "workflows");
       const s = await page.request.post("/api/stamps", { data: { shortDescription: `${MARK41} Ștampilă`, notes: "" } });
       expect(s.ok(), await s.text()).toBeTruthy();
@@ -147,6 +148,78 @@ test.describe("TC-STAMP-02 (41.41) — „Panouri” pe Ștampile și pe ecranul
       await expectPanouriRoundTrip(page, "Cum lucrezi cu ștampilele", "workflows");
     } finally {
       await removeStampLeftovers(page.request, MARK41);
+    }
+  });
+});
+
+// Slice 41.99 — Adrian: „Everything that I have requested for the group's functionality should be applied very similarly to
+// the stems functionality including the colour of the fonts the behavior of the What is a stamp tile Adding uh all left and
+// all up to the panels function Turning the tile how you work with stamps into a radio button type of wizard … making the
+// buttons calm and managing the width of the tiles". 41.98's group case, on Ștampile.
+test.describe("TC-STAMP-02 (41.99) — Ștampile ca Grupuri", () => {
+  test("„Ce este o Ștampilă?” roșie, pe toată lățimea, o dată pe autentificare; asistentul de 3 unități; rânduri calme; alegerea pe bej", async ({ page }) => {
+    test.slow();
+    const M = `${MARK}-4199`;
+    await removeStampLeftovers(page.request, M);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const s = await page.request.post("/api/stamps", { data: { shortDescription: `${M} Ștampilă`, notes: "" } });
+    expect(s.ok(), await s.text()).toBeTruthy();
+    const RED = "rgb(192, 0, 0)";
+    try {
+      await page.goto("/admin/stamps");
+      const about = page.getByRole("region", { name: "Ce este o Ștampilă?", exact: true });
+      const wizard = page.getByRole("region", { name: "Cum lucrezi cu ștampilele", exact: true });
+      const list = page.locator('[data-tile="list"]');
+      const row = page.locator("[data-tile-row]");
+      await expect(about).toBeVisible({ timeout: 30_000 });
+      // All its text red; across the whole row.
+      const colours = await about.locator("h2, p").evaluateAll((els) => [...new Set(els.filter((e) => !e.closest("[data-tile-close-anchor]") && (e.textContent ?? "").trim()).map((e) => getComputedStyle(e).color))]);
+      expect(colours).toEqual([RED]);
+      await expect.poll(async () => {
+        const [a, r] = await Promise.all([about.boundingBox(), row.boundingBox()]);
+        return Math.abs(a!.width - r!.width) <= 1;
+      }, { timeout: 15_000 }).toBe(true);
+      await expect.poll(async () => Math.round((await wizard.boundingBox())!.width), { timeout: 15_000 }).toBe(389);
+      await expect.poll(async () => Math.round((await list.boundingBox())!.width)).toBe(524);
+      // „Panouri": „Toate sus" and „Toate la stânga".
+      await openTiles(page);
+      await expect(page.getByRole("button", { name: "Toate sus", exact: true })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Toate la stânga", exact: true })).toBeVisible();
+      await closeTiles(page);
+      // „Am înțeles" closes it; the two rise; a reload keeps it closed; a new sign-in opens it.
+      const top = (await row.boundingBox())!.y;
+      await about.getByRole("button", { name: "Am înțeles", exact: true }).click();
+      await expect(about).toHaveCount(0);
+      await expect.poll(async () => Math.abs((await wizard.boundingBox())!.y - top) <= 2, { timeout: 15_000 }).toBe(true);
+      await page.reload();
+      await expect(wizard).toBeVisible({ timeout: 30_000 });
+      await expect(about).toHaveCount(0);
+      await page.evaluate(() => localStorage.setItem("ga40-sign-in-v1", `${Date.now()}`));
+      await page.reload();
+      await expect(about).toBeVisible({ timeout: 30_000 });
+      // The wizard: the question, red; a choice's steps only, lit on the note box.
+      await page.evaluate(() => localStorage.removeItem("ga40-stamp-wizard-v1"));
+      await page.reload();
+      await expect(wizard.getByText("Ce vrei să faci?", { exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(wizard.locator("[data-workflow-step]")).toHaveCount(0);
+      const apply = wizard.locator('[data-wizard-choice="apply"]');
+      await apply.getByRole("radio").check();
+      await expect(wizard.locator("[data-workflow-step]")).toHaveCount(2);
+      await expect(wizard.locator('[data-workflow-step="members"]')).toContainText("„‹ Aplică ștampila”");
+      await expect(wizard.locator("[data-workflow-note]")).toContainText("„Etichete și grupuri”");
+      await expect(apply).toHaveAttribute("data-wizard-lit", "");
+      await expect(apply).toHaveCSS("background-color", "rgb(255, 251, 235)");
+      await expect(apply).not.toHaveAttribute("data-wizard-lit", "", { timeout: 15_000 });
+      await page.evaluate(() => localStorage.removeItem("ga40-stamp-wizard-v1"));
+      // The list's row buttons: 35 % at rest, full under the pointer.
+      const mine = list.locator("tbody tr").filter({ hasText: `${M} Ștampilă` });
+      const buttons = mine.locator('[data-row-buttons="quiet"]');
+      await page.mouse.move(2, 2);
+      await expect.poll(() => buttons.evaluate((b) => getComputedStyle(b).opacity), { timeout: 15_000 }).toBe("0.35");
+      await mine.hover();
+      await expect.poll(() => buttons.evaluate((b) => getComputedStyle(b).opacity)).toBe("1");
+    } finally {
+      await removeStampLeftovers(page.request, M);
     }
   });
 });

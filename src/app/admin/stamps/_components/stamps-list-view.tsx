@@ -14,7 +14,10 @@ import { GrowingText } from "@/components/forms/growing-text";
 import { TileUnitRow } from "@/components/screen/tile-unit-row";
 import { WorkflowsTile } from "@/components/screen/workflows-tile";
 import { AdminTilesBar, useAdminTiles } from "@/components/screen/admin-tiles";
-import { ADMIN_STAMPS_REGISTRY, ADMIN_STAMPS_SCREEN } from "@/lib/ui/screen-tiles";
+import { ADMIN_STAMPS_LIST_UNITS, ADMIN_STAMPS_REGISTRY, ADMIN_STAMPS_SCREEN, ADMIN_STAMPS_WIZARD_UNITS } from "@/lib/ui/screen-tiles";
+import { useOncePerSignIn } from "@/components/tiles/once-per-sign-in";
+import { QUIET_ROW, QUIET_ROW_BUTTONS, QUIET_ROW_MARK } from "@/lib/ui/quiet-row";
+import { StampAboutTile } from "./stamp-about-tile";
 import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 /** The stamps, at #37.16's column widths (Slice #37.22). */
@@ -25,9 +28,13 @@ const COLUMNS: readonly ColumnName[] = ["description", "count", "rowActions"];
  * panels), the create form (3) while it is open, and the list (the fewest units
  * that hold its columns, the description taking what the others leave).
  */
-const ABOUT_UNITS = 7; // 40.98: re-pinned (6 of 148 px)
 const FORM_UNITS = 4; // 40.98: re-pinned (3 of 148 px)
-const LIST_UNITS = tableUnits(COLUMNS);
+/**
+ * Slice 41.99 (Ask first 4): as Grupuri's (41.98) — 75 % of the units that hold its columns (`tableUnits`, 6), rounded
+ * down, 4; the description is the fill, so it is the column that narrows. „Ce este o Ștampilă?" is a line of its own.
+ */
+export const LIST_UNITS = ADMIN_STAMPS_LIST_UNITS;
+export const LIST_UNITS_BEFORE_41_99 = tableUnits(COLUMNS);
 // Slice #39.89: the list fills its tile at Reference Data's standard gap, the description taking what the others leave.
 const LIST_FILL: ColumnName = "description";
 
@@ -209,6 +216,8 @@ export function StampsListView({ about }: { about?: ReactNode } = {}) {
   const t = useTranslations("stamp");
   // Slice 41.41: the screen's tiles chosen with „Panouri" (in the page bar), packed and dragged like a record's.
   const tiles = useAdminTiles(ADMIN_STAMPS_REGISTRY);
+  // Slice 41.99: „Ce este o Ștampilă?" open the first time Ștampile is opened after each sign-in (as Grupuri, 41.98).
+  useOncePerSignIn(ADMIN_STAMPS_REGISTRY.entity, "about", tiles.choice.reveal);
   const tileLabels = { about: t("infoPanel.title"), workflows: t("workflows.title"), list: t("pageTitle") };
   const qc = useQueryClient();
 
@@ -234,10 +243,11 @@ export function StampsListView({ about }: { about?: ReactNode } = {}) {
   return (
     <>
     <AdminTilesBar registry={ADMIN_STAMPS_REGISTRY} labels={tileLabels} tiles={tiles} allUp />
-    <TileUnitRow screen={{ ...ADMIN_STAMPS_SCREEN, units: Math.max(ABOUT_UNITS, LIST_UNITS) }}>
-      {tiles.choice.isShown("about") && about}
-      {/* 41.44: how you work with them — a second information tile. */}
-      <WorkflowsTile kind="stamp" hidden={!tiles.choice.isShown("workflows")} />
+    <TileUnitRow screen={ADMIN_STAMPS_SCREEN}>
+      {/* 41.99: „Ce este o Ștampilă?", across the row, closed by „Am înțeles" for this sign-in. */}
+      {tiles.choice.isShown("about") && (about ?? <StampAboutTile onUnderstood={() => tiles.choice.toggle("about")} />)}
+      {/* 41.44: how you work with them — a second information tile. 41.99: the wizard, 3 units, the list beside it. */}
+      <WorkflowsTile kind="stamp" units={ADMIN_STAMPS_WIZARD_UNITS} hidden={!tiles.choice.isShown("workflows")} />
       {creating && <CreateForm onClose={() => setCreating(false)} />}
 
       <section {...screenPanel("stamps", LIST_UNITS)} className={ADMIN_LIST_PANEL} data-tile="list" hidden={!tiles.choice.isShown("list")}>
@@ -308,7 +318,8 @@ export function StampsListView({ about }: { about?: ReactNode } = {}) {
               </tr>
             )}
             {shown?.map((s) => (
-              <tr key={s.id} className="hover:bg-cta-pale dark:hover:bg-zinc-800/50">
+              // Slice 41.99 (Ask first 4): calm, as Grupuri's (quiet-row.ts).
+              <tr key={s.id} className={`${QUIET_ROW} hover:bg-cta-pale dark:hover:bg-zinc-800/50`}>
                 <td className={`px-4 py-2 ${WRAPS}`}>
                   <span className="font-mono font-semibold text-ink dark:text-zinc-100">
                     {s.code}
@@ -327,7 +338,7 @@ export function StampsListView({ about }: { about?: ReactNode } = {}) {
                   {s.memberCount}
                 </td>
                 <td className="px-4 py-2">
-                  <div className="flex flex-wrap gap-2">
+                  <div className={`flex flex-wrap gap-2 ${QUIET_ROW_BUTTONS}`} data-row-buttons={QUIET_ROW_MARK}>
                     {/* #37.46 (A080): Stamp + „Aplică", a link. */}
                     <IconButton
                       href={`/admin/stamps/${s.id}`}

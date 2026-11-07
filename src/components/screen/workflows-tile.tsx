@@ -12,13 +12,9 @@
  * The text is `<kind>.workflows` in the messages; workflows-labels.test.ts holds every label it quotes to a screen
  * string, so the tile cannot drift from the screen in silence.
  */
-import { useId } from "react";
-import { useTranslations } from "next-intl";
-import { TileTitle } from "@/components/tiles/tile-title";
-import { GroupWorkflowsWizard } from "@/components/screen/group-workflows-wizard";
-import { screenPanel } from "@/lib/ui/field-widths";
+import { WorkflowsWizard } from "@/components/screen/group-workflows-wizard";
 
-/** The workflows, in reading order — each `<kind>.workflows.steps.<key>.{title,body}`. */
+/** 41.44's workflows, each `<kind>.workflows.steps.<key>.{title,body}` — the steps the wizards quote (41.84, 41.99). */
 export const WORKFLOW_STEPS = ["find", "create", "members", "record", "delete"] as const;
 /** As wide as „Ce este …?" (7 units) — on a group's and a stamp's own screen. */
 export const WORKFLOWS_UNITS = 7;
@@ -28,42 +24,10 @@ export const WORKFLOWS_UNITS = 7;
  */
 export const LIST_SCREEN_WORKFLOWS_UNITS = 3;
 
-// Slice 41.83: under Administrare every tile is the record tile's grey — both kinds alike (they were blue and amber).
-const SURFACE = {
-  group: "rounded-lg border border-card-rim bg-card px-5 py-4",
-  stamp: "rounded-lg border border-card-rim bg-card px-5 py-4",
-} as const;
-const TEXT = {
-  group: "text-ink",
-  stamp: "text-ink",
-} as const;
-
-/** Slice 41.84: the group's tile asks first what you want to do (group-workflows-wizard.tsx); „Ștampile" keeps the list. */
+/**
+ * Slice 41.84: the group's tile asks first what you want to do (group-workflows-wizard.tsx). Slice 41.99: so does the
+ * stamp's — one wizard for both kinds; 41.44's list of every step (`WorkflowsList`) went.
+ */
 export function WorkflowsTile({ kind, hidden = false, units = WORKFLOWS_UNITS }: { kind: "group" | "stamp"; hidden?: boolean; units?: number }) {
-  if (kind === "group") return <GroupWorkflowsWizard units={units} hidden={hidden} />;
-  return <WorkflowsList kind={kind} hidden={hidden} />;
-}
-
-function WorkflowsList({ kind, hidden }: { kind: "group" | "stamp"; hidden: boolean }) {
-  const t = useTranslations(kind === "group" ? "group.workflows" : "stamp.workflows");
-  const titleId = useId();
-  return (
-    <section
-      {...screenPanel(`${kind}-workflows`, WORKFLOWS_UNITS)}
-      data-tile="workflows"
-      hidden={hidden}
-      aria-labelledby={titleId}
-      className={SURFACE[kind]}
-    >
-      <TileTitle id={titleId} title={t("title")} className="mb-3" admin />
-      <ol className={`flex flex-col gap-2.5 text-sm ${TEXT[kind]}`}>
-        {WORKFLOW_STEPS.map((key) => (
-          <li key={key} data-workflow-step={key}>
-            <p className="font-semibold">{t(`steps.${key}.title`)}</p>
-            <p>{t(`steps.${key}.body`)}</p>
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
+  return <WorkflowsWizard kind={kind} units={units} hidden={hidden} />;
 }

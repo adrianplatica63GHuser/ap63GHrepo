@@ -75,12 +75,16 @@ describe.each(["ro-RO", "en-GB"])("its words in %s", (locale) => {
 });
 
 describe("the wiring", () => {
-  it("the group's workflows tile is the wizard; „Ștampile” keeps its list (Ask first 5)", () => {
+  // 41.99 rewritten in place — was „the group's workflows tile is the wizard; „Ștampile” keeps its list (Ask first 5)"
+  // (`WORKFLOW_STEPS.map((key)`, 41.44's every step at once). Adrian: „Turning the tile how you work with stamps into a
+  // radio button type of wizard". One wizard for both kinds, driven by WORKFLOW_WIZARDS.
+  it("both kinds' workflows tile is the one wizard; no list of every step is left", () => {
     const src = read("src", "components", "screen", "workflows-tile.tsx");
-    // 41.98: the units are the caller's — 3 on Grupuri, WORKFLOWS_UNITS (7) on a group's screen.
-    expect(src).toContain('if (kind === "group") return <GroupWorkflowsWizard units={units} hidden={hidden} />;');
+    // 41.98: the units are the caller's — 3 on Grupuri and Ștampile, WORKFLOWS_UNITS (7) on a group's and a stamp's screen.
+    expect(src).toContain("return <WorkflowsWizard kind={kind} units={units} hidden={hidden} />;");
     expect(src).toContain("units = WORKFLOWS_UNITS");
-    expect(src).toContain("WORKFLOW_STEPS.map((key)");
+    expect(src).not.toMatch(/function WorkflowsList|WORKFLOW_STEPS\.map/);
+    expect(read("src", "components", "screen", "group-workflows-wizard.tsx")).toContain("const w = WORKFLOW_WIZARDS[kind];");
   });
   it("„Ce este un Grup?” unticks itself in „Panouri” with „Am înțeles” (Ask first 1)", () => {
     expect(read("src", "app", "admin", "groups", "_components", "groups-list-view.tsx")).toContain('<GroupAboutTile onUnderstood={() => tiles.choice.toggle("about")} />');

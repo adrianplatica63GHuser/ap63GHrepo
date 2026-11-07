@@ -69,7 +69,17 @@ export const ADMIN_GROUPS_SCREEN: ScreenTiles = {
   tileUnits: { workflows: ADMIN_GROUPS_WIZARD_UNITS, list: ADMIN_GROUPS_LIST_UNITS },
   flowUnits: ADMIN_GROUPS_WIZARD_UNITS + ADMIN_GROUPS_LIST_UNITS,
 };
-export const ADMIN_STAMPS_SCREEN: ScreenTiles = { entity: "admin-stamps", tiles: ["about", "workflows", "list"], units: 7, flowUnits: 14 };
+// Slice 41.99: Ștampile as Grupuri — „Ce este o Ștampilă?" across the row, the 3-unit wizard, the list at 75 % of its
+// old units (6 → 4) beside it.
+export const ADMIN_STAMPS_WIZARD_UNITS = 3;
+export const ADMIN_STAMPS_LIST_UNITS = 4;
+export const ADMIN_STAMPS_SCREEN: ScreenTiles = {
+  entity: "admin-stamps",
+  tiles: ["about", "workflows", "list"],
+  units: ADMIN_STAMPS_LIST_UNITS,
+  tileUnits: { workflows: ADMIN_STAMPS_WIZARD_UNITS, list: ADMIN_STAMPS_LIST_UNITS },
+  flowUnits: ADMIN_STAMPS_WIZARD_UNITS + ADMIN_STAMPS_LIST_UNITS,
+};
 export const ADMIN_TAGS_SCREEN: ScreenTiles = { entity: "admin-tags", tiles: ["note", "cloud"], units: 7, flowUnits: 14 };
 
 /**

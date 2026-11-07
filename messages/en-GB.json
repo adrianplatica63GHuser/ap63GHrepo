@@ -4062,7 +4062,8 @@
       "body2": "Unlike groups, a stamp can be applied to any mix of entity types at the same time.",
       "body3": "Stamps can also describe subjective qualifiers: the level of trust, an object's potential, a priority or any other personal assessment label. It is good practice to apply as many stamps as you can and to create varied ones — it adds value and richness to how the data is used.",
       "codeNote": "Each stamp gets a unique three-letter code (e.g. STMP-AAA), assigned automatically.",
-      "seeAlso": "For temporary actions on a single type of object, use Groups."
+      "seeAlso": "For temporary actions on a single type of object, use Groups.",
+      "understood": "I understand"
     },
     "workflows": {
       "title": "How you work with stamps",
@@ -4081,11 +4082,32 @@
         },
         "record": {
           "title": "From „Tags and groups”, on an object",
-          "body": "„Edit” opens the tile; „+ Apply stamp” picks a stamp, and „Remove stamp” (×) takes it off. Each change is written at once; „Done” closes the tile."
+          "body": "„Edit” opens the tile; „+ Apply stamp” picks a stamp, and „Remove stamp” (×, on the stamp's code) takes it off. Nothing is written until you press „Save”; „Cancel” leaves everything as it was."
         },
         "delete": {
           "title": "Deleting a stamp",
           "body": "„Delete” on the stamp's row asks to confirm. The stamp goes from the objects too, and the objects stay in the archive."
+        }
+      },
+      "wizard": {
+        "question": "What do you want to do?",
+        "noteTitle": "Note",
+        "headings": {
+          "self": "The stamp itself",
+          "records": "The stamped objects"
+        },
+        "choices": {
+          "find": { "label": "Find a stamp", "why": "To see whether the stamp you need already exists, or to open it." },
+          "create": { "label": "Make a new stamp", "why": "When the search found none — search first, so the same stamp is not made twice." },
+          "describe": { "label": "Change a stamp's notes", "why": "When what you know about it has changed; the short description stays the one given at creation." },
+          "delete": { "label": "Delete a stamp", "why": "When it has done its job — its objects stay in the archive." },
+          "apply": { "label": "Apply or remove a stamp", "why": "So the stamp is on exactly the objects you need." }
+        },
+        "steps": {
+          "describe": {
+            "title": "Changing the notes",
+            "body": "„Apply” on the stamp's row opens its screen. In „Stamp description” change „Notes” and press „Save stamps”."
+          }
         }
       }
     }
@@ -4178,7 +4200,7 @@
         },
         "record": {
           "title": "From „Tags and groups”, on an object",
-          "body": "„Edit” opens the tile; „+ Add to group” picks a group, and „Remove from group” (×) takes the object out. Each change is written at once; „Done” closes the tile. An object is in at most 3 groups."
+          "body": "„Edit” opens the tile; „+ Add to group” picks a group, and „Remove from group” (×, on the group's code) takes the object out. Nothing is written until you press „Save”; „Cancel” leaves everything as it was. An object is in at most 3 groups."
         },
         "delete": {
           "title": "Deleting a group",
