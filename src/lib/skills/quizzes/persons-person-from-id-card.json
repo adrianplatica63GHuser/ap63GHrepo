@@ -244,11 +244,11 @@
           "section": "persons-id-card-manual",
           "ro": {
             "question": "Peste o lună, Ciprian deschide mama creată odată cu titularul de pe cartea lui, și se uită la „Proveniență”, în „Clasificare”. Ce scrie acolo?",
-            "explanation": "La fiecare părinte creat astfel, „Proveniență” este „Din actul de identitate al unei rude”, iar „Note” spune din cartea cui a fost creat."
+            "explanation": "La fiecare părinte creat astfel, „Proveniență” este „Din ID-ul unei rude”, iar „Note” spune din cartea cui a fost creat."
           },
           "en": {
             "question": "A month later, Ciprian opens the mother created together with the holder from his card, and looks at „Proveniență” (provenance), in „Clasificare”. What does it say?",
-            "explanation": "For each parent created this way, „Proveniență” is „Din actul de identitate al unei rude” (from a relative's identity document), and „Note” says from whose card they were created."
+            "explanation": "For each parent created this way, „Proveniență” is „Din ID-ul unei rude” (from a relative's ID), and „Note” says from whose card they were created."
           },
           "options": [
             {
@@ -266,8 +266,8 @@
             {
               "id": "o3",
               "correct": true,
-              "ro": "„Din actul de identitate al unei rude”, iar „Note” spune din cartea cui.",
-              "en": "„Din actul de identitate al unei rude”, and „Note” says from whose card."
+              "ro": "„Din ID-ul unei rude”, iar „Note” spune din cartea cui.",
+              "en": "„Din ID-ul unei rude”, and „Note” says from whose card."
             }
           ]
         },

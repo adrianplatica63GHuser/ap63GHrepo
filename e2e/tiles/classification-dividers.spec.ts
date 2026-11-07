@@ -74,9 +74,29 @@ async function steps(page: Page, url: string, olderToo: boolean) {
   await expect(tile.getByRole("button", { name: "Verificat azi", exact: true })).toBeDisabled({ timeout: 15_000 });
   await expect(tile.locator("[data-classification-review] [data-classification-date]")).toHaveText("(actualizat azi)");
 
+  // Step 1c — 41.94: the item titles in #C00000; a line between every two items and under Proveniență (three, with one
+  // version); no „Istoric".
+  for (const h of await tile.locator("[data-classification-item] h3").all()) {
+    await expect(h).toHaveCSS("color", "rgb(192, 0, 0)");
+  }
+  expect((await read(tile)).kinds).toEqual(["horizontal", "horizontal", "horizontal"]);
+  await expect(tile.locator("[data-history-line], [data-history-block]")).toHaveCount(0);
+  await expect(tile.getByText("Istoric", { exact: true })).toHaveCount(0);
+
   // Step 2 — „Editează": the three selects, one to a row, inside the tile; „Salvează" disabled until a choice.
   await openEdit(tile);
   expect(await read(tile)).toMatchObject({ items: ["importance", "relevance", "provenance"], stacked: true, within: true, selects: 3 });
+  // 41.94 (Ask first 3, 4): each select 136 px (M) on its label's line, the three starting at one column; two lines.
+  const geo = await tile.evaluate((t) => [...t.querySelectorAll<HTMLElement>("[data-classification-item]")].map((i) => {
+    const h = i.querySelector("h3")!.getBoundingClientRect();
+    const s = i.querySelector("select")!.getBoundingClientRect();
+    return { w: Math.round(s.width), left: Math.round(s.left), sameLine: s.top < h.bottom && h.top < s.bottom, after: s.left >= h.right };
+  }));
+  for (const g of geo) expect(g).toMatchObject({ w: 136, sameLine: true, after: true });
+  expect(new Set(geo.map((g) => g.left)).size, "the selects start at one column").toBe(1);
+  expect((await read(tile)).kinds).toEqual(["horizontal", "horizontal"]);
+  // 41.94 (Ask first 5): Proveniență's last value.
+  await expect(tile.getByRole("combobox", { name: "Proveniență", exact: true }).locator("option").last()).toHaveText("Din ID-ul unei rude");
   await expect(tile.locator('[data-tile-save="classification"]')).toBeDisabled();
   await tile.getByRole("combobox", { name: "Importanță", exact: true }).selectOption({ index: 1 });
   const chosen = (await tile.getByRole("combobox", { name: "Importanță", exact: true }).locator("option:checked").textContent())!.trim();
@@ -110,10 +130,11 @@ async function steps(page: Page, url: string, olderToo: boolean) {
   await expect(review.getByRole("button", { name: "Verificat azi", exact: true })).toBeDisabled();
   await expect(tile.locator("[data-classification-item] [data-classification-date]")).toHaveCount(0);
   await expect(tile.getByRole("button", { name: "Verificat azi", exact: true })).toHaveCount(1);
-  const [prov, rl, hist] = await Promise.all([
-    tile.locator('[data-classification-item="provenance"]').boundingBox(), review.boundingBox(), tile.locator("[data-history-line]").boundingBox(),
+  // 41.94: under the three — there is no „Istoric" after it any more.
+  const [prov, rl] = await Promise.all([
+    tile.locator('[data-classification-item="provenance"]').boundingBox(), review.boundingBox(),
   ]);
-  expect(rl!.y >= prov!.y + prov!.height - 1 && hist!.y >= rl!.y + rl!.height - 1, "under the three, before Istoric").toBe(true);
+  expect(rl!.y >= prov!.y + prov!.height - 1, "under the three").toBe(true);
   await expect(tile.locator("[data-info-glyph]")).toHaveCount(1);
   const titleLine = tile.locator("[data-tile-title-line]");
   const info = titleLine.locator("button:has([data-info-glyph])");
@@ -123,7 +144,9 @@ async function steps(page: Page, url: string, olderToo: boolean) {
   expect(ib!.x - (hb!.x + hb!.width)).toBeGreaterThanOrEqual(0);
   await info.click();
   const tip = titleLine.locator("[role=tooltip]");
-  for (const w of ["Importanță", "Relevanță", "Proveniență", "Istoric", "Revizuire", "un singur bloc"]) await expect(tip).toContainText(w);
+  for (const w of ["Importanță", "Relevanță", "Proveniență", "Revizuire", "un singur bloc"]) await expect(tip).toContainText(w);
+  // 41.94: the bubble's „Istoric" paragraph went with the block.
+  await expect(tip).not.toContainText("Istoric");
   await expect(tip).toContainText("mai mult de 90 de zile");
   await expect(tip).toContainText("mai veche de 90 de zile");
   await expect(tip).toContainText("Administrare → Setări");
@@ -134,7 +157,8 @@ async function steps(page: Page, url: string, olderToo: boolean) {
   const again = await showTile(page, "Clasificare");
   await expect(again.locator('[data-read-value="classification.importance"]')).toHaveText(chosen, { timeout: 30_000 });
   await expect(again.getByRole("button", { name: "Versiunea anterioară", exact: true })).toBeVisible({ timeout: 15_000 });
-  expect(await read(again)).toMatchObject({ kinds: ["horizontal"], inside: true });
+  // 41.94: the version line, then the three under the items.
+  expect(await read(again)).toMatchObject({ kinds: ["horizontal", "horizontal", "horizontal", "horizontal"], inside: true });
 
   // Step 5 — „Editează", a change, „Renunță": nothing written, the value as it was.
   await openEdit(again);

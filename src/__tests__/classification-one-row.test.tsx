@@ -7,7 +7,8 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 
-import { EntityMetadataTab } from "@/components/entity-metadata-tab";
+import { CLASSIFICATION_SELECT_STYLE, EntityMetadataTab, ROSE_ITEM_TITLE } from "@/components/entity-metadata-tab";
+import { FIELD_LABEL } from "@/lib/ui/field-box";
 import { ListTile } from "@/components/tiles/list-tile";
 import { CLASSIFICATION_UNITS, LIST_UNITS, unitsRem } from "@/lib/ui/field-widths";
 
@@ -63,6 +64,16 @@ function renderTile() {
 
 const items = () => [...document.querySelectorAll<HTMLElement>("[data-classification-item]")];
 
+describe("Slice 41.94: the rose tiles' item titles in #C00000; the selects at M", () => {
+  it("an item title is a field's label in Administrare's red — FIELD_LABEL itself stays navy", () => {
+    expect(ROSE_ITEM_TITLE).toBe(FIELD_LABEL.replace("text-label", "text-admin-title"));
+    expect(FIELD_LABEL).toContain("text-label");
+  });
+  it("a select is the M box, 8.5rem (136 px)", () => {
+    expect(CLASSIFICATION_SELECT_STYLE).toEqual({ width: "8.5rem" });
+  });
+});
+
 function renderInFrame() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -90,7 +101,9 @@ describe("„Clasificare”: read, and edited with „Editează” (Slice 41.10)
     expect(items().map((i) => i.querySelector("[data-read-value]")?.textContent)).toEqual(["importance.low", "relevance.current", "provenance.manual"]);
     for (const i of items()) {
       expect(i.querySelector("h3")!.compareDocumentPosition(i.querySelector("[data-read-value]")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-      expect(i.querySelector("h3")!.className).toBe("font-colhead text-xs font-normal tracking-[0.02em] text-label");
+      // 41.94 inverted in place — was `… text-label` (the navy). Adrian: „The navy blue strings should become color
+      // #C00000".
+      expect(i.querySelector("h3")!.className).toBe("font-colhead text-xs font-normal tracking-[0.02em] text-admin-title");
       // 41.28: no „i" on an item's title any more — the tile has one.
       expect(i.querySelector("[data-info-glyph]")).toBeNull();
     }
@@ -105,7 +118,11 @@ describe("„Clasificare”: read, and edited with „Editează” (Slice 41.10)
     const review = document.querySelectorAll<HTMLElement>("[data-classification-review]");
     expect(review).toHaveLength(1);
     expect(items()[2].compareDocumentPosition(review[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(review[0].compareDocumentPosition(document.querySelector("[data-history-line]")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // 41.94 inverted in place — was „the review line, then Istoric (`[data-history-line]`) under it". Adrian: „Remove
+    // the History section at the bottom".
+    expect(document.querySelector("[data-history-line]")).toBeNull();
+    expect(document.querySelector("[data-history-block]")).toBeNull();
+    expect(screen.queryByText("provenance.historyTitle")).toBeNull();
     expect(within(review[0]).getByRole("button", { name: "markReviewed.button" })).toBeEnabled();
     expect(review[0].querySelector("[data-classification-date]")!.textContent).toBe("");
     // 41.28 (Ask first 3): one „i" in the tile, named for the tile. 41.37 inverted in place — it was „at the right end
@@ -136,6 +153,18 @@ describe("„Clasificare”: read, and edited with „Editează” (Slice 41.10)
     fireEvent.click(await screen.findByRole("button", { name: /^editTile/ }));
     const selects = await screen.findAllByRole("combobox");
     expect(selects.map((x) => x.getAttribute("aria-label"))).toEqual(["importance.title", "relevance.title", "provenance.title"]);
+    // 41.94 (Ask first 3): each select an M box (136 px) on its label's line — the items one grid of two columns, each
+    // item across both (`subgrid`), so the selects start at one column. Was 41.10's: the tile's whole width under it.
+    expect(document.querySelector("[data-classification-items]")!.className).toMatch(/\bgrid-cols-\[max-content_max-content\]/);
+    for (const s of selects) {
+      expect(s.style.width).toBe("8.5rem");
+      const item = s.closest<HTMLElement>("[data-classification-item]")!;
+      expect(item.className).toMatch(/\bgrid-cols-subgrid\b/);
+      expect(item.className).toMatch(/\bcol-span-2\b/);
+      expect(item.firstElementChild!.tagName).toBe("H3");
+    }
+    // 41.94 (Ask first 4): in „Editează" two lines — between the items — and none above „Salvează".
+    expect(document.querySelectorAll("[data-classification-line-between] [data-divider]")).toHaveLength(2);
     // While editing, no review button: it marks the saved value, not the one being chosen.
     expect(screen.queryByRole("button", { name: "markReviewed.button" })).toBeNull();
     expect(screen.getByRole("button", { name: "save" })).toBeDisabled();

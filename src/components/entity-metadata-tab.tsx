@@ -19,13 +19,12 @@ import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { MetadataSnapshot, MetadataVersionItem } from "@/lib/metadata/queries";
 import { PROVENANCE_VALUES, provenanceI18nKey } from "@/lib/metadata/provenance";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { CLASSIFICATION_UNITS, boxRem, rem, screenBox, tileInner, unitsInnerRem } from "@/lib/ui/field-widths";
+import { SCALE, boxRem, rem, screenBox } from "@/lib/ui/field-widths";
 import { daysSince, oldestStamp, updatedToday as isUpdatedToday } from "@/lib/metadata/updated-days";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { pickerOptionText, usePickerDismiss } from "@/lib/ui/picker-dismiss";
 import { Divider } from "@/lib/ui/divider";
 import { MAX_GROUPS_PER_ITEM, MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/validation";
-import { FIELD_LABEL } from "@/lib/ui/field-box";
 import { ReadValue, TileEditBar, TileEditButton, onTileKeyDown } from "@/components/tiles/read-edit-tile";
 import { EmptyTileLine, focusFirstField } from "@/components/tiles/empty-tile";
 import { TileAction, TileHint, useTileChrome } from "@/components/tiles/list-tile";
@@ -132,9 +131,12 @@ function versionLabelColor(
 // MetaSelect — thin styled select
 // ---------------------------------------------------------------------------
 
-/** Slice 41.10: a dropdown in „Editează" fills the 2-unit tile inside — 228 px. */
-// 41.16: the tile's inner width as drawn on the live unit (`tileInner`), 228 px on 119.
-const CLASSIFICATION_SELECT_STYLE: React.CSSProperties = { width: tileInner(unitsInnerRem(CLASSIFICATION_UNITS)) };
+/**
+ * Slice 41.94 — Adrian: „Make the drop downs for these fields: Importance, Relevance, Provenance - to be size M and place
+ * them inline with the fields". A dropdown in „Editează" is an M box (8.5rem, 136 px) on its label's line. It filled the
+ * 2-unit tile inside (228 px) under its label since 41.10.
+ */
+export const CLASSIFICATION_SELECT_STYLE: React.CSSProperties = { width: rem(SCALE.M) };
 
 function MetaSelect({
   value,
@@ -164,7 +166,7 @@ function MetaSelect({
       aria-describedby={describedBy}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
-      // Slice 41.10: the 2-unit tile's whole width inside (228 px), as a gray tile's fill field — a fixed width (#37.23).
+      // Slice 41.94: an M box on its label's line — a fixed width (#37.23).
       style={CLASSIFICATION_SELECT_STYLE}
       className={[
         "rounded border border-slate-300 dark:border-slate-600",
@@ -196,8 +198,14 @@ function MetaSelect({
  * keyboard (#37.50). The text stays in the document (`sr-only` while closed),
  * so the control it explains can point `aria-describedby` at it.
  */
-/** Slice 41.10: an item's title is a field's label, as on the gray tiles — navy, 12 px (40.95's `FIELD_LABEL`). */
-const ITEM_TITLE = FIELD_LABEL;
+/**
+ * Slice 41.10: an item's title is a field's label, as on the gray tiles — 12 px Roboto Condensed (40.95's `FIELD_LABEL`).
+ * Slice 41.94 — Adrian: „Tiles “Classification” and “Tags and groups” The navy blue strings should become color #C00000".
+ * Every item title in the rose tiles takes Administrare's red (`text-admin-title`, #C00000; #F87171 in dark); the values,
+ * the notes and the tile titles keep theirs, and `FIELD_LABEL` stays navy everywhere else.
+ */
+export const ROSE_ITEM_TITLE = "font-colhead text-xs font-normal tracking-[0.02em] text-admin-title";
+const ITEM_TITLE = ROSE_ITEM_TITLE;
 
 function ItemTitle({ id, title, note, about }: { id: string; title: string; note?: string; about: string }) {
   if (!note) return <h3 className={ITEM_TITLE}>{title}</h3>;
@@ -205,6 +213,18 @@ function ItemTitle({ id, title, note, about }: { id: string; title: string; note
     <HintBubble id={id} text={note} triggerLabel={about}>
       <h3 className={ITEM_TITLE}>{title}</h3>
     </HintBubble>
+  );
+}
+
+/**
+ * Slice 41.94: the line between two of „Clasificare"'s items — the version line's `Divider`, across both of the edit
+ * grid's columns.
+ */
+function ItemLine() {
+  return (
+    <div className="col-span-2" data-classification-line-between="">
+      <Divider />
+    </div>
   );
 }
 
@@ -283,6 +303,9 @@ function ClassificationItem({
   const uid = useId();
   const statementId = `${uid}-statement`;
 
+  /* Slice 41.94: in „Editează" the item is ONE line — its label, then its select — on the items' shared two columns
+     (`grid-cols-subgrid`), so the three selects start at one column, after the longest label. Read keeps the label
+     over the value. */
   const control = editing ? (
     <MetaSelect
       value={value}
@@ -303,7 +326,10 @@ function ClassificationItem({
   );
 
   return (
-    <section className="flex flex-col gap-0.5" data-classification-item={item}>
+    <section
+      className={editing ? "col-span-2 grid grid-cols-subgrid items-center gap-y-0.5" : "flex flex-col gap-0.5"}
+      data-classification-item={item}
+    >
       {/* 41.28: the title alone — the tile's one „i" explains the three (it was each item's own). */}
       <ItemTitle id={`${uid}-title`} title={title} about="" />
       {/* 41.28 (Ask first 2): one line — the value. 41.59: its „(actualizat …)" and „Marchează ca verificat" are the
@@ -321,7 +347,7 @@ function ClassificationItem({
         </div>
       </div>
 
-      {children && <div className="mt-1 flex flex-col gap-1 px-2">{children}</div>}
+      {children && <div className="col-span-2 mt-1 flex flex-col gap-1 px-2">{children}</div>}
     </section>
   );
 }
@@ -1705,8 +1731,9 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
     ) });
   }
 
-  // Slice 41.37: Clasificare's one „i" — the three items, Istoric, and the review timeline („Revizuire"), its day counts
-  // the settings' own (`tfDays`, as `buildReviewWarning`), never written into the text.
+  // Slice 41.37: Clasificare's one „i" — the three items and the review timeline („Revizuire"), its day counts the
+  // settings' own (`tfDays`, as `buildReviewWarning`), never written into the text. Slice 41.94: „Istoric" went from the
+  // tile — Adrian: „Remove the History section at the bottom" — and its paragraph from the bubble with it.
   const reviewWarnDays = tfDays(tf, "metadata_review_warning");
   const reviewStaleDays = tfDays(tf, "dashboard_stale_metadata");
   const aboutBubble = (
@@ -1720,10 +1747,6 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
               {t(`${k}.note`)}
             </span>
           ))}
-          <span className="mb-1.5 block">
-            <strong className="block font-semibold">{t("provenance.historyTitle")}</strong>
-            {t("provenance.historyNote")}
-          </span>
           <span className="block" data-review-note="">
             <strong className="block font-semibold">{t("review.title")}</strong>
             {t("review.note", { warn: reviewWarnDays, stale: reviewStaleDays })}
@@ -1797,11 +1820,16 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           <EmptyTileLine title={chrome!.title} tile="classification" onAdd={startEdit} />
         ) : (
         // Slice 41.10 (Ask first 2): the three values one to a row, label above value; „Editează" turns them into
-        // their selects, saved together by „Salvează" under them; Esc is „Renunță".
+        // their selects, saved together by „Salvează" under them; Esc is „Renunță". Slice 41.94: in „Editează" a grid
+        // of two columns — the labels', the selects' — each item one line across both.
+        // Slice 41.94 (Ask first 4) — Adrian: „Place dividers between Importance, Relevance, Provenance and the line
+        // with “when it was updated” and the Update button; these dividers are similar to the one above Importance".
+        // The version line's Divider between every two items, and under Proveniență when the review line follows it —
+        // three in read, two in „Editează" (none above „Salvează").
         <div
           role="group"
           aria-label={chrome?.title ?? t("sectionClassification")}
-          className="flex flex-col gap-2"
+          className={editing ? "grid grid-cols-[max-content_max-content] gap-x-2 gap-y-2" : "flex flex-col gap-2"}
           data-classification-items={itemsId}
           data-classification-editing={editing ? "" : undefined}
           onKeyDown={onTileKeyDown(editing, cancelEdit)}
@@ -1820,6 +1848,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           placeholder={t("importance.placeholder")}
           highlight={highlights.importance}
         />
+        <ItemLine />
 
         {/* ── 2. Relevanță / Relevance ─────────────────────────────────────── */}
         <ClassificationItem
@@ -1835,8 +1864,9 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           placeholder={t("relevance.placeholder")}
           highlight={highlights.relevance}
         />
+        <ItemLine />
 
-        {/* ── 3. Proveniență / Provenience, with its history ───────────────── */}
+        {/* ── 3. Proveniență / Provenience ─────────────────────────────────── */}
         <ClassificationItem
           item="provenance"
           title={t("provenance.title")}
@@ -1864,8 +1894,9 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
         </ClassificationItem>
 
         {/* Slice 41.59 (Ask first 2) — Adrian: „I need to treat all three as one metadata item". One line under the
-            three, before Istoric: the oldest stamp's „(actualizat …)" and one „Marchează ca verificat" at its right
-            end, the red warning under it. Its press opens the confirmation; the review is its „Confirmă". */}
+            three: the oldest stamp's „(actualizat …)" and one „Marchează ca verificat" at its right end, the red
+            warning under it. Its press opens the confirmation; the review is its „Confirmă". */}
+        {isOnLatest && !editing && <ItemLine />}
         {isOnLatest && !editing && (
           <ClassificationReviewLine
             daysText={buildDaysText(reviewStamp)}
@@ -1891,31 +1922,13 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           <p role="alert" className="px-2 text-xs text-alert">{saveError}</p>
         )}
 
-        {/* Istoric — under the review line (41.59; it was Proveniență's own, under its value). */}
-        <div className="flex flex-col gap-1 px-2" data-history-block="">
-          {/* History — sourced from entity_provenance_log via the main query. It says something about THIS record,
-              so it stays visible (#37.63). Slice 41.10: a label as the others; the save moved to „Salvează". */}
-          <h4 className={FIELD_LABEL} data-history-line="">
-            {t("provenance.historyTitle")}
-          </h4>
-          {data.provenanceHistory.length === 0 ? (
-            <p className="text-xs text-fade dark:text-zinc-500">{t("provenance.historyEmpty")}</p>
-          ) : (
-            <ul className="flex flex-col gap-0.5">
-              {data.provenanceHistory.map((entry, i) => (
-                <li key={i} className="flex items-center gap-3 text-xs text-ink dark:text-zinc-300">
-                  <span className="font-mono tabular-nums">{entry.date}</span>
-                  <span>{provenanceLabelMap[entry.method] ?? entry.method}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        {/* Slice 41.94 (Ask first 2): „Istoric" is gone from the tile. entity_provenance_log is still written and the
+            API still returns `provenanceHistory`; only its display went. */}
 
         {editing && (
           // 41.59 (Ask first 3): „Salvează" opens the same confirmation — the save also confirms the three as checked
           // today, the changed ones marked; „Înapoi" keeps the edit open.
-          <div className="relative">
+          <div className="relative col-span-2">
             <TileEditBar
               tile="classification"
               onSave={() => setConfirming("save")}

@@ -117,7 +117,7 @@ A Romanian identity card — the old booklet above all — also prints the paren
 
 Without a CNP, the application looks for the parent by name only, and the window tells you so. If it finds nobody, it reads „New person”: press „Create and link”. If it finds persons with a similar name, it shows them as suggestions, not as sure matches: choose „Link this person” only if it really is the same person, otherwise „None of these — create a new person”. „Skip” passes over that parent.
 
-At the end you return to the list of persons. On the holder's screen, in „Links”, the father appears with „(Tată)” and the mother with „(Mamă)”; on the father's screen, the holder appears with „(Fiu)” (son) or „(Fiică)” (daughter). For each parent created this way, „Provenance” is „From a relative's identity document”, and „Notes” says from whose card they were created.
+At the end you return to the list of persons. On the holder's screen, in „Links”, the father appears with „(Tată)” and the mother with „(Mamă)”; on the father's screen, the holder appears with „(Fiu)” (son) or „(Fiică)” (daughter). For each parent created this way, „Provenance” is „From a relative's ID”, and „Notes” says from whose card they were created.
 
 ### 3.3.2 From an identity card already in the archive {#persons-id-card-document}
 

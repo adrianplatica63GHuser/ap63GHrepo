@@ -939,7 +939,7 @@
         "algorithm": "Calculated (algorithm)",
         "aiInterpreted": "AI interpretation",
         "externalFeed": "External feed",
-        "relativeIdCard": "From a relative's identity document",
+        "relativeIdCard": "From a relative's ID",
         "statementManual": "This item was entered manually using the Add new button — all data was typed in directly by a user.",
         "statementImage": "This item was created from a graphics file (a scan or a photo). The image is stored as-is — the nickname was taken from the filename and the code was auto-assigned. No content was extracted from the image.",
         "statementDocFile": "This item was created from a PDF, Word or plain-text file. The file is stored as-is; no content was extracted from it automatically.",
@@ -951,9 +951,6 @@
         "algorithmSource": "Source calculation",
         "algorithmViewRun": "View calculation",
         "algorithmNotFound": "Source calculation not found (may have been deleted).",
-        "historyTitle": "History",
-        "historyNote": "Every change of provenance is logged in the history, with the date it was made.",
-        "historyEmpty": "No history recorded yet",
         "save": "Save",
         "saving": "Saving…",
         "saved": "✓ Saved"
@@ -4298,7 +4295,7 @@
       "ALGORITHM": "Calculated (algorithm)",
       "AI_INTERPRETED": "AI interpretation",
       "EXTERNAL_FEED": "External feed",
-      "RELATIVE_ID_CARD": "From a relative's identity document"
+      "RELATIVE_ID_CARD": "From a relative's ID"
     },
     "table": {
       "type": "Type",

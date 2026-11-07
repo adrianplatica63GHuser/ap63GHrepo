@@ -87,11 +87,17 @@ describe("„Clasificări”: the dividers and the two cells (Slice #37.81)", ()
   });
 
   // Slice 41.10: was „a vertical divider between the two cells, each centred; a horizontal one before Proveniență".
-  it("one version: no line in the tile; the three values one to a row", async () => {
+  // Slice 41.94 inverted in place — was „one version: no line in the tile". Adrian: „Place dividers between Importance,
+  // Relevance, Provenance and the line with “when it was updated” and the Update button".
+  it("one version: a line between every two items and under Proveniență, before the review line — three", async () => {
     renderTile();
     await screen.findAllByText("importance.title");
     expect(document.querySelector("[data-classification-pair]")).toBeNull();
-    expect(dividers()).toHaveLength(0);
+    await waitFor(() => expect(dividers()).toHaveLength(3));
+    expect(dividers().map((d) => d.dataset.divider)).toEqual(["horizontal", "horizontal", "horizontal"]);
+    const between = [...document.querySelectorAll<HTMLElement>("[data-classification-line-between]")];
+    expect(between.map((b) => b.previousElementSibling?.getAttribute("data-classification-item"))).toEqual(["importance", "relevance", "provenance"]);
+    expect(between[2].nextElementSibling?.hasAttribute("data-classification-review")).toBe(true);
     const items = [...document.querySelectorAll<HTMLElement>("[data-classification-item]")];
     expect(items.map((i) => i.dataset.classificationItem)).toEqual(["importance", "relevance", "provenance"]);
     for (const i of items) expect(i.parentElement).toBe(items[0].parentElement);
@@ -104,14 +110,16 @@ describe("„Clasificări”: the dividers and the two cells (Slice #37.81)", ()
     ];
     renderTile();
     const prev = await screen.findByRole("button", { name: "version.prev" });
-    await waitFor(() => expect(dividers()).toHaveLength(1));
+    // 41.94: the version line, then the three under the items.
+    await waitFor(() => expect(dividers()).toHaveLength(4));
     expect(dividers()[0].dataset.divider).toBe("horizontal");
     expect(dividers()[0].previousElementSibling?.contains(prev)).toBe(true);
     // No bespoke border left on the version line.
     expect((dividers()[0].previousElementSibling as HTMLElement).className).not.toMatch(/border-b/);
     fireEvent.click(prev);
     await waitFor(() => expect(screen.queryByRole("button", { name: "markReviewed.button" })).toBeNull());
-    expect(dividers().map((d) => d.dataset.divider)).toEqual(["horizontal"]);
+    // An older version has no review line, so no line under Proveniență: the version line and the two between items.
+    expect(dividers().map((d) => d.dataset.divider)).toEqual(["horizontal", "horizontal", "horizontal"]);
   });
 
   it("no line in the tile is drawn any other way", () => {
@@ -120,7 +128,10 @@ describe("„Clasificări”: the dividers and the two cells (Slice #37.81)", ()
     // The only rim border left is the „Clasificare" subheader, drawn when both sections share one panel (no `part`).
     expect(part.match(/border-b border-card-rim/g) ?? []).toHaveLength(1);
     expect(part).toMatch(/\{!part && \(\s*<h3 className="border-b border-card-rim/);
+    // 41.94: the version line's, and `ItemLine` (the same Divider) between the items — written three times.
     expect((part.match(/<Divider\b/g) ?? [])).toHaveLength(1);
+    expect((part.match(/<ItemLine \/>/g) ?? [])).toHaveLength(3);
+    expect(src).toMatch(/function ItemLine\(\) \{[\s\S]*?<Divider \/>[\s\S]*?\n\}/);
     expect(src).not.toContain("classification-left-line");
   });
 });

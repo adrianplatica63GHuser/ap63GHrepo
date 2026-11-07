@@ -16,7 +16,7 @@ bring its father and mother with it. The tile offers „Părinții titularului",
 holder's and marked as assumed. On save, the holder is created first. Then each ticked parent goes
 through the same confirm-or-create the import uses, by name only, and is linked to the holder. On the
 holder's „Corelate" each parent then reads „Tată" or „Mamă", and on the parent's the holder reads
-„Fiu". Each parent's provenance is „Din actul de identitate al unei rude", and its „Note" names the
+„Fiu". Each parent's provenance is „Din ID-ul unei rude", and its „Note" names the
 holder.
 
 ## Before you start
@@ -42,7 +42,7 @@ The window is 1366 × 900.
 | 5 | „Creează și leagă" | „Mama titularului", „Părintele 2 din 2" |
 | 6 | „Creează și leagă" | The list of natural persons |
 | 7 | Opens `Andrei TC-PERS-08` | „Legături": `Ion TC-PERS-08 (Tată)` and `Maria TC-PERS-08-MAMA (Mamă)` |
-| 8 | Opens `Ion TC-PERS-08` | „Legături": `Andrei TC-PERS-08 (Fiu)`; „Proveniență" „Din actul de identitate al unei rude"; „Note" „Creat din cartea de identitate a lui TC-PERS-08 Andrei (PPERS…)" |
+| 8 | Opens `Ion TC-PERS-08` | „Legături": `Andrei TC-PERS-08 (Fiu)`; „Proveniență" „Din ID-ul unei rude"; „Note" „Creat din cartea de identitate a lui TC-PERS-08 Andrei (PPERS…)" |
 
 ## At the end — leaving things as they were found
 

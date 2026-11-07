@@ -98,20 +98,24 @@ describe("every explanation is a bubble, not a paragraph (Slice #37.63)", () => 
     expect(META).toMatch(/describedBy=\{statement \? `\$\{describedBy\} \$\{statementId\}` : describedBy\}/);
     expect(META).toContain('{(["importance", "relevance", "provenance"] as const).map((k) => (');
     expect(META).toContain("{t(`${k}.note`)}");
-    expect(META).toContain('{t("provenance.historyNote")}');
+    // 41.94 inverted in place — was `toContain('{t("provenance.historyNote")}')`: „Istoric" went from the tile and
+    // its paragraph from the „i".
+    expect(META).not.toContain("provenance.historyNote");
     for (const note of ["tags.note", "crossRef.note"]) {
       expect(META).toContain(`t("${note}")`);
     }
     expect(ro.shared.entityMetadata.about).toBe("Despre „{title}”");
   });
 
-  it("what is true of this record stays visible: the days since, the review warning, „Istoric”", () => {
+  it("what is true of this record stays visible: the days since, the review warning (41.94: no longer „Istoric”)", () => {
     // 41.28: the days since follow the value on its line, a span (it was its own paragraph under it). 41.59: one line
     // for the three, under them — the review component's (`classification-review.tsx`), the oldest stamp's.
     const REVIEW = read("src/components/classification-review.tsx");
     expect(REVIEW).toMatch(/\{daysText\}\s*<\/span>/);
     expect(REVIEW).toMatch(/\{warning\}\s*<\/p>/);
     expect(META).toContain("<ClassificationReviewLine");
-    expect(META).toMatch(/t\("provenance\.historyTitle"\)/);
+    // 41.94 inverted in place — was `toMatch(/t\("provenance\.historyTitle"\)/)`. Adrian: „Remove the History section
+    // at the bottom". The log is still written; only its display went.
+    expect(META).not.toMatch(/provenance\.historyTitle/);
   });
 });

@@ -117,7 +117,7 @@ O carte de identitate românească — buletinul vechi, mai ales — tipărește
 
 Fără CNP, aplicația caută părintele doar după nume, iar fereastra vă spune asta. Dacă nu găsește pe nimeni, scrie „Persoană nouă”: apăsați „Creează și leagă”. Dacă găsește persoane cu nume asemănător, le arată ca sugestii, nu ca potriviri sigure: alegeți „Leagă această persoană” doar dacă este într-adevăr același om, altfel „Niciuna — creează persoană nouă”. „Omite” trece peste părintele acela.
 
-La sfârșit vă întoarceți la lista persoanelor. Pe ecranul titularului, în „Legături”, tatăl apare cu „(Tată)” și mama cu „(Mamă)”; pe ecranul tatălui, titularul apare cu „(Fiu)” sau „(Fiică)”. La fiecare părinte creat astfel, „Proveniență” este „Din actul de identitate al unei rude”, iar „Note” spune din cartea cui a fost creat.
+La sfârșit vă întoarceți la lista persoanelor. Pe ecranul titularului, în „Legături”, tatăl apare cu „(Tată)” și mama cu „(Mamă)”; pe ecranul tatălui, titularul apare cu „(Fiu)” sau „(Fiică)”. La fiecare părinte creat astfel, „Proveniență” este „Din ID-ul unei rude”, iar „Note” spune din cartea cui a fost creat.
 
 ### 3.3.2 Dintr-o carte de identitate aflată în arhivă {#persons-id-card-document}
 

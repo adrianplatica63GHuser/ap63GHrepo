@@ -939,7 +939,7 @@
         "algorithm": "Calculat (algoritm)",
         "aiInterpreted": "Interpretare AI",
         "externalFeed": "Flux extern",
-        "relativeIdCard": "Din actul de identitate al unei rude",
+        "relativeIdCard": "Din ID-ul unei rude",
         "statementManual": "Acest element a fost introdus manual folosind butonul Adaugă nou — toate datele au fost completate direct de un utilizator.",
         "statementImage": "Acest element a fost creat dintr-un fișier grafic (o scanare sau o fotografie). Imaginea este stocată ca atare — porecla a fost preluată din numele fișierului, iar codul a fost generat automat. Nu a fost extras niciun conținut din imagine.",
         "statementDocFile": "Acest element a fost creat dintr-un fișier PDF, Word sau text simplu. Fișierul este stocat ca atare; nu a fost extras automat niciun conținut din el.",
@@ -951,9 +951,6 @@
         "algorithmSource": "Calcul sursă",
         "algorithmViewRun": "Vezi calculul",
         "algorithmNotFound": "Calculul sursă nu a fost găsit (posibil șters).",
-        "historyTitle": "Istoric",
-        "historyNote": "Fiecare schimbare de proveniență este consemnată în istoric, cu data la care a fost făcută.",
-        "historyEmpty": "Niciun istoric înregistrat încă",
         "save": "Salvează",
         "saving": "Se salvează…",
         "saved": "✓ Salvat"
@@ -4298,7 +4295,7 @@
       "ALGORITHM": "Calculat (algoritm)",
       "AI_INTERPRETED": "Interpretare AI",
       "EXTERNAL_FEED": "Flux extern",
-      "RELATIVE_ID_CARD": "Din actul de identitate al unei rude"
+      "RELATIVE_ID_CARD": "Din ID-ul unei rude"
     },
     "table": {
       "type": "Tip",
