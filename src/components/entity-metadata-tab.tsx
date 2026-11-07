@@ -441,7 +441,7 @@ type OnHold = (change: (h: Held) => Held) => void;
 /** Slice 41.97: the mark on an item added in this edit, not yet saved — „nou". */
 function NewMark({ label }: { label: string }) {
   return (
-    <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide text-cta dark:text-zinc-300" data-held-new="">
+    <span className="ml-1 text-xs font-semibold lowercase italic text-cta dark:text-zinc-300" data-held-new="">
       {label}
     </span>
   );
