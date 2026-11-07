@@ -20,7 +20,9 @@ import { TileUnitRow } from "@/components/screen/tile-unit-row";
 import { WorkflowsTile } from "@/components/screen/workflows-tile";
 import { GroupAboutTile } from "./group-about-tile";
 import { AdminTilesBar, useAdminTiles } from "@/components/screen/admin-tiles";
-import { ADMIN_GROUPS_REGISTRY, ADMIN_GROUPS_SCREEN } from "@/lib/ui/screen-tiles";
+import { ADMIN_GROUPS_LIST_UNITS, ADMIN_GROUPS_REGISTRY, ADMIN_GROUPS_SCREEN, ADMIN_GROUPS_WIZARD_UNITS } from "@/lib/ui/screen-tiles";
+import { useOncePerSignIn } from "@/components/tiles/once-per-sign-in";
+import { QUIET_ROW, QUIET_ROW_BUTTONS, QUIET_ROW_MARK } from "@/lib/ui/quiet-row";
 
 /** The groups, at #37.16's column widths (Slice #37.22). */
 const COLUMNS: readonly ColumnName[] = ["groupCode", "description", "rowActions"];
@@ -30,9 +32,15 @@ const COLUMNS: readonly ColumnName[] = ["groupCode", "description", "rowActions"
  * panels), the add form (3) while it is open, and the list (the fewest units
  * that hold its columns, the description taking what the others leave).
  */
-const ABOUT_UNITS = 7; // 40.98: re-pinned (6 of 148 px)
 const FORM_UNITS = 4; // 40.98: re-pinned (3 of 148 px)
-const LIST_UNITS = tableUnits(COLUMNS);
+/**
+ * Slice 41.98 — Adrian: „The next tile with the list of groups should be 75% of what is now - This space must be saved by
+ * narrowing the description column". 75 % of the units that hold its columns (`tableUnits`, 6), rounded down — 4; the
+ * description is the fill, so it is the column that narrows. „Ce este un Grup?" is a line of its own across the row now,
+ * so its 7 units (ABOUT_UNITS) went.
+ */
+export const LIST_UNITS = ADMIN_GROUPS_LIST_UNITS;
+export const LIST_UNITS_BEFORE_41_98 = tableUnits(COLUMNS);
 // Slice #39.89: the list fills its tile at Reference Data's standard gap, the description taking what the others leave.
 const LIST_FILL: ColumnName = "description";
 
@@ -211,6 +219,8 @@ export function GroupsListView({ about, fromMap = false }: { about?: ReactNode; 
   const router = useRouter();
   // Slice 41.41: the screen's tiles chosen with „Panouri" (in the page bar), packed and dragged like a record's.
   const tiles = useAdminTiles(ADMIN_GROUPS_REGISTRY);
+  // Slice 41.98 (Ask first 1): „Ce este un Grup?" open the first time Grupuri is opened after each sign-in.
+  useOncePerSignIn(ADMIN_GROUPS_REGISTRY.entity, "about", tiles.choice.reveal);
   const tileLabels = { about: t("infoPanel.title"), workflows: t("workflows.title"), list: t("pageTitle") };
 
   // Slice #39.73: from the big map's „Grup nou…" the add form is open on arrival (its target is „Proprietăți" by
@@ -254,12 +264,13 @@ export function GroupsListView({ about, fromMap = false }: { about?: ReactNode; 
         />
       </section>
     )}
-    <AdminTilesBar registry={ADMIN_GROUPS_REGISTRY} labels={tileLabels} tiles={tiles} />
-    <TileUnitRow screen={{ ...ADMIN_GROUPS_SCREEN, units: Math.max(ABOUT_UNITS, LIST_UNITS) }}>
-      {/* 41.84: „Ce este un Grup?" closes with „Am înțeles" — unticked in „Panouri", where it comes back from. */}
+    <AdminTilesBar registry={ADMIN_GROUPS_REGISTRY} labels={tileLabels} tiles={tiles} allUp />
+    <TileUnitRow screen={ADMIN_GROUPS_SCREEN}>
+      {/* 41.84: „Ce este un Grup?" closes with „Am înțeles" — unticked in „Panouri", where it comes back from. 41.98: across
+          the whole row, so closing it lifts the two tiles under it; open again at the next sign-in. */}
       {tiles.choice.isShown("about") && (about ?? <GroupAboutTile onUnderstood={() => tiles.choice.toggle("about")} />)}
-      {/* 41.44: how you work with them — a second information tile. */}
-      <WorkflowsTile kind="group" hidden={!tiles.choice.isShown("workflows")} />
+      {/* 41.44: how you work with them — a second information tile. 41.98: 3 units, the list beside it. */}
+      <WorkflowsTile kind="group" units={ADMIN_GROUPS_WIZARD_UNITS} hidden={!tiles.choice.isShown("workflows")} />
       {adding && (
         <AddForm
           onClose={() => setAdding(false)}
@@ -343,7 +354,9 @@ export function GroupsListView({ about, fromMap = false }: { about?: ReactNode; 
               </tr>
             )}
             {shown?.map((g) => (
-              <tr key={g.id} className="hover:bg-cta-pale dark:hover:bg-zinc-800/50">
+              // Slice 41.98 (Ask first 4) — Adrian: „The buttons from the list of groups must be made “calm”": 35 % at rest,
+              // full on the row under the pointer or with the focus (quiet-row.ts).
+              <tr key={g.id} className={`${QUIET_ROW} hover:bg-cta-pale dark:hover:bg-zinc-800/50`}>
                 <td className="px-4 py-2">
                   <span className="font-mono font-semibold text-ink dark:text-zinc-100">
                     {g.code}
@@ -359,7 +372,7 @@ export function GroupsListView({ about, fromMap = false }: { about?: ReactNode; 
                   {g.description}
                 </td>
                 <td className="px-4 py-2">
-                  <div className="flex flex-wrap gap-2">
+                  <div className={`flex flex-wrap gap-2 ${QUIET_ROW_BUTTONS}`} data-row-buttons={QUIET_ROW_MARK}>
                     <IconButton
                       href={`/admin/groups/${g.id}`}
                       icon={Pencil}

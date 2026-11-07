@@ -18,6 +18,7 @@ import {
   secondsRangeMs,
 } from "@/lib/time-frames/config";
 import { forgetMakeRoomDelay } from "@/components/tiles/make-room-delay";
+import { forgetWorkflowHighlight } from "@/components/screen/workflow-highlight";
 import { forgetExpandDurations } from "@/components/maps/expand-map-durations";
 import { forgetSearchFlight } from "@/components/maps/search-flight-settings";
 import { TIME_FRAME_GROUPS, exampleValue } from "@/lib/time-frames/groups";
@@ -192,6 +193,7 @@ function TimeFramesPanel() {
       await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       // Slice 39.92: the tile screens read the make-room delay once per page load — the next one reads it afresh.
       forgetMakeRoomDelay();
+      forgetWorkflowHighlight(); // 41.98
       // Slice 41.75: and „Hartă extinsă"'s two parts.
       forgetExpandDurations();
       // Slice 41.76: and the search flight's length and arc.

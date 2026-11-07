@@ -53,7 +53,8 @@ describe("the six groups", () => {
     expect(ro.timeFrames.groups).toEqual({
       dashboard: "Tablou de bord", documents: "Acte", persons: "Persoane", recency: "Insigna „Nou!”", tiles: "Fișe", maps: "Hărți",
     });
-    expect(TIME_FRAME_GROUPS.find((g) => g.id === "tiles")?.keys).toEqual(["tile_make_room_delay"]);
+    // 41.98: + how long a choice in „Cum lucrezi cu …" stands on the note box (it read the make-room delay alone).
+    expect(TIME_FRAME_GROUPS.find((g) => g.id === "tiles")?.keys).toEqual(["tile_make_room_delay", "workflow_choice_highlight"]);
     // 41.76: + the search flight's length and arc, after 41.75's two (it read the two alone).
     expect(TIME_FRAME_GROUPS.find((g) => g.id === "maps")?.keys).toEqual(["map_expand_grow", "map_expand_zoom_out", "map_search_flight", "map_search_arc"]);
   });

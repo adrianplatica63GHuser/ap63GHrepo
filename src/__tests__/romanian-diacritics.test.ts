@@ -596,12 +596,14 @@ describe("the seeded time-frame rows", () => {
     expect(Object.fromEntries(repair)).toEqual(Object.fromEntries(migrated));
   });
 
-  it("cover all fifteen settings, and none of the Romanian is left un-accented", () => {
+  // 41.98: sixteen — the wizard's highlight, by migration_129 (it read „fifteen" from 41.76).
+  it("cover all sixteen settings, and none of the Romanian is left un-accented", () => {
     // Ten seeded by 063; the eleventh, the make-room delay, added by migration_117 (Slice 39.92); the twelfth and
     // thirteenth, „Hartă extinsă"'s two parts, by migration_127 (Slice 41.75); the fourteenth and fifteenth, the search
     // flight's length and arc, by migration_128 (Slice 41.76). It read „all eleven" until 41.75, „thirteen" in 41.75.
     const migrated = effectiveRows();
-    expect(migrated.size).toBe(15);
+    expect(migrated.size).toBe(16);
+    expect(migrated.has("workflow_choice_highlight")).toBe(true);
     expect(migrated.has("tile_make_room_delay")).toBe(true);
     expect(migrated.has("map_expand_grow") && migrated.has("map_expand_zoom_out")).toBe(true);
     expect(migrated.has("map_search_flight") && migrated.has("map_search_arc")).toBe(true);

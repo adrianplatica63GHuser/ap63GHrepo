@@ -317,6 +317,7 @@ export function StampApplicator({
       registry={STAMP_REGISTRY}
       labels={{ description: t("applicator.descriptionTile"), records: t("applicator.records"), workflows: t("workflows.title") }}
       tiles={tiles}
+      allUp
     />
     <TileUnitRow screen={STAMP_SCREEN}>
       {/* „Descrierea ștampilei" — 41.43: compact, 2 units: the code and the short description, the notes, „Salvează ștampilele". */}

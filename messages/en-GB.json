@@ -4419,7 +4419,8 @@
         "map_expand_grow": "With „Expand map”, the „Map” tile grows into the expanded map in {duration}, while the property travels to the middle.",
         "map_expand_zoom_out": "Then the expanded map zooms out in {duration}, until the property is about a tenth of the map's height.",
         "map_search_flight": "A place found with „Search the map” is reached after a flight of {duration}; with 0 the map jumps straight there.",
-        "map_search_arc": "With a = {duration}, the flight's top is {duration} × the height from which both places show; with 0 it glides straight, without rising."
+        "map_search_arc": "With a = {duration}, the flight's top is {duration} × the height from which both places show; with 0 it glides straight, without rising.",
+        "workflow_choice_highlight": "A choice pressed in „How you work with groups” stands, with its steps, on the beige box for {duration}; with 0 it is not highlighted."
       },
       "example": "Example:"
     },

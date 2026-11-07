@@ -77,7 +77,9 @@ describe.each(["ro-RO", "en-GB"])("its words in %s", (locale) => {
 describe("the wiring", () => {
   it("the group's workflows tile is the wizard; „Ștampile” keeps its list (Ask first 5)", () => {
     const src = read("src", "components", "screen", "workflows-tile.tsx");
-    expect(src).toContain('if (kind === "group") return <GroupWorkflowsWizard units={WORKFLOWS_UNITS} hidden={hidden} />;');
+    // 41.98: the units are the caller's — 3 on Grupuri, WORKFLOWS_UNITS (7) on a group's screen.
+    expect(src).toContain('if (kind === "group") return <GroupWorkflowsWizard units={units} hidden={hidden} />;');
+    expect(src).toContain("units = WORKFLOWS_UNITS");
     expect(src).toContain("WORKFLOW_STEPS.map((key)");
   });
   it("„Ce este un Grup?” unticks itself in „Panouri” with „Am înțeles” (Ask first 1)", () => {

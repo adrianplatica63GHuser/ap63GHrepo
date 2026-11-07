@@ -195,7 +195,10 @@ describe("seconds with decimals — the make-room delay (39.92)", () => {
     expect(route).toContain("key:   z.enum(MAP_EXPAND_KEYS),");
     expect(route).toContain("value: z.number().int().min(0).max(SECONDS_MAX_MS),");
     // 41.76: the search flight 0..15 s, its coefficient a 0..300 hundredths, both out of the 1..3650 arm.
-    expect(route).toContain("const IN_MS: readonly string[] = [MAKE_ROOM_DELAY_KEY, ...MAP_EXPAND_KEYS, MAP_SEARCH_FLIGHT_KEY, MAP_SEARCH_ARC_KEY];");
+    // 41.98: + the wizard's highlight, 0..10 s (it read the four keys without it).
+    expect(route).toContain("const IN_MS: readonly string[] = [MAKE_ROOM_DELAY_KEY, ...MAP_EXPAND_KEYS, MAP_SEARCH_FLIGHT_KEY, MAP_SEARCH_ARC_KEY, WORKFLOW_HIGHLIGHT_KEY];");
+    expect(route).toMatch(/key: {3}z\.literal\(WORKFLOW_HIGHLIGHT_KEY\),\s*value: z\.number\(\)\.int\(\)\.min\(0\)\.max\(SECONDS_MAX_MS\)/);
+    expect(secondsRangeMs("workflow_choice_highlight")).toEqual({ min: 0, max: SECONDS_MAX_MS });
     expect(route).toContain("value: z.number().int().min(0).max(MAP_SEARCH_FLIGHT_MAX_MS),");
     expect(route).toContain("value: z.number().int().min(HUNDREDTHS_MIN).max(HUNDREDTHS_MAX),");
     expect(SECONDS_MIN_MS).toBe(200);

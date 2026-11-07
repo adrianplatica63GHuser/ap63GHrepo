@@ -233,7 +233,7 @@ export function StampsListView({ about }: { about?: ReactNode } = {}) {
 
   return (
     <>
-    <AdminTilesBar registry={ADMIN_STAMPS_REGISTRY} labels={tileLabels} tiles={tiles} />
+    <AdminTilesBar registry={ADMIN_STAMPS_REGISTRY} labels={tileLabels} tiles={tiles} allUp />
     <TileUnitRow screen={{ ...ADMIN_STAMPS_SCREEN, units: Math.max(ABOUT_UNITS, LIST_UNITS) }}>
       {tiles.choice.isShown("about") && about}
       {/* 41.44: how you work with them — a second information tile. */}

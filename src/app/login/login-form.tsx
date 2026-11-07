@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { clearSessionCache } from "@/lib/auth/me-query";
+import { markSignIn } from "@/lib/auth/sign-in-stamp";
 import { buttonClass } from "@/lib/ui/button-styles";
 
 interface LoginFormProps {
@@ -86,6 +87,8 @@ export function LoginForm({
       // A new session starts from an empty cache: no role, list or record an
       // earlier session in this tab fetched survives into this one.
       clearSessionCache(queryClient);
+      // Slice 41.98: a new sign-in, a new stamp — what opens once per sign-in opens again.
+      markSignIn();
 
       // Hard navigation so the server middleware sees the new session cookie
       router.push("/");

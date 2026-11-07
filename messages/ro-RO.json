@@ -4419,7 +4419,8 @@
         "map_expand_grow": "La „Hartă extinsă”, fișa „Hartă” se mărește până la harta extinsă în {duration}, iar proprietatea ajunge la mijloc.",
         "map_expand_zoom_out": "Apoi harta extinsă se depărtează în {duration}, până când proprietatea are cam o zecime din înălțimea hărții.",
         "map_search_flight": "Un loc găsit cu „Caută pe hartă” e atins după un zbor de {duration}; cu 0, harta sare direct acolo.",
-        "map_search_arc": "Cu a = {duration}, vârful zborului e la {duration} × înălțimea de la care se văd ambele locuri; cu 0, zborul alunecă drept, fără să urce."
+        "map_search_arc": "Cu a = {duration}, vârful zborului e la {duration} × înălțimea de la care se văd ambele locuri; cu 0, zborul alunecă drept, fără să urce.",
+        "workflow_choice_highlight": "O alegere apăsată în „Cum lucrezi cu grupurile” stă, cu pașii ei, pe fondul bej {duration}; cu 0, nu se evidențiază."
       },
       "example": "Exemplu:"
     },

@@ -23,7 +23,8 @@ export const TIME_FRAME_GROUPS = [
   { id: "persons", keys: ["id_card_expiring_soon"] },
   { id: "recency", keys: ["recency_badge_red", "recency_badge_amber", "recency_badge_window"] },
   // Slice 39.92: the make-room delay, under the screen's own word for a tile.
-  { id: "tiles", keys: ["tile_make_room_delay"] },
+  // Slice 41.98: and how long a choice in „Cum lucrezi cu …" stands on the note box.
+  { id: "tiles", keys: ["tile_make_room_delay", "workflow_choice_highlight"] },
   // Slice 41.75: „Hărți", last — „Hartă extinsă"'s two animated parts.
   // Slice 41.76: and „Caută pe hartă"'s flight — its length and its arc.
   { id: "maps", keys: ["map_expand_grow", "map_expand_zoom_out", "map_search_flight", "map_search_arc"] },

@@ -40,6 +40,8 @@ export const TIME_FRAME_KEYS = [
   // Slice 41.76: „Caută pe hartă"'s flight — its length and the parabola's coefficient a.
   "map_search_flight",
   "map_search_arc",
+  // Slice 41.98: how long a choice in „Cum lucrezi cu …" stands on the note box.
+  "workflow_choice_highlight",
 ] as const;
 
 export type TimeFrameKey = (typeof TIME_FRAME_KEYS)[number];
@@ -85,6 +87,7 @@ export const TIME_FRAME_DEFAULTS: Record<TimeFrameKey, { value: number; unit: Ti
   map_expand_zoom_out:      { value: 3000, unit: "milliseconds" },
   map_search_flight:        { value: 4000, unit: "milliseconds" },
   map_search_arc:           { value: 100,  unit: "hundredths" },
+  workflow_choice_highlight: { value: 3000, unit: "milliseconds" }, // migration_129 (Slice 41.98)
 };
 
 /** Read a numeric day-value from a TimeFrameMap (falls back to default). */
@@ -164,6 +167,12 @@ export function isTypedInSeconds(unit: TimeFrameUnit): boolean {
  */
 export const MAP_EXPAND_KEYS = ["map_expand_grow", "map_expand_zoom_out"] as const satisfies readonly TimeFrameKey[];
 
+/**
+ * Slice 41.98: how long a choice pressed in „Cum lucrezi cu grupurile" (and, 41.99, „… ștampilele"), and the steps it
+ * shows, stand on the note box — 0 (off) to 10 s, typed in seconds.
+ */
+export const WORKFLOW_HIGHLIGHT_KEY = "workflow_choice_highlight" satisfies TimeFrameKey;
+
 /** Slice 41.76: the search flight's length — 0 (a jump) to 15 s. */
 export const MAP_SEARCH_FLIGHT_KEY = "map_search_flight" satisfies TimeFrameKey;
 export const MAP_SEARCH_FLIGHT_MAX_MS = 15_000;
@@ -174,7 +183,10 @@ export const MAP_SEARCH_FLIGHT_MAX_MS = 15_000;
  */
 export function secondsRangeMs(key: string): { min: number; max: number } {
   if (key === MAP_SEARCH_FLIGHT_KEY) return { min: 0, max: MAP_SEARCH_FLIGHT_MAX_MS };
-  return (MAP_EXPAND_KEYS as readonly string[]).includes(key) ? { min: 0, max: SECONDS_MAX_MS } : { min: SECONDS_MIN_MS, max: SECONDS_MAX_MS };
+  // Slice 41.98: the wizard's highlight, 0 (off) to 10 s, as „Hartă extinsă"'s parts.
+  return (MAP_EXPAND_KEYS as readonly string[]).includes(key) || key === WORKFLOW_HIGHLIGHT_KEY
+    ? { min: 0, max: SECONDS_MAX_MS }
+    : { min: SECONDS_MIN_MS, max: SECONDS_MAX_MS };
 }
 
 /**

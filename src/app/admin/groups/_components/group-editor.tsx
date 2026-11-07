@@ -236,7 +236,7 @@ export function GroupEditor({
     // key. 41.42: two of them — the identity (2 units) and the members' two lists (7), side by side where 9 units fit.
     <>
     {/* Slice 41.41: the screen's tiles chosen with „Panouri" (in the page bar); „Implicit" there puts the places back. */}
-    <AdminTilesBar registry={GROUP_REGISTRY} labels={{ identity: t("panels.identity"), members: t("panels.members"), workflows: t("workflows.title") }} tiles={tiles} />
+    <AdminTilesBar registry={GROUP_REGISTRY} labels={{ identity: t("panels.identity"), members: t("panels.members"), workflows: t("workflows.title") }} tiles={tiles} allUp />
     <TileUnitRow screen={GROUP_SCREEN}>
       {/* „Identitatea grupului" — 41.42: compact, 2 units: the code and the target on one line, the description, „Salvează grupul". */}
       <section

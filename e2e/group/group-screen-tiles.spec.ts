@@ -14,7 +14,7 @@
  */
 
 import { test, expect, type Page } from "../helpers/test";
-import { expectPanouriRoundTrip, showTile, tileBox, tilesMenuButton } from "../helpers/tiles";
+import { closeTiles, expectPanouriRoundTrip, openTiles, showTile, tileBox, tilesMenuButton } from "../helpers/tiles";
 import { E2E_MARKER, createNaturalPerson, createProperty, removeGroupLeftovers, removeLeftovers, removeRecord, removeStampLeftovers } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}GRP-04`;
@@ -303,5 +303,91 @@ test.describe("TC-GRP-04 (41.84) — „Am înțeles”; „Cum lucrezi cu grupu
     await page.reload();
     await expect(wizard.getByRole("radio", { name: /^Văd grupuri de proprietăți pe hartă/ })).toBeChecked({ timeout: 30_000 });
     await page.evaluate(() => localStorage.removeItem("ga40-group-wizard-v1"));
+  });
+});
+
+// Slice 41.98 — Adrian: „Please add to the Groups screen, the Panels function: the All up and All left buttons … During a
+// work session the first time the user opens the groups functionality, the “Ce este un Grup? Tile is open; its width is the
+// entire width of the screen … when this style is closed the two tiles underneath will automatically be moved up … “How
+// you work with groups” which starts at size three units width … The buttons from the list of groups must be made “calm” …
+// the entire item must show that it was selected by having a beige box as a background for a few seconds". A new sign-in
+// is what the login form does: a new stamp in `ga40-sign-in-v1`.
+test.describe("TC-GRP-04 (41.98) — „Ce este un Grup?” o dată pe autentificare, lățimi, rânduri calme, alegerea pe bej", () => {
+  test("deschisă pe toată lățimea; X o închide și fișele urcă; reîncărcată rămâne închisă; o nouă autentificare o redeschide", async ({ page }) => {
+    test.slow();
+    const M = `${MARK}-4198`;
+    await removeGroupLeftovers(page.request, M);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const g = await page.request.post("/api/groups", { data: { targetType: "PROPERTY", description: `${M} Grup` } });
+    expect(g.ok(), await g.text()).toBeTruthy();
+    try {
+      await page.goto("/admin/groups");
+      const about = page.getByRole("region", { name: "Ce este un Grup?", exact: true });
+      const wizard = page.getByRole("region", { name: "Cum lucrezi cu grupurile", exact: true });
+      const list = page.locator('[data-tile="list"]');
+      const row = page.locator("[data-tile-row]");
+      // Open, across the whole row.
+      await expect(about).toBeVisible({ timeout: 30_000 });
+      await expect.poll(async () => {
+        const [a, r] = await Promise.all([about.boundingBox(), row.boundingBox()]);
+        return Math.abs(a!.width - r!.width) <= 1;
+      }, { timeout: 15_000 }).toBe(true);
+      // The wizard 3 units (389 px), the list 4 (524) beside it.
+      await expect.poll(async () => Math.round((await wizard.boundingBox())!.width), { timeout: 15_000 }).toBe(389);
+      await expect.poll(async () => Math.round((await list.boundingBox())!.width)).toBe(524);
+      const [wb, lb] = await Promise.all([wizard.boundingBox(), list.boundingBox()]);
+      expect(lb!.x, "the list beside the wizard").toBeGreaterThan(wb!.x + wb!.width);
+      // „Panouri": „Toate sus" and „Toate la stânga".
+      await openTiles(page);
+      await expect(page.getByRole("button", { name: "Toate sus", exact: true })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Toate la stânga", exact: true })).toBeVisible();
+      await closeTiles(page);
+      // Its X closes it; the two tiles rise to the top of the row.
+      const top = (await row.boundingBox())!.y;
+      await about.getByRole("button", { name: "Închide — Ce este un Grup?", exact: true }).click();
+      await expect(about).toHaveCount(0);
+      await expect.poll(async () => Math.abs((await wizard.boundingBox())!.y - top) <= 2, { timeout: 15_000 }).toBe(true);
+      // A reload in the same sign-in keeps it closed.
+      await page.reload();
+      await expect(wizard).toBeVisible({ timeout: 30_000 });
+      await expect(about).toHaveCount(0);
+      await expect(tileBox(page, "Ce este un Grup?")).not.toBeChecked();
+      // A new sign-in opens it again.
+      await page.evaluate(() => localStorage.setItem("ga40-sign-in-v1", `${Date.now()}`));
+      await page.reload();
+      await expect(about).toBeVisible({ timeout: 30_000 });
+
+      // The list's row buttons: 35 % at rest, full under the pointer.
+      const mine = list.locator("tbody tr").filter({ hasText: `${M} Grup` });
+      const buttons = mine.locator('[data-row-buttons="quiet"]');
+      await page.mouse.move(2, 2);
+      await expect.poll(() => buttons.evaluate((b) => getComputedStyle(b).opacity), { timeout: 15_000 }).toBe("0.35");
+      await mine.hover();
+      await expect.poll(() => buttons.evaluate((b) => getComputedStyle(b).opacity)).toBe("1");
+
+      // A choice pressed: the item and its steps on the note box, from the same moment, for the setting's time; then not.
+      const items = (await (await page.request.get("/api/time-frames")).json()) as { items: { key: string; value: number }[] };
+      const ms = items.items.find((i) => i.key === "workflow_choice_highlight")?.value;
+      expect(ms, "workflow_choice_highlight is seeded (migration_129)").toBeGreaterThan(0);
+      await page.evaluate(() => localStorage.removeItem("ga40-group-wizard-v1"));
+      await page.reload();
+      await expect(wizard).toBeVisible({ timeout: 30_000 });
+      const choice = wizard.locator('[data-wizard-choice="create"]');
+      await choice.getByRole("radio").check();
+      const steps = wizard.locator("[data-wizard-steps]");
+      await expect(choice).toHaveAttribute("data-wizard-lit", "");
+      await expect(steps).toHaveAttribute("data-wizard-lit", "");
+      await expect(choice).toHaveCSS("background-color", "rgb(255, 251, 235)");
+      await expect(choice).toHaveCSS("border-top-color", "rgb(253, 230, 138)");
+      await expect(choice).not.toHaveAttribute("data-wizard-lit", "", { timeout: (ms ?? 3000) + 3000 });
+      await expect(steps).not.toHaveAttribute("data-wizard-lit", "");
+      // A reload that restores the choice does not light it.
+      await page.reload();
+      await expect(wizard.locator('[data-wizard-choice="create"] input')).toBeChecked({ timeout: 30_000 });
+      await expect(wizard.locator("[data-wizard-lit]")).toHaveCount(0);
+      await page.evaluate(() => localStorage.removeItem("ga40-group-wizard-v1"));
+    } finally {
+      await removeGroupLeftovers(page.request, M);
+    }
   });
 });

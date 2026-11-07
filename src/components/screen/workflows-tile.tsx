@@ -20,8 +20,13 @@ import { screenPanel } from "@/lib/ui/field-widths";
 
 /** The workflows, in reading order — each `<kind>.workflows.steps.<key>.{title,body}`. */
 export const WORKFLOW_STEPS = ["find", "create", "members", "record", "delete"] as const;
-/** As wide as „Ce este …?" (7 units). */
+/** As wide as „Ce este …?" (7 units) — on a group's and a stamp's own screen. */
 export const WORKFLOWS_UNITS = 7;
+/**
+ * Slice 41.98 — Adrian: „“How you work with groups” which starts at size three units width". On Grupuri (41.99: and
+ * Ștampile) the wizard is 3 units, the list beside it.
+ */
+export const LIST_SCREEN_WORKFLOWS_UNITS = 3;
 
 // Slice 41.83: under Administrare every tile is the record tile's grey — both kinds alike (they were blue and amber).
 const SURFACE = {
@@ -34,8 +39,8 @@ const TEXT = {
 } as const;
 
 /** Slice 41.84: the group's tile asks first what you want to do (group-workflows-wizard.tsx); „Ștampile" keeps the list. */
-export function WorkflowsTile({ kind, hidden = false }: { kind: "group" | "stamp"; hidden?: boolean }) {
-  if (kind === "group") return <GroupWorkflowsWizard units={WORKFLOWS_UNITS} hidden={hidden} />;
+export function WorkflowsTile({ kind, hidden = false, units = WORKFLOWS_UNITS }: { kind: "group" | "stamp"; hidden?: boolean; units?: number }) {
+  if (kind === "group") return <GroupWorkflowsWizard units={units} hidden={hidden} />;
   return <WorkflowsList kind={kind} hidden={hidden} />;
 }
 

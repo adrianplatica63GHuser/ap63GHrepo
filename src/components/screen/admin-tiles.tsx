@@ -31,17 +31,24 @@ export function AdminTilesBar<K extends string>({
   registry,
   labels,
   tiles,
+  allUp = false,
 }: {
   registry: TileRegistry<K>;
   labels: Readonly<Record<K, string>>;
   tiles: AdminTiles<K>;
+  /**
+   * Slice 41.98 — Adrian: „Please add to the Groups screen, the Panels function: the All up and All left buttons with the
+   * three chevrons". „Toate sus" and „Toate la stânga", as on the record screens — on Grupuri, a group's screen, Ștampile
+   * and a stamp's screen.
+   */
+  allUp?: boolean;
 }) {
   return (
     <>
       <PageBarControls>
         <TilesMenuButton menu={tiles.menu} />
       </PageBarControls>
-      <TileSelector all={registry.all} labels={labels} choice={tiles.choice} menu={tiles.menu} />
+      <TileSelector all={registry.all} labels={labels} choice={tiles.choice} menu={tiles.menu} allUp={allUp} />
     </>
   );
 }
