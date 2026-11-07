@@ -25,7 +25,9 @@ export default async function EditNaturalPersonPage({ params, searchParams }: Pa
   const identityDocuments = await listPersonIdentityDocuments(data.person.id);
 
   return (
-    <div className="flex flex-1 flex-col bg-canvas">
+    // Slice 42.01 — Adrian: „Natural Persons screen is still beige! It must be the off white colour that the other principle
+    // objects are" (FU-391). The juridical person's wrapper; it stood on the canvas's beige (bg-canvas, #F3F1ED).
+    <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
       {/* Slice #21.08.misc: the max-w-3xl (768px) cap was removed so the
           Details tab's two side-by-side panel stacks have room. Matches the
           Property detail page, which is already uncapped. This widens every

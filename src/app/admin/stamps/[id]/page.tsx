@@ -3,6 +3,8 @@ import { getTranslations } from "next-intl/server";
 import { getStampDetail } from "@/lib/stamps/queries";
 import { stampDisplayName } from "@/lib/stamps/code";
 import { StampApplicator } from "../_components/stamp-applicator";
+import { ListHeading } from "@/lib/ui/record-heading";
+import { adminIcon } from "@/components/sidebar/nav-config";
 
 // Slice #20.17: BackLink removed — the BreadcrumbBar now handles back
 // navigation universally.  ?from= / ?fromLabel= searchParams are still
@@ -32,9 +34,8 @@ export default async function StampApplicatorPage({ params, searchParams }: Prop
       <main className="w-full px-6 py-8 flex flex-col gap-6">
         {/* Slices #38.12–#38.13: „Implicit" at the screen's top right puts the dragged tiles back in their default places. */}
         <header className="flex flex-wrap items-start justify-between gap-4">
-          <h1 className="text-base font-semibold tracking-tight text-admin-title">
-            {t("applicator.pageTitle", { stamp: title })}
-          </h1>
+          {/* 42.01 (FU-394): a principal list's size, Ștampile's icon before it (it was 16 px). */}
+          <ListHeading icon={adminIcon("stamps")} title={t("applicator.pageTitle", { stamp: title })} admin />
         </header>
 
         <StampApplicator stampId={id} initialDetail={detail} onlyTiles={tiles} />

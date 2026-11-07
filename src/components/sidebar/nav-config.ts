@@ -204,8 +204,8 @@ export const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
-/** Slice 41.92: the Administrare items whose screens are headed with their icon. */
-export type AdminNavKey = "referenceData" | "groups" | "stamps" | "tags" | "settings";
+/** Slice 41.92: the Administrare items whose screens are headed with their icon. 42.01: „Utilizatori & Acces" too. */
+export type AdminNavKey = "referenceData" | "users" | "groups" | "stamps" | "tags" | "settings";
 
 /**
  * Slice 41.92: an Administrare screen's icon — the one its item draws in the side panel, read from NAV_SECTIONS so

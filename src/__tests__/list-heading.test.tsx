@@ -36,6 +36,11 @@ describe("ListHeading (40.38)", () => {
     ] as const) {
       expect([file.join("/"), read(...file).includes(`<ListHeading icon={adminIcon("${key}")} title={t("pageTitle")} admin`)]).toEqual([file.join("/"), true]);
     }
+    // 42.01 (FU-394): „Utilizatori & Acces", a group's and a stamp's screen, and a document type's page too.
+    expect(read("src", "app", "admin", "users", "page.tsx").split('<ListHeading icon={adminIcon("users")} title={t("title")} admin').length - 1).toBe(2);
+    expect(read("src", "app", "admin", "groups", "[id]", "page.tsx")).toContain('<ListHeading icon={adminIcon("groups")} title={t("editorTitle", { code: detail.code })} admin />');
+    expect(read("src", "app", "admin", "stamps", "[id]", "page.tsx")).toContain('<ListHeading icon={adminIcon("stamps")} title={t("applicator.pageTitle", { stamp: title })} admin />');
+    expect(read("src", "app", "admin", "value-lists", "_components", "document-type-page.tsx")).toContain('<ListHeading icon={adminIcon("referenceData")} title={name} admin />');
     const nav = read("src", "components", "sidebar", "nav-config.ts");
     expect(nav).toMatch(/\{ key: "referenceData", href: "\/admin\/value-lists", icon: BookOpen \}/);
     expect(nav).toContain('NAV_SECTIONS.find((s) => s.key === "administration")');

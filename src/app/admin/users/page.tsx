@@ -3,6 +3,8 @@ import { getTranslations } from "next-intl/server";
 import { canManageAccounts, getCurrentAppUser } from "@/lib/auth/current-role";
 import { UsersAccessClient } from "./users-access-client";
 import { PROSE_STYLE } from "@/lib/ui/field-widths";
+import { ListHeading } from "@/lib/ui/record-heading";
+import { adminIcon } from "@/components/sidebar/nav-config";
 
 /**
  * Server component — verifies the caller may manage accounts (`canManageAccounts`), then hands off to
@@ -20,7 +22,8 @@ export default async function UsersAccessPage() {
   if (appUser.isUat) {
     return (
       <div className="flex flex-1 flex-col bg-zinc-50 p-6 dark:bg-zinc-950">
-        <h1 className="text-base font-bold text-admin-title mb-1">{t("title")}</h1>
+        {/* 42.01 (FU-394): a principal list's heading, after the side panel's icon, in Administrare's red (it was 16 px). */}
+        <ListHeading icon={adminIcon("users")} title={t("title")} admin className="mb-1" />
         <p className="text-sm text-fade" style={PROSE_STYLE} role="note" data-uat-no-accounts="users">
           {t("uatNoAccounts")}
         </p>
@@ -37,7 +40,9 @@ export default async function UsersAccessPage() {
   return (
     // 41.83: the record screens' off-white (it stood on the canvas's beige), its heading in #C00000.
     <div className="flex flex-1 flex-col bg-zinc-50 p-6 dark:bg-zinc-950">
-      <h1 className="text-base font-bold text-admin-title mb-1">{t("title")}</h1>
+      {/* 42.01 (FU-394) — Adrian: „Make sure the titles are same size as for principal objects, and are using the icon as
+          well - applies to Users & Access". */}
+      <ListHeading icon={adminIcon("users")} title={t("title")} admin className="mb-1" />
       <p className="text-sm text-fade mb-6" style={PROSE_STYLE}>{t("description")}</p>
       <UsersAccessClient />
     </div>

@@ -419,16 +419,12 @@ test.describe("TC-LAYOUT-01 — o fereastră îngustă (40.69)", () => {
       const h1 = page.locator("h1").first();
       await expect(h1, url).toBeVisible({ timeout: 30_000 });
       // 41.92 rewrote this in place: the five screens Adrian named are headed at „Persoane fizice"'s size, 24 px, in red,
-      // after their side-panel icon; „Utilizatori & Acces" keeps 41.83's 16 px (it read 16 px for every screen).
-      if (url === "/admin/users") {
-        expect(await look(h1), url).toBe(`16px ${RED}`);
-      } else {
-        expect(await look(h1), url).toBe(`24px ${RED}`);
-        const icon = h1.locator("svg[data-list-icon]");
-        await expect(icon, url).toHaveCount(1);
-        expect(await icon.evaluate((e) => getComputedStyle(e).color), url).toBe(RED);
-        expect((await icon.boundingBox())!.x, url).toBeLessThan((await h1.locator("span").first().boundingBox())!.x);
-      }
+      // after their side-panel icon. 42.01 (FU-394) rewrote it again: „Utilizatori & Acces" too (it kept 41.83's 16 px).
+      expect(await look(h1), url).toBe(`24px ${RED}`);
+      const icon = h1.locator("svg[data-list-icon]");
+      await expect(icon, url).toHaveCount(1);
+      expect(await icon.evaluate((e) => getComputedStyle(e).color), url).toBe(RED);
+      expect((await icon.boundingBox())!.x, url).toBeLessThan((await h1.locator("span").first().boundingBox())!.x);
       expect(await groundOf(h1), url).toBe(OFF_WHITE);
       // Every tile shown: the record tile's grey; every tile title red.
       // „Utilizatori & Acces" has no tile of the screen's registry, only its panel; the others' tiles come with their data.
@@ -466,3 +462,37 @@ test.describe("TC-LAYOUT-01 — o fereastră îngustă (40.69)", () => {
   });
 });
 
+
+// Slice 42.01 (FU-391) — Adrian: „Natural Persons screen is still beige! It must be the off white colour that the other
+// principle objects are". On an invented person and an invented company: the two screens stand on one ground.
+test.describe("TC-LAYOUT-01 (42.01) — o persoană fizică pe fondul alb-cenușiu", () => {
+  test("ecranul unei persoane fizice are fondul ecranului unei persoane juridice", async ({ page }) => {
+    test.slow();
+    const M = `${E2E_MARKER}LAYOUT-4201`;
+    await removeLeftovers(page.request, M);
+    const person = await createNaturalPerson(page.request, { lastName: M, firstName: "Ion" });
+    const company = await createCompany(page.request, { name: `${M} SRL` });
+    const ground = async (url: string) => {
+      await page.goto(url);
+      const h = page.locator("[data-record-header]").first();
+      await expect(h).toBeVisible({ timeout: 30_000 });
+      return h.evaluate((e) => {
+        for (let p = e.parentElement; p; p = p.parentElement) {
+          const c = getComputedStyle(p).backgroundColor;
+          if (c !== "rgba(0, 0, 0, 0)") return c;
+        }
+        return null;
+      });
+    };
+    try {
+      const np = await ground(`/natural-persons/${person}`);
+      const jp = await ground(`/judicial-persons/${company}`);
+      expect(np).not.toBeNull();
+      expect(np).toBe(jp);
+      expect(np).not.toBe("rgb(243, 241, 237)"); // the canvas's beige, #F3F1ED
+    } finally {
+      await removeRecord(page.request, "person", person);
+      await removeRecord(page.request, "company", company);
+    }
+  });
+});

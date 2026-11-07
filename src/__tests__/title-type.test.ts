@@ -160,14 +160,18 @@ describe("41.83 — every title under Administrare: a tile title's size, in #C00
   });
   // 41.92 rewrote this in place: the five screens Adrian named are headed at the lists' 24 px with their icon (ListHeading
   // admin, list-heading.test.tsx); the rest keep 16 px. It read every one of the nine at 16 px.
-  it("every other Administrare page heading is 16 px and red", () => {
-    for (const rel of [
-      "src/app/admin/users/page.tsx", "src/app/admin/groups/[id]/page.tsx", "src/app/admin/stamps/[id]/page.tsx",
-      "src/app/admin/value-lists/_components/document-type-page.tsx",
-    ]) {
-      const h1s = [...read(rel).matchAll(/<h1[^>]*className="([^"]+)"/g)].map((m) => tokens(m[1]));
-      expect([rel, h1s.length > 0]).toEqual([rel, true]);
-      for (const h of h1s) expect([rel, h.includes("text-base") && h.includes("text-admin-title") && !h.includes("text-2xl")]).toEqual([rel, true]);
+  // 42.01 rewrote this in place (FU-394) — it read „every other Administrare page heading is 16 px and red" for
+  // „Utilizatori & Acces", a group's and a stamp's screen and a document type's page. Adrian: „Make sure the titles are
+  // same size as for principal objects, and are using the icon as well - applies to Users & Access". Now every one is
+  // ListHeading admin with its side-panel icon, and no Administrare page writes an <h1> of its own.
+  it("every Administrare page heading is a principal list's, with the side panel's icon, in red", () => {
+    for (const [rel, key, n] of [
+      ["src/app/admin/users/page.tsx", "users", 2], ["src/app/admin/groups/[id]/page.tsx", "groups", 1],
+      ["src/app/admin/stamps/[id]/page.tsx", "stamps", 1], ["src/app/admin/value-lists/_components/document-type-page.tsx", "referenceData", 1],
+    ] as const) {
+      const src = read(rel);
+      expect([rel, (src.match(new RegExp(`<ListHeading icon=\\{adminIcon\\("${key}"\\)\\} title=\\{[^}]+\\}\\)?\\}? admin`, "g")) ?? []).length]).toEqual([rel, n]);
+      expect([rel, /<h1\b/.test(src)]).toEqual([rel, false]);
     }
     for (const rel of [
       "src/app/admin/tags/page.tsx", "src/app/admin/groups/page.tsx", "src/app/admin/stamps/page.tsx", "src/app/admin/settings/page.tsx",

@@ -50,6 +50,8 @@ import { IdentitySystemForm } from "./identity-system-form";
 import { fetchValueListRows, type ValueListRow } from "./role-doc-types";
 import { invalidateListCaches, saveRow } from "./value-list-modal";
 import { COLUMN_NAMES_FACE } from "@/lib/ui/title-type";
+import { ListHeading } from "@/lib/ui/record-heading";
+import { adminIcon } from "@/components/sidebar/nav-config";
 
 const INPUT_CLASS =
   "rounded-md border border-wire bg-raised px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none";
@@ -84,7 +86,8 @@ export function DocumentTypePage({ code, initialTab }: { code: string; initialTa
   const name = String(row.name ?? "");
   return (
     <div className="flex flex-col gap-4" data-document-type-page={code}>
-      <h1 className="text-base font-semibold tracking-tight text-admin-title">{name}</h1>
+      {/* 42.01 (FU-394): a principal list's size, Date de referință's icon before it (it was 16 px). */}
+      <ListHeading icon={adminIcon("referenceData")} title={name} admin />
       <div role="tablist" aria-label={t("tabsLabel")} className="flex gap-1 border-b border-card-rim">
         {DOCUMENT_TYPE_TABS.map((key) => (
           <button

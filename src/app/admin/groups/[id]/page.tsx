@@ -2,6 +2,8 @@ import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { getGroupDetail } from "@/lib/groups/queries";
 import { GroupEditor } from "../_components/group-editor";
+import { ListHeading } from "@/lib/ui/record-heading";
+import { adminIcon } from "@/components/sidebar/nav-config";
 
 // Slice #20.17: BackLink removed — the BreadcrumbBar now handles back
 // navigation universally.  ?from= / ?fromLabel= searchParams are still
@@ -30,9 +32,8 @@ export default async function GroupEditorPage({ params, searchParams }: PagePara
       <main className="w-full px-6 py-8 flex flex-col gap-6">
         {/* Slice 41.41: „Implicit" is in „Panouri" (the page bar) now, as on a record screen — it puts the places back too. */}
         <header className="flex flex-wrap items-start justify-between gap-4">
-          <h1 className="text-base font-semibold tracking-tight text-admin-title">
-            {t("editorTitle", { code: detail.code })}
-          </h1>
+          {/* 42.01 (FU-394): a principal list's size, Grupuri's icon before it (it was 16 px). */}
+          <ListHeading icon={adminIcon("groups")} title={t("editorTitle", { code: detail.code })} admin />
         </header>
 
         <GroupEditor groupId={id} initialDetail={detail} onlyTiles={tiles} />
