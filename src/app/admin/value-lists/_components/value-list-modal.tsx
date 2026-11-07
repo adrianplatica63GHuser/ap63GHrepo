@@ -4,6 +4,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, type RefObject } f
 import { createPortal } from "react-dom";
 import { ClipboardList, FolderInput, FolderOpen, Merge, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { IconButton, IconTooltip } from "@/lib/ui/icon-button";
+import { HintBubble } from "@/lib/ui/hint-bubble";
 import { useTranslations } from "next-intl";
 import {
   useQuery,
@@ -163,6 +164,9 @@ const OWN_COLUMNS: Partial<Record<ListKey, Readonly<Record<string, ColumnName>>>
   "document-types": { name: "valueDocTypeName", shortName: "valueDocTypeShortName" },
   // Slice #39.77: a tarla's code is short — its column is its header's width, so the gap to the locality is a cell's padding.
   tarla: { indicativ: "valueTarlaCode" },
+  // 42.03: „Cetățenie"'s two and „Relația cu firma"'s name, narrower.
+  citizenships: { name: "valueCitizenshipName", printedForms: "valuePrintedForms" },
+  "person-relationships": { name: "valuePersonRelationshipName" },
   // Slice #38.70: the roles' two checkmarks at the roles' tighter padding.
   "person-roles": { validForProperty: "valueRoleFlag", validForPerson: "valueRoleFlag" },
 };
@@ -276,9 +280,13 @@ function nameTipField(listKey: ListKey): FieldMeta | undefined {
   return LIST_META[listKey].fields.find((f) => f.nameTip);
 }
 
-/** A cell's column: a joined one is as wide as a name (#38.55: three names on one line); any other, its field's. */
+/**
+ * A cell's column: a joined one is as wide as a name (#38.55: three names on one line); any other, its field's.
+ * 42.03: a tarla's „Localitate (județ)" has its own, as wide as its longest.
+ */
 function cellColumn(cell: FieldMeta[], listKey: ListKey): ColumnName {
-  return cell.length > 1 ? "valueConverse" : fieldColumn(cell[0], listKey);
+  if (cell.length > 1) return listKey === "tarla" ? "valueTarlaLocality" : "valueConverse";
+  return fieldColumn(cell[0], listKey);
 }
 
 /** A list's table: a column per cell, the status where the list has one, then the actions. */
@@ -368,9 +376,21 @@ export function referenceFillColumn(listKey: ListKey): ColumnName {
   return columns.includes("valueText") ? "valueText" : columns[0];
 }
 
+/**
+ * 42.03 — Adrian: „For Tarla Codes, the Code and the Locality(county); the Description can use the space". The tarla's
+ * tile keeps the eight units it had before its two columns narrowed, so what they free goes to „Descriere"
+ * (`referenceFillColumn`) instead of the tile shrinking.
+ */
+export const REFERENCE_TILE_UNITS: Partial<Record<ListKey, number>> = { tarla: 8 };
+
+/** The units a list's tile takes: its own, or what `REFERENCE_TILE_UNITS` keeps for it. */
+function referenceUnits(listKey: ListKey): number {
+  return Math.max(REFERENCE_TILE_UNITS[listKey] ?? 0, valueListCardUnits(listKey));
+}
+
 /** A list's tile on a Reference Data page: its units, and — when it is off the grid — its width. */
 export function referenceTileWidth(listKey: ListKey): { units: number; widthRem?: number } {
-  const units = valueListCardUnits(listKey);
+  const units = referenceUnits(listKey);
   if (!REFERENCE_TILE_FOLLOWS_LIST.has(listKey)) return { units };
   const table = columnsRem(listColumns(listKey));
   for (let n = 1; n <= units; n++) if (referenceTableRem(unitsRem(n)) === table) return { units: n };
@@ -381,7 +401,7 @@ export function referenceTileWidth(listKey: ListKey): { units: number; widthRem?
 /** The table's fill in its tile, or nothing for a list whose table keeps its own width. */
 export function referenceTileFill(listKey: ListKey): TileFill | undefined {
   if (REFERENCE_TILE_FOLLOWS_LIST.has(listKey)) return undefined;
-  const units = valueListCardUnits(listKey);
+  const units = referenceUnits(listKey);
   return { units, column: referenceFillColumn(listKey), tableRem: referenceTableRem(unitsRem(units)) };
 }
 
@@ -502,6 +522,8 @@ type DependentsReportWire = {
   /** Configuration that goes with the row when it is deleted. Never blocks. */
   removedWithRow: { labelKey: string; count: number }[];
   notes: string[];
+  /** 42.03: rows that write the value's name as text — they keep it. Never blocks; absent on a refusal's body. */
+  named?: { labelKey: string; count: number }[];
 };
 
 async function fetchDependents(
@@ -1881,7 +1903,21 @@ export function ValueListModal({
                           </>
                         ) : (
                           cell.map((f) => (
-                            <span key={f.key} className="block">{f.labelText ?? t(`fields.${f.labelKey}`)}</span>
+                            f.key === "printedForms" && listKey === "citizenships" ? (
+                              // 42.03 — Adrian: „what is “Printed forms”?" The title says it, in a bubble on its ⓘ.
+                              <HintBubble
+                                key={f.key}
+                                id={`${listTitleId}-printed-forms`}
+                                text={t("fields.printedFormsHint")}
+                                triggerLabel={t("fields.printedFormsHintTrigger")}
+                                className="inline-flex items-center justify-center gap-1"
+                                align="end"
+                              >
+                                <span data-printed-forms-head="">{f.labelText ?? t(`fields.${f.labelKey}`)}</span>
+                              </HintBubble>
+                            ) : (
+                              <span key={f.key} className="block">{f.labelText ?? t(`fields.${f.labelKey}`)}</span>
+                            )
                           ))
                         )}
                       </th>
@@ -2650,6 +2686,25 @@ export function DeleteDialog({
               </p>
               <ul className="mb-3 list-disc pl-5 text-xs text-fade">
                 {report.removedWithRow.map((d) => (
+                  <li key={d.labelKey}>
+                    {t(
+                      `dependents.classes.${d.labelKey}` as Parameters<typeof t>[0],
+                      { count: d.count },
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {/* 42.03: „Țara adresei" — the addresses that write this country's name. The delete goes ahead; they keep
+              their text, so they are named here rather than counted against it. */}
+          {report?.named && report.named.length > 0 && (
+            <>
+              <p className="mb-1 text-xs font-medium text-ink" data-named-keep="">
+                {t("confirm.namedKeep")}
+              </p>
+              <ul className="mb-3 list-disc pl-5 text-xs text-fade">
+                {report.named.map((d) => (
                   <li key={d.labelKey}>
                     {t(
                       `dependents.classes.${d.labelKey}` as Parameters<typeof t>[0],

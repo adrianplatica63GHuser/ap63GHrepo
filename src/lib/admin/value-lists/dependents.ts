@@ -142,6 +142,8 @@ import {
   type WhitelistGrantOutcome,
 } from "./role-whitelists";
 import {
+  address,
+  propertyAddress,
   document,
   documentDocument,
   judicialPerson,
@@ -348,6 +350,20 @@ export type ListDependencies = {
     from: string,
     to: string,
   ) => Promise<WhitelistGrantOutcome>;
+  /**
+   * 42.03: rows that write this value's NAME as text — counted for „Folosit de" and named in the delete's confirmation,
+   * never a reason to refuse it and never moved by „Unește": the text stays as it is. `nameColumn` is the row's name;
+   * a text matches it trimmed and in any case (`foldName` in ./queries.ts).
+   */
+  named?: { nameColumn: PgColumn; refs: readonly NamedRef[] };
+};
+
+/** 42.03: one class of rows that write a value's name as text. */
+export type NamedRef = {
+  /** i18n key under `valueList.dependents.classes`. */
+  labelKey: string;
+  table: PgTable;
+  column: PgColumn;
 };
 
 export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
@@ -590,10 +606,19 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
 
   // Slice 41.51 (migration_124): „Țara adresei". An address keeps the country's NAME (text), never the row, so nothing
   // depends on a value: a delete or a rename leaves every stored address as it was.
+  // 42.03 — Adrian: „I see Romania is not used!". Still no ref (a delete is never refused, „Unește" moves nothing), but
+  // the addresses that write a country's name are counted (`named`): a person's or a firm's two, a property's.
   "address-countries": {
     table: lookupAddressCountry,
     idColumn: lookupAddressCountry.id,
     refs: [],
+    named: {
+      nameColumn: lookupAddressCountry.name,
+      refs: [
+        { labelKey: "personAddresses", table: address, column: address.country },
+        { labelKey: "propertyAddresses", table: propertyAddress, column: propertyAddress.country },
+      ],
+    },
   },
 
   // Slice #39.70 (migration_114): „Relația cu firma". A person holding the value is a dependent — it holds a delete
@@ -760,6 +785,7 @@ export type DependentCount = {
 };
 
 /** What the server says about a row a user is trying to delete. */
+// 42.03: `named` — the rows that write the value's name as text (`ListDependencies.named`); never blocks.
 export type DependentsReport = {
   /** The blocking count. Zero means the delete is offered. */
   total: number;
@@ -773,6 +799,8 @@ export type DependentsReport = {
   removedWithRow: DependentCount[];
   /** i18n keys under `valueList.dependents.notes` — what the count does NOT cover. */
   notes: string[];
+  /** 42.03: rows that write this value's name as text — they keep it after a delete. Never blocks. */
+  named: DependentCount[];
 };
 
 // Slice #34.03: `matchesByValue(def)` was here — `def.source !== def.idColumn`,

@@ -2566,7 +2566,9 @@
       "county": "Județ",
       "tarlaLocalityJoined": "Localitate",
       "tarlaLocalityJoinedSub": "(județ)",
-      "publicBody": "Autoritate publică"
+      "publicBody": "Autoritate publică",
+      "printedFormsHint": "Cum scrie actul de identitate această cetățenie (ex. ROU, ROUMAINE), despărțite prin virgulă — importul cărții de identitate le folosește ca să găsească cetățenia.",
+      "printedFormsHintTrigger": "Ce sunt formele tipărite?"
     },
     "documentTypeStatus": {
       "new": "Adăugat manual",
@@ -2704,7 +2706,8 @@
       "noTarget": "Nu există altă valoare în această listă pe care să le mutați. Adăugați una întâi, apoi reveniți aici.",
       "delete": "Șterge",
       "deleting": "Se șterge…",
-      "cancel": "Anulează"
+      "cancel": "Anulează",
+      "namedKeep": "Scriu această țară — și o păstrează scrisă după ștergere:"
     },
     "dependents": {
       "classes": {
@@ -2725,7 +2728,9 @@
         "tarlaCorners": "{count, plural, one {# colț al conturului} few {# colțuri ale conturului} other {# de colțuri ale conturului}}",
         "tarlaParcels": "{count, plural, one {# parcelă a tarlalei} few {# parcele ale tarlalei} other {# de parcele ale tarlalei}}",
         "tarlaPlans": "{count, plural, one {# plan parcelar legat} few {# planuri parcelare legate} other {# de planuri parcelare legate}}",
-        "naturalPersonRelationships": "{count, plural, one {# persoană fizică} few {# persoane fizice} other {# de persoane fizice}}"
+        "naturalPersonRelationships": "{count, plural, one {# persoană fizică} few {# persoane fizice} other {# de persoane fizice}}",
+        "personAddresses": "{count, plural, one {# adresă a unei persoane} few {# adrese ale unor persoane} other {# de adrese ale unor persoane}}",
+        "propertyAddresses": "{count, plural, one {# adresă a unei proprietăți} few {# adrese ale unor proprietăți} other {# de adrese ale unor proprietăți}}"
       },
       "notes": {
         "versionSnapshots": "Istoricul versiunilor nu este numărat mai sus. Fiecare versiune salvată păstrează valoarea așa cum era atunci — nici ștergerea, nici mutarea nu modifică versiunile deja salvate. Mutarea adaugă însă câte o versiune nouă fiecărui obiect pe care îl modifică."
@@ -4097,11 +4102,26 @@
           "records": "Obiectele ștampilate"
         },
         "choices": {
-          "find": { "label": "Caut o ștampilă", "why": "Ca să văd dacă ștampila de care am nevoie există deja, sau ca s-o deschid." },
-          "create": { "label": "Fac o ștampilă nouă", "why": "Când căutarea n-a găsit-o — caută întâi, ca să nu faci aceeași ștampilă de două ori." },
-          "describe": { "label": "Schimb notele unei ștampile", "why": "Când s-a schimbat ce știi despre ea; descrierea scurtă rămâne cea de la creare." },
-          "delete": { "label": "Șterg o ștampilă", "why": "Când și-a făcut treaba — obiectele ei rămân în arhivă." },
-          "apply": { "label": "Aplic sau scot o ștampilă", "why": "Ca ștampila să stea exact pe obiectele de care ai nevoie." }
+          "find": {
+            "label": "Caut o ștampilă",
+            "why": "Ca să văd dacă ștampila de care am nevoie există deja, sau ca s-o deschid."
+          },
+          "create": {
+            "label": "Fac o ștampilă nouă",
+            "why": "Când căutarea n-a găsit-o — caută întâi, ca să nu faci aceeași ștampilă de două ori."
+          },
+          "describe": {
+            "label": "Schimb notele unei ștampile",
+            "why": "Când s-a schimbat ce știi despre ea; descrierea scurtă rămâne cea de la creare."
+          },
+          "delete": {
+            "label": "Șterg o ștampilă",
+            "why": "Când și-a făcut treaba — obiectele ei rămân în arhivă."
+          },
+          "apply": {
+            "label": "Aplic sau scot o ștampilă",
+            "why": "Ca ștampila să stea exact pe obiectele de care ai nevoie."
+          }
         },
         "steps": {
           "describe": {

@@ -82,3 +82,25 @@ test.describe("TC-VL-12 — „Țara adresei”", () => {
     }
   });
 });
+
+/** 42.03 — „Folosit de” counts the addresses that write a country's name; „Forme tipărite” says what it is. */
+test.describe("TC-VL-12 — „Țara adresei” numărată, „Forme tipărite” explicată (42.03)", () => {
+  test("„România” e folosită de adresele seed-ului; bula de pe „Forme tipărite”", async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto("/admin/value-lists?list=address-countries");
+    const panel = page.getByRole("region", { name: "Țara adresei", exact: true });
+    const romania = panel.locator("tbody tr").filter({ has: page.locator("td:first-child", { hasText: /^România$/ }) });
+    await expect(romania.locator("[data-usage]")).not.toHaveText("…", { timeout: 30_000 });
+    // Every seeded person's and property's address writes „România": it is used, so it is not greyed or last.
+    const n = Number(await romania.locator("[data-usage]").getAttribute("data-usage"));
+    expect(n, "„România”'s addresses").toBeGreaterThan(0);
+    await expect(romania).not.toHaveAttribute("data-unused", "");
+
+    await page.goto("/admin/value-lists?list=citizenships");
+    const cit = page.getByRole("region", { name: "Cetățenie", exact: true });
+    await expect(cit.locator("[data-printed-forms-head]")).toBeVisible({ timeout: 30_000 });
+    await cit.getByRole("button", { name: "Ce sunt formele tipărite?", exact: true }).click();
+    await expect(page.getByText("Cum scrie actul de identitate această cetățenie (ex. ROU, ROUMAINE), despărțite prin virgulă — importul cărții de identitate le folosește ca să găsească cetățenia.", { exact: true })).toBeVisible();
+  });
+});

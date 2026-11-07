@@ -175,7 +175,15 @@ describe("the dependency map", () => {
     expect(ownerTable(def.idColumn)).toBe(getTableName(def.table));
     // 41.51: „Țara adresei" is the one list nothing refers to — an address keeps the country's NAME, as text — so it
     // has no refs by design (it read `expect(def.refs.length).toBeGreaterThan(0)` for every list).
-    if (list === "address-countries") expect(def.refs).toEqual([]);
+    // 42.03 — Adrian: „I see Romania is not used!". Still no ref — nothing refuses its delete and „Unește" moves
+    // nothing — but the addresses that write each name are counted (`named`): a person's or a firm's, a property's.
+    if (list === "address-countries") {
+      expect(def.refs).toEqual([]);
+      expect(def.named?.refs.map((r) => [r.labelKey, getTableName(r.table), ownerTable(r.column)])).toEqual([
+        ["personAddresses", "address", "address"],
+        ["propertyAddresses", "property_address", "property_address"],
+      ]);
+    }
     else expect(def.refs.length).toBeGreaterThan(0);
     for (const ref of def.refs) {
       expect(ownerTable(ref.column)).toBe(getTableName(ref.table));
@@ -564,8 +572,9 @@ describe("the confirmation has words for everything it can say", () => {
   const ro = messages("ro-RO");
   const en = messages("en-GB");
 
+  // 42.03: and the classes written by name (`named`) — „Țara adresei"'s addresses.
   const labelKeys = [
-    ...new Set(LISTS.flatMap((l) => LIST_DEPENDENCIES[l].refs.map((r) => r.labelKey))),
+    ...new Set(LISTS.flatMap((l) => [...LIST_DEPENDENCIES[l].refs, ...(LIST_DEPENDENCIES[l].named?.refs ?? [])].map((r) => r.labelKey))),
   ];
   const noteKeys = [...new Set(LISTS.flatMap((l) => dependentNotes(l)))];
 
@@ -1483,5 +1492,29 @@ describe("the 409 the whitelist panels can say in Romanian", () => {
     const failures = read("lib", "admin", "value-lists", "failures.ts");
     expect(failures).toContain('if (code === "DUPLICATE") return "duplicate";');
     expect(FAILURE_CODES).toContain("duplicate");
+  });
+});
+
+describe("42.03 — „Țara adresei” counted by name", () => {
+  const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
+  const QUERIES = read("src", "lib", "admin", "value-lists", "queries.ts");
+  const MODAL = read("src", "app", "admin", "value-lists", "_components", "value-list-modal.tsx");
+
+  it("„Folosit de” adds the addresses that write each row's name, folded the same on both sides", () => {
+    expect(QUERIES).toContain("for (const [name, n] of await namedCounts(db, ref)) for (const id of byName.get(name) ?? []) usage[id] += n;");
+    expect(QUERIES).toContain('return typeof value === "string" ? value.trim().toLocaleLowerCase("ro-RO") : "";');
+    // „ROMÂNIA” off an old card counts for „România”.
+    expect(" ROMÂNIA ".trim().toLocaleLowerCase("ro-RO")).toBe("România".toLocaleLowerCase("ro-RO"));
+  });
+
+  it("is a count, not a lock: the report names them apart from the blocking total, and the dialog says they keep it", () => {
+    expect(QUERIES).toContain("addCount(named, ref.labelKey, (await namedCounts(conn, ref)).get(name) ?? 0);");
+    expect(QUERIES).toMatch(/total: dependents\.reduce\(\(sum, d\) => sum \+ d\.count, 0\),/);
+    expect(MODAL).toContain("{report?.named && report.named.length > 0 && (");
+    expect(MODAL).toContain('{t("confirm.namedKeep")}');
+    const ro = messages("ro-RO");
+    const en = messages("en-GB");
+    expect(typeof at(ro, "valueList.confirm.namedKeep")).toBe("string");
+    expect(typeof at(en, "valueList.confirm.namedKeep")).toBe("string");
   });
 });

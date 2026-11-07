@@ -247,3 +247,37 @@ describe("„Roluri Persoane” without a horizontal scroll bar at 1366 px (#38.
     expect(MODAL).toContain('"person-roles": { validForProperty: "valueRoleFlag", validForPerson: "valueRoleFlag" },');
   });
 });
+
+describe("42.03 — „Liste de valori”'s columns narrower", () => {
+  const inner = (n: keyof typeof COLUMN) => (columnRem(n) - columnPadRem(n)) * REM;
+
+  it("„Cetățenie”: „Denumire” and „Forme tipărite” in columns of their own, never wider than before", () => {
+    expect(MODAL).toContain('citizenships: { name: "valueCitizenshipName", printedForms: "valuePrintedForms" },');
+    expect(inner("valueCitizenshipName")).toBeGreaterThanOrEqual(76.5); // „Moldoveană", measured
+    expect(columnRem("valueCitizenshipName")).toBeLessThan(columnRem("valueNameShort"));
+    expect(columnRem("valuePrintedForms")).toBeLessThan(columnRem("valueText"));
+  });
+
+  it("„Relația cu firma”: „Denumire” at half of valueName's, still holding „Contact instituțional” (125.8 px)", () => {
+    expect(MODAL).toContain('"person-relationships": { name: "valuePersonRelationshipName" },');
+    expect(columnRem("valuePersonRelationshipName")).toBe(columnRem("valueName") / 2);
+    expect(inner("valuePersonRelationshipName")).toBeGreaterThanOrEqual(125.8);
+  });
+
+  it("„Țara adresei” keeps its name column: „Statele Unite ale Americii” is the longest", () => {
+    expect(MODAL).toContain('const SHORT_NAME_LISTS: ReadonlySet<ListKey> = new Set(["use-categories", "citizenships", "address-countries"]);');
+  });
+
+  it("„Forme tipărite”'s title carries a bubble that says what it is, in both languages", () => {
+    expect(MODAL).toContain('f.key === "printedForms" && listKey === "citizenships" ? (');
+    expect(MODAL).toContain('text={t("fields.printedFormsHint")}');
+    const ro = JSON.parse(read("messages", "ro-RO.json"));
+    const en = JSON.parse(read("messages", "en-GB.json"));
+    expect(ro.valueList.fields.printedFormsHint).toBe(
+      "Cum scrie actul de identitate această cetățenie (ex. ROU, ROUMAINE), despărțite prin virgulă — importul cărții de identitate le folosește ca să găsească cetățenia.",
+    );
+    expect(en.valueList.fields.printedFormsHint).toContain("ROU, ROUMAINE");
+    expect(typeof ro.valueList.fields.printedFormsHintTrigger).toBe("string");
+    expect(typeof en.valueList.fields.printedFormsHintTrigger).toBe("string");
+  });
+});

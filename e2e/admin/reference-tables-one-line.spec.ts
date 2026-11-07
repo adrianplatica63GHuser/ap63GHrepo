@@ -436,16 +436,19 @@ const OBJECT_TYPES_ROLES = [
   "property-property-roles",
   "document-document-roles",
 ] as const;
+/** 42.03 — „Liste de valori”: the same treatment, through the same pieces. */
+const VALUE_LISTS = ["tarla", "citizenships", "address-countries", "person-relationships"] as const;
 
-test.describe("TC-VL-05 pasul 10 — titluri centrate, spații egale, rânduri strânse și calme (42.02)", () => {
-  test("la 1920 px: pe fiecare listă din cele două grupuri", async ({ page }) => {
+test.describe("TC-VL-05 pasul 10 — titluri centrate, spații egale, rânduri strânse și calme (42.02, 42.03)", () => {
+  // 42.03: „Liste de valori"'s four too — it read „pe fiecare listă din cele două grupuri".
+  test("la 1920 px: pe fiecare listă din „Tipuri de obiecte”, „Roluri și legături” și „Liste de valori”", async ({ page }) => {
     test.slow();
     await page.setViewportSize({ width: 1920, height: 1080 });
     // A natural persons' row, measured here: the rows of these lists are as high.
     await page.goto("/natural-persons");
     await expect(page.locator("table tbody tr").first()).toBeVisible({ timeout: 30_000 });
     const personRow = await page.locator("table tbody tr").first().evaluate((r) => r.getBoundingClientRect().height);
-    for (const key of OBJECT_TYPES_ROLES) {
+    for (const key of [...OBJECT_TYPES_ROLES, ...VALUE_LISTS]) {
       await page.goto(`/admin/value-lists?list=${key}`);
       const tile = page.locator(`[data-reference-tiles] [data-tile="${key}"]`);
       await expect(tile.locator("table[data-width-table] tbody tr").first()).toBeVisible({ timeout: 30_000 });

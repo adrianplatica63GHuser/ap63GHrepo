@@ -2566,7 +2566,9 @@
       "county": "County",
       "tarlaLocalityJoined": "Locality",
       "tarlaLocalityJoinedSub": "(county)",
-      "publicBody": "Public body"
+      "publicBody": "Public body",
+      "printedFormsHint": "How an identity document prints this citizenship (e.g. ROU, ROUMAINE), separated by commas — the identity-card import uses them to find the citizenship.",
+      "printedFormsHintTrigger": "What are printed forms?"
     },
     "documentTypeStatus": {
       "new": "Added by hand",
@@ -2704,7 +2706,8 @@
       "noTarget": "There is no other value in this list to move them to. Add one first, then come back here.",
       "delete": "Delete",
       "deleting": "Deleting…",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "namedKeep": "These write this country — and keep it written after the delete:"
     },
     "dependents": {
       "classes": {
@@ -2725,7 +2728,9 @@
         "tarlaCorners": "{count, plural, one {# corner of its outline} other {# corners of its outline}}",
         "tarlaParcels": "{count, plural, one {# parcel of the tarla} other {# parcels of the tarla}}",
         "tarlaPlans": "{count, plural, one {# linked plan parcelar} other {# linked plans parcelare}}",
-        "naturalPersonRelationships": "{count, plural, one {# natural person} other {# natural persons}}"
+        "naturalPersonRelationships": "{count, plural, one {# natural person} other {# natural persons}}",
+        "personAddresses": "{count, plural, one {# address of a person} other {# addresses of persons}}",
+        "propertyAddresses": "{count, plural, one {# address of a property} other {# addresses of properties}}"
       },
       "notes": {
         "versionSnapshots": "Version history is not counted above. Each saved version keeps the value as it was at the time — neither deleting nor moving alters a version that is already saved. Moving does add one new version to each object it changes."
@@ -4097,11 +4102,26 @@
           "records": "The stamped objects"
         },
         "choices": {
-          "find": { "label": "Find a stamp", "why": "To see whether the stamp you need already exists, or to open it." },
-          "create": { "label": "Make a new stamp", "why": "When the search found none — search first, so the same stamp is not made twice." },
-          "describe": { "label": "Change a stamp's notes", "why": "When what you know about it has changed; the short description stays the one given at creation." },
-          "delete": { "label": "Delete a stamp", "why": "When it has done its job — its objects stay in the archive." },
-          "apply": { "label": "Apply or remove a stamp", "why": "So the stamp is on exactly the objects you need." }
+          "find": {
+            "label": "Find a stamp",
+            "why": "To see whether the stamp you need already exists, or to open it."
+          },
+          "create": {
+            "label": "Make a new stamp",
+            "why": "When the search found none — search first, so the same stamp is not made twice."
+          },
+          "describe": {
+            "label": "Change a stamp's notes",
+            "why": "When what you know about it has changed; the short description stays the one given at creation."
+          },
+          "delete": {
+            "label": "Delete a stamp",
+            "why": "When it has done its job — its objects stay in the archive."
+          },
+          "apply": {
+            "label": "Apply or remove a stamp",
+            "why": "So the stamp is on exactly the objects you need."
+          }
         },
         "steps": {
           "describe": {

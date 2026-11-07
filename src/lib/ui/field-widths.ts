@@ -1727,7 +1727,21 @@ export const COLUMN = {
   valueText: { content: 10, kind: "fixed" }, //             any other text field — an indicativ, a short name, a type of institution (150 px)
   // Slice #39.77 — a tarla's code, „47/2" (27 px), under „INDICATIV" (75 px): the header sets it. At valueText's 160 px
   // the gap to „Localitate" was the one Adrian called „way too big".
-  valueTarlaCode: { content: "S", kind: "fixed" },
+  // 42.03 — Adrian: „For Tarla Codes, the Code and the Locality(county); the Description can use the space". Its header's
+  // „INDICATIV" is 56.6 px in the headers' 13.5-px Roboto Condensed (the codes 32 px), so 4 rem and half the padding:
+  // 7 rem → 5. Was S (80 px) at full padding.
+  valueTarlaCode: { content: 4, kind: "fixed", pad: 1 },
+  // 42.03: a tarla's „Localitate (județ)" — its longest, „Bragadiru, Ilfov", 93 px (14-px Roboto, measured in the pane).
+  // It was the converse names' column (#39.67's joined cell), 12.25 rem; 7.25 now.
+  valueTarlaLocality: { content: 6.25, kind: "fixed", pad: 1 },
+  // 42.03 — „For Citizenship, the Name and the Printed forms": „Moldoveană" 76.5 px; was valueNameShort's 10.5 rem → 6.25.
+  // „Forme tipărite": none stored yet; sized for migration_125's example „ROU, ROUMAINE" and the header's ⓘ beside
+  // „TIPĂRITE" — was valueText's 12 rem → 8.
+  valueCitizenshipName: { content: 5.25, kind: "fixed", pad: 1 },
+  valuePrintedForms: { content: 7, kind: "fixed", pad: 1 },
+  // 42.03 — „For “Relationship to the business” the name column can be 50% of what is now": valueName's 19 rem → 9.5,
+  // at half the padding so „Contact instituțional" (125.8 px) still fits.
+  valuePersonRelationshipName: { content: 8.5, kind: "fixed", pad: 1 },
   // Slice #38.60 — the roles' own two: #38.50 gave „Roluri" the name column sized for the longest DOCUMENT type (XL, 252 px)
   // and #38.55 the converse names an XL too; both held much shorter text, which left the gaps Adrian saw. Each is now as
   // wide as its own longest value, measured at 1920 px on the archive after #38.58 shortened the converse cell.

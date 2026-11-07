@@ -22,11 +22,24 @@ const PAGES_PANEL = code(read("src", "app", "documents", "_components", "pages-p
 const REM = 16;
 
 describe("„Indicative Tarla” — a small gap after the code, the list ending at its buttons", () => {
-  it("the code's column is its header's width (S, 80 px — „INDICATIV” measured 75), not valueText's 160", () => {
+  // 42.03 — Adrian: „For Tarla Codes, the Code and the Locality(county); the Description can use the space". It read
+  // „its header's width (S, 80 px — „INDICATIV” measured 75)": `COLUMN.valueTarlaCode.content` "S", at full padding. The
+  // headers are 13.5-px Roboto Condensed now — „INDICATIV" 56.6 px, the codes 32 — so 4 rem at half the padding.
+  it("the code's column is its header's width (64 px — „INDICATIV” measured 56.6) at half the padding, not valueText's 160", () => {
     expect(MODAL).toContain('tarla: { indicativ: "valueTarlaCode" },');
-    expect(COLUMN.valueTarlaCode.content).toBe("S");
-    expect(SCALE.S * REM).toBeGreaterThanOrEqual(75);
-    expect(SCALE.S).toBeLessThan(COLUMN.valueText.content as number);
+    expect(COLUMN.valueTarlaCode).toEqual({ content: 4, kind: "fixed", pad: 1 });
+    expect(columnRem("valueTarlaCode")).toBeLessThan(SCALE.S + 2); // never wider than before
+    expect(4 * REM).toBeGreaterThanOrEqual(56.6);
+  });
+
+  it("42.03: „Localitate (județ)” as wide as its longest, „Bragadiru, Ilfov” (93 px), not the converse names' 12.25 rem", () => {
+    expect(MODAL).toContain('if (cell.length > 1) return listKey === "tarla" ? "valueTarlaLocality" : "valueConverse";');
+    expect((columnRem("valueTarlaLocality") - columnPadRem("valueTarlaLocality")) * REM).toBeGreaterThanOrEqual(93);
+    expect(columnRem("valueTarlaLocality")).toBeLessThan(columnRem("valueConverse"));
+    // The description takes what is freed: the tarla's tile keeps its eight units and its table fills it (`referenceTileFill`).
+    expect(MODAL).toContain('return columns.includes("valueText") ? "valueText" : columns[0];');
+    expect(MODAL).toContain("export const REFERENCE_TILE_UNITS: Partial<Record<ListKey, number>> = { tarla: 8 };");
+    expect(MODAL).toContain("const units = referenceUnits(listKey);");
   });
 
   it("its buttons' column holds the four it draws (179 px measured), not the document types' 21rem", () => {

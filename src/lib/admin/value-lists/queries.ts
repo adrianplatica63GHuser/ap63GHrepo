@@ -76,6 +76,7 @@ import {
   LIST_DEPENDENCIES,
   dependentNotes,
   type DependentCount,
+  type NamedRef,
   type DependentRef,
   type DependentsReport,
   type ListDependencies,
@@ -1358,12 +1359,48 @@ async function buildReport(
     else addCount(dependents, ref.labelKey, n);
   }
 
+  // 42.03: the rows that write the value's name as text — said in the confirmation, never counted against the delete.
+  const named: DependentCount[] = [];
+  if (def.named) {
+    const [row] = await conn.select({ name: def.named.nameColumn }).from(def.table).where(eq(def.idColumn, id));
+    const name = foldName(row?.name);
+    if (name !== "") {
+      for (const ref of def.named.refs) {
+        addCount(named, ref.labelKey, (await namedCounts(conn, ref)).get(name) ?? 0);
+      }
+    }
+  }
+
   return {
     total: dependents.reduce((sum, d) => sum + d.count, 0),
     dependents,
     removedWithRow,
     notes,
+    named,
   };
+}
+
+/**
+ * 42.03: a name trimmed and in lower case — how an address's country text meets „Țara adresei"'s row. Folded here, not
+ * in SQL, so „ROMÂNIA" meets „România" whatever the database's collation does with „Â".
+ */
+export function foldName(value: unknown): string {
+  return typeof value === "string" ? value.trim().toLocaleLowerCase("ro-RO") : "";
+}
+
+/** 42.03: how many rows of one `named` ref write each name, folded (`foldName`). */
+async function namedCounts(conn: Conn | typeof db, ref: NamedRef): Promise<Map<string, number>> {
+  const rows = await conn
+    .select({ value: ref.column, n: count() })
+    .from(ref.table)
+    .where(sql`${ref.column} IS NOT NULL`)
+    .groupBy(ref.column);
+  const out = new Map<string, number>();
+  for (const r of rows) {
+    const k = foldName(r.value);
+    if (k !== "") out.set(k, (out.get(k) ?? 0) + Number(r.n));
+  }
+  return out;
 }
 
 /**
@@ -1390,6 +1427,19 @@ export async function countUsage(list: ListKey): Promise<Record<string, number>>
     for (const r of rows) {
       const key = String(r.value);
       if (key in usage) usage[key] += Number(r.n);
+    }
+  }
+  // 42.03: „Țara adresei" — the addresses that write each row's name, trimmed and in any case. Folded in the database
+  // and here alike (`foldName`), so „ROMÂNIA" off an old card counts for „România".
+  if (def.named) {
+    const names = await db.select({ id: def.idColumn, name: def.named.nameColumn }).from(def.table);
+    const byName = new Map<string, string[]>();
+    for (const r of names) {
+      const k = foldName(r.name);
+      if (k !== "") byName.set(k, [...(byName.get(k) ?? []), String(r.id)]);
+    }
+    for (const ref of def.named.refs) {
+      for (const [name, n] of await namedCounts(db, ref)) for (const id of byName.get(name) ?? []) usage[id] += n;
     }
   }
   return usage;
