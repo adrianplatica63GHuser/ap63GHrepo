@@ -4,8 +4,8 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-11-03 20:44
--- Migrations : 124, newest migration_128_map_search_flight.sql
+-- Generated : 2026-11-06 21:10
+-- Migrations : 125, newest migration_129_workflow_choice_highlight.sql
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
