@@ -124,7 +124,8 @@ test.describe("TC-VL-10 — triunghiul legăturilor", () => {
         tileW: t.getBoundingClientRect().width,
         tileH: t.getBoundingClientRect().height,
         column: t.querySelector<HTMLElement>("[data-triangle-list]")!.getBoundingClientRect().width,
-        side: t.closest<HTMLElement>("[data-value-list-side]")!.getBoundingClientRect().width,
+        // 42.02: the row of tiles it spans — the side less its scroll gutter at 1920 (2 px under the side, measured).
+        side: t.closest<HTMLElement>("[data-tile-row]")!.getBoundingClientRect().width,
         sideScrolls: t.closest<HTMLElement>("[data-value-list-side]")!.scrollWidth > t.closest<HTMLElement>("[data-value-list-side]")!.clientWidth + 1,
       }));
       const before = BEFORE[width as 1366 | 1920];
@@ -133,7 +134,7 @@ test.describe("TC-VL-10 — triunghiul legăturilor", () => {
       // 42.02 (Ask first 5) — Adrian: „Wider As to Occupy a maximized screen; This will make it less tall". The tile is
       // the side's whole width at both; at 1920 the six stand in two columns, 1–3 and 4–6 — measured 1334 × 471 px.
       // It read: at 1920 `wide.column / before.column >= 1.2 - 0.01` (#38.77's capped width); at 1366 as below.
-      expect(Math.abs(wide.tileW - wide.side), "the tile as wide as the side holding it").toBeLessThanOrEqual(1);
+      expect(Math.abs(wide.tileW - wide.side), "the tile as wide as the row of tiles holding it").toBeLessThanOrEqual(1);
       expect(wide.column, "the six's column no narrower than before").toBeGreaterThanOrEqual(before.column - 1);
       if (width === 1920) {
         expect(wide.tileH, "the tile at 1920, the six in two columns").toBeLessThan(540);

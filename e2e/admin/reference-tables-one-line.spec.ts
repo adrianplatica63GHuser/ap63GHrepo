@@ -174,7 +174,9 @@ test.describe("TC-VL-05 pasul 4 — Roluri: valorile centrate (#38.60)", () => {
       expect(c.worstTick).toBeLessThanOrEqual(2);
       const centre = { head: "center", cell: "center" };
       expect(c.centred).toEqual([centre, centre, centre, centre]);
-      for (const l of c.left) expect([l.head, l.cell].every((a) => a === "left" || a === "start")).toBe(true);
+      // 42.02: every header centred across and down; „Denumire"'s cells stay at the left. It read: head and cell both
+      // left (`[l.head, l.cell].every((a) => a === "left" || a === "start")`).
+      for (const l of c.left) expect([l.head, ["left", "start"].includes(l.cell)]).toEqual(["center", true]);
       expect(c.tallest).toBeLessThan(56);
     });
   }

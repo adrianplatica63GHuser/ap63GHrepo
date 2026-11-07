@@ -73,7 +73,9 @@ describe("one piece for every Reference Data page (Ask first 3)", () => {
 
   it("the property types' page draws its lists and the grid through it", () => {
     expect(HUB).toContain('selected === "property-types"');
-    expect(HUB).toContain("...referenceTileWidth(key), node: listCard(key, true)"); // #39.88: was `units: valueListCardUnits(key)`
+    // #39.88: was `units: valueListCardUnits(key)`. 42.02: and the list's scroll bar — it read
+    // "...referenceTileWidth(key), node: listCard(key, true)".
+    expect(HUB).toContain("...referenceTileWidth(key), extraPx: scrollbars[key] ?? 0, node: listCard(key, true)");
     expect(HUB).toContain('{ key: "type-uses", units: usesUnits, node: <PropertyTypeUses cardUnits={VALUE_LIST_CARD_UNITS} fill onUnits={setUsesUnits} /> }');
     expect(HUB).toContain("<ReferenceTiles page={selected} tiles={tiles} />");
   });
@@ -188,5 +190,15 @@ describe("42.02 — no „Implicit” on Date de referință; the list right und
 
   it("the packing keeps a full box's width while it measures — the triangle is not shrunk to 2 px and 1,669 px tall (Ask first 6)", () => {
     expect(PACKING).toMatch(/for \(const b of boxes\) \{\s*if \(!b\.full\) styles\.reset\(b\.el, "width"\);/);
+  });
+});
+
+describe("42.02 — a long list never scrolls sideways in its tile", () => {
+  it("its tile widens by the list's vertical scroll bar, which the list tells the page", () => {
+    expect(MODAL).toContain("const px = Math.max(0, Math.round(frame.offsetWidth - frame.clientWidth - 2));");
+    expect(MODAL).toContain("}, [frameHeight, visibleRows?.length]);");
+    expect(HUB).toContain("onScrollbar={fill ? scrollbarOf(key) : undefined}");
+    const TILES = code(read("src", "app", "admin", "value-lists", "_components", "reference-tiles.tsx"));
+    expect(TILES).toContain("return t.extraPx ? { ...base, width: `calc(${base.width} + ${t.extraPx}px)` } : base;");
   });
 });
