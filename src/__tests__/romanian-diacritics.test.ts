@@ -612,7 +612,7 @@ describe("the seeded time-frame rows", () => {
       [`${key}.label_ro`, r.labelRo] as const,
       [`${key}.description_ro`, r.descriptionRo] as const,
     ]);
-    expect(romanian).toHaveLength(30);
+    expect(romanian).toHaveLength(32); // 41.98: sixteen rows, two strings each (it read 30)
 
     // Every one of the twenty strings carries at least one Romanian diacritic.
     // That is what a reversion to the 063 spelling would fail — those strings
