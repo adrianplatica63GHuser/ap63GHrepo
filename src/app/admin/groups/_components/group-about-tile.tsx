@@ -24,7 +24,7 @@ export function GroupAboutTile({ onUnderstood }: { onUnderstood: () => void }) {
   const t = useTranslations("group.infoPanel");
   const titleId = useId();
   return (
-    <section data-panel="about-groups" data-tile="about" data-tile-full="" aria-labelledby={titleId} className="basis-full rounded-lg border border-card-rim bg-card px-5 py-4 text-admin-title">
+    <section data-tile="about" data-tile-full="" aria-labelledby={titleId} className="basis-full rounded-lg border border-card-rim bg-card px-5 py-4 text-admin-title">
       <TileTitle id={titleId} title={t("title")} className="mb-3" admin />
       <div className="flex flex-col gap-2 text-sm">
         <p>{t("body1")}</p>

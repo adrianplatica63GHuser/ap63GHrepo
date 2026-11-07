@@ -26,8 +26,9 @@ export default async function EditNaturalPersonPage({ params, searchParams }: Pa
 
   return (
     // Slice 42.01 — Adrian: „Natural Persons screen is still beige! It must be the off white colour that the other principle
-    // objects are" (FU-391). The juridical person's wrapper; it stood on the canvas's beige (bg-canvas, #F3F1ED).
-    <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
+    // objects are" (FU-391). The juridical person's ground — the off-white, zinc-50 (zinc-950 in dark) — through the role
+    // token `bg-ground`, since this file writes only role tokens (colour-tokens.test.ts); it stood on the canvas's beige.
+    <div className="flex flex-1 flex-col bg-ground">
       {/* Slice #21.08.misc: the max-w-3xl (768px) cap was removed so the
           Details tab's two side-by-side panel stacks have room. Matches the
           Property detail page, which is already uncapped. This widens every

@@ -137,6 +137,7 @@
    ─────────────────────────────────────────────────────────────────────────── */
 @theme {
   --color-canvas:    #F3F1ED;   /* bg-canvas   — page background               */
+  --color-ground:    var(--color-zinc-50);   /* bg-ground — a record screen's off-white page (42.01: the zinc-50 the others draw) */
   --color-card:      #EEF4FA;   /* bg-card     — panel / section background    */
   --color-card-rim:  #C6D4E8;   /* border-card-rim — panel border              */
   --color-cta-pale:  #f1f5f9;   /* bg-cta-pale — light slate wash / row hover  */
@@ -174,6 +175,7 @@
   color-scheme: dark;
   /* Slice 40.76 — each role's dark value. Unlayered, so it outranks the theme layer's :root. */
   --color-canvas:       #0a0a0a;
+  --color-ground:       var(--color-zinc-950);  /* 42.01: the record screens' dark page */
   --color-card:         #18181b;  /* zinc-900 */
   --color-card-rim:     #27272a;  /* zinc-800 */
   --color-admin-title:  #F87171;  /* 41.83: #C00000 cannot be read on zinc-900; red-400, as danger-dark */
