@@ -304,8 +304,9 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A096", "{chunks}"], // 41.70: „Căutarea globală" in the big map's search box's message — a link in a sentence, same tab
   ],
   "src/components/entity-metadata-tab.tsx": [
-    ["A113", "<span className=\"font-mono text-xs rounded border border"],
-    ["A113", "<span className=\"font-mono text-xs rounded border border"],
+    // Slice 41.95: a group's and a stamp's code left its link (the „×" is on the code's rectangle now, and a button
+    // cannot be inside a link) — the two `<span className="font-mono text-xs rounded border border…` entries went; the
+    // description is the link, through TextTooltip.
     ["A113", "{nameOr(ref.peerName, unnamedKindOf(ref.peerType))}"], // #37.57
     ["A110", "{labelCancel}"],
     ["A110", "{labelOk}"],

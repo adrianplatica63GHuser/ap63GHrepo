@@ -185,6 +185,8 @@ test.describe("TC-TILES-10 (41.95) — grupuri și ștampile: codul singur, „�
     await page.setViewportSize({ width: 1366, height: 900 });
     const person = await createNaturalPerson(page.request, { lastName: M, firstName: "Ion" });
     const long = `${M} ${"o descriere destul de lungă ca să treacă de câteva rânduri ".repeat(6).trim()}`;
+    // A stamp's short description is at most 200 characters (lib/stamps/validation.ts) — still several lines.
+    const longStamp = long.slice(0, 190).trim();
     let groupId: string | undefined;
     let stampId: string | undefined;
     try {
@@ -193,7 +195,7 @@ test.describe("TC-TILES-10 (41.95) — grupuri și ștampile: codul singur, „�
       expect(g.status()).toBe(201);
       groupId = ((await g.json()) as { id: string }).id;
       expect((await page.request.post(`/api/metadata/${po}/groups`, { data: { groupId } })).ok()).toBeTruthy();
-      const s = await page.request.post("/api/stamps", { data: { shortDescription: long, notes: "" } });
+      const s = await page.request.post("/api/stamps", { data: { shortDescription: longStamp, notes: "" } });
       expect(s.status()).toBe(201);
       stampId = ((await s.json()) as { id: string }).id;
       expect((await page.request.post(`/api/metadata/${po}/stamps`, { data: { stampId } })).ok()).toBeTruthy();
@@ -230,7 +232,7 @@ test.describe("TC-TILES-10 (41.95) — grupuri și ștampile: codul singur, „�
         expect(rb!.x + rb!.width - d.right, "to the row's edge").toBeLessThanOrEqual(2);
         await expect(desc).toHaveAttribute("href", kind === "group" ? /\/admin\/groups\// : /\/admin\/stamps\//);
         await desc.hover();
-        await expect(page.getByRole("tooltip").filter({ hasText: long })).toBeVisible();
+        await expect(page.getByRole("tooltip").filter({ hasText: kind === "group" ? long : longStamp })).toBeVisible();
         await page.mouse.move(2, 2);
       }
       // The two add buttons: white, bordered — the secondary face.
