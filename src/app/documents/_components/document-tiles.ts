@@ -132,7 +132,8 @@ export function tileOfTabIndex(tabs: readonly string[], index: number): string {
 
 // Slice #37.63: META INFO („metadata") is two tiles — „Clasificări" and „Conexiuni".
 // Slice #37.65: Persoane, Proprietăți and „Acte corelate" are one tile, „Corelate" („related").
-export const DOCUMENT_LIST_TILES = ["related", "classification", "connections"] as const;
+// Slice 41.96: „Alte referințe" („otherReferences"), „Vezi și" as a tile of its own.
+export const DOCUMENT_LIST_TILES = ["related", "classification", "connections", "otherReferences"] as const;
 
 /**
  * The three tiles „Corelate" replaced (#37.65). A browser that had any of them
@@ -176,7 +177,7 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
     // Slice #37.56: the page image stands at the right of the row, top-aligned.
     placement: { right: fixed },
     // Slice #39.12: „family" is a natural person's only.
-    groups: { record, related: ["related"], meta: ["classification", "connections"], family: [], fixed },
+    groups: { record, related: ["related"], meta: ["classification", "connections", "otherReferences"], family: [], fixed },
     renamed: {
       ...Object.fromEntries(
         Object.keys(RENAMED_TABS)
@@ -184,13 +185,15 @@ export function documentTileRegistry(layout: DocumentLayout): TileRegistry<strin
           .filter(([, now]) => now.length > 0)
           .map(([was, now]) => [tabTileKey(was), now.length === 1 ? now[0] : now]),
       ),
-      // A browser that stored META INFO opens with both of its halves (#37.63).
-      metadata: ["classification", "connections"],
+      // A browser that stored META INFO opens with both of its halves (#37.63) — and, since 41.96, „Alte referințe".
+      metadata: ["classification", "connections", "otherReferences"],
       // …and one that stored any of the three lists, with „Corelate" (#37.65).
       ...RELATED_WAS,
       // A certificate's „Părți" was its own tile, „succession", until #39.48.
       succession: PARTIES_TILE,
     },
+    // Slice 41.96: a choice stored before „Alte referințe" that showed „Etichete și grupuri" shows both.
+    joined: { otherReferences: "connections" },
   };
 }
 
@@ -205,7 +208,7 @@ export const DOC_TILE_OF_TAB: Readonly<Record<string, string | readonly string[]
   related: "related",
   persons: "related",
   properties: "related",
-  metadata: ["classification", "connections"],
+  metadata: ["classification", "connections", "otherReferences"],
 };
 
 /**

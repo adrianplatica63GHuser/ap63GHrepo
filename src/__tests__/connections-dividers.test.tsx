@@ -71,14 +71,17 @@ const sequence = (): string[] => {
 };
 
 describe("„Conexiuni”: a line between its groups (Slice #37.82)", () => {
-  it("on the latest version: four groups, three lines, one between every two", async () => {
+  // 41.96 inverted in place — was „four groups, three lines": „Vezi și" is „Alte referințe", a tile of its own (part
+  // "references"), so the tile holds three groups and two lines. Without `part` it is still the fourth (next test).
+  it("on the latest version: three groups, two lines, one between every two — no „Vezi și” (41.96)", async () => {
     renderTile("connections");
     await screen.findByRole("button", { name: "tags.remove arendă" });
-    await waitFor(() => expect(sequence()).toHaveLength(7));
-    expect(sequence().map((s) => (s === "line" ? "line" : "group"))).toEqual(["group", "line", "group", "line", "group", "line", "group"]);
+    await waitFor(() => expect(sequence()).toHaveLength(5));
+    expect(sequence().map((s) => (s === "line" ? "line" : "group"))).toEqual(["group", "line", "group", "line", "group"]);
     expect(sequence()[0]).toMatch(/tags\.title/);
+    expect(document.querySelector("[data-cross-refs-section]")).toBeNull();
     const lines = [...document.querySelectorAll<HTMLElement>("[data-connections-groups] > [data-divider]")];
-    expect(lines).toHaveLength(3);
+    expect(lines).toHaveLength(2);
     for (const l of lines) expect(l.className).toBe(DIVIDER_HORIZONTAL);
     // 0.5rem either side of a line: the 1rem the groups were apart, plus the line.
     expect(document.querySelector("[data-connections-groups]")!.className).toMatch(/(^| )gap-2( |$)/);

@@ -31,6 +31,8 @@ export const PROP_TILES = [
   "related",
   "classification",
   "connections",
+  // Slice 41.96: „Alte referințe" — „Vezi și" as a tile of its own, the third of the rose group.
+  "otherReferences",
   "map",
   "corners",
   "streetView",
@@ -52,17 +54,19 @@ export const PROP_TILE_REGISTRY: TileRegistry<PropTile> = {
   groups: {
     record: ["cadastral", "address"],
     related: ["related"],
-    meta: ["classification", "connections"],
+    meta: ["classification", "connections", "otherReferences"],
     family: [], // Slice #39.12: only a natural person has a family
     fixed: ["map", "corners", "streetView"],
   },
   // #37.63: META INFO is two tiles; #37.66: the three lists are „Corelate".
   renamed: {
-    metadata: ["classification", "connections"],
+    metadata: ["classification", "connections", "otherReferences"],
     associations: "related",
     persons: "related",
     documents: "related",
   },
+  // Slice 41.96: a choice stored before „Alte referințe" that showed „Etichete și grupuri" (its „Vezi și") shows both.
+  joined: { otherReferences: "connections" },
 };
 
 /**
@@ -76,7 +80,7 @@ export const PROP_TILE_OF_TAB: Readonly<Record<string, PropTile | readonly PropT
   related: "related",
   persons: "related",
   document: "related",
-  metadata: ["classification", "connections"],
+  metadata: ["classification", "connections", "otherReferences"],
 };
 
 /**

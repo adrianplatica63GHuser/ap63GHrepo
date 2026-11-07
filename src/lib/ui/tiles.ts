@@ -52,6 +52,13 @@ export interface TileRegistry<K extends string> {
    */
   renamed?: Readonly<Record<string, K | readonly K[]>>;
   /**
+   * Slice 41.96: a tile added after choices were stored → the older tile it came out of. A choice stored before it — one
+   * that carries no `JOINED_MARK` for it — and holds the older tile opens with the new one ticked too, so nobody loses
+   * what they had on screen („Alte referințe" was „Etichete și grupuri"'s „Vezi și"). Every choice written since carries
+   * the mark (`storedChoice`), so unticking the new tile sticks.
+   */
+  joined?: Readonly<Partial<Record<K, K>>>;
+  /**
    * Where the tiles stand when the screen opens (Slice #37.56). `right` names
    * the tiles that start at the right of the screen (since 40.32 only start:
    * each moves like any tile once dragged, `PackBox.start`), top to
@@ -126,7 +133,8 @@ export function rightColumnIndex<K extends string>(
  * - `addresses` / `address` — every address tile (address-block.tsx): a natural person's two, a firm's, a property's —
  *   one width for all of them, a person's two included (Ask first 3);
  * - `classification` — „Clasificare” (entity-metadata-tab.tsx), on the four;
- * - `connections` — „Etichete și grupuri” (entity-metadata-tab.tsx), the fourth, on the four.
+ * - `connections` — „Etichete și grupuri” (entity-metadata-tab.tsx), the fourth, on the four;
+ * - `otherReferences` — „Alte referințe” (entity-metadata-tab.tsx, Slice 41.96), on the four.
  */
 export const SHARED_WIDTH_TILES: Readonly<Record<string, string>> = {
   related: "related",
@@ -134,6 +142,7 @@ export const SHARED_WIDTH_TILES: Readonly<Record<string, string>> = {
   address: "address",
   classification: "classification",
   connections: "connections",
+  otherReferences: "otherReferences",
 };
 
 /** The width tile `tile` shares across forms, or none — a tile whose width is its own kind of record's. */
@@ -166,12 +175,28 @@ export function parseStoredTiles<K extends string>(raw: string | null, reg: Tile
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [...reg.defaults];
-    const keys = parsed.filter((x): x is string => typeof x === "string").flatMap((k) => reg.renamed?.[k] ?? k);
+    const strings = parsed.filter((x): x is string => typeof x === "string");
+    const keys = strings.flatMap((k) => reg.renamed?.[k] ?? k);
+    // Slice 41.96: a tile that joined later opens ticked with the one it came out of, in a choice that never knew it.
+    for (const [late, older] of Object.entries(reg.joined ?? {}) as [K, K][]) {
+      if (!strings.includes(`${JOINED_MARK}${late}`) && keys.includes(older)) keys.push(late);
+    }
     const known = inRegistryOrder(keys, reg.all);
     return known.length > 0 ? known : [...reg.defaults];
   } catch {
     return [...reg.defaults];
   }
+}
+
+/** Slice 41.96: the mark a stored choice carries for each tile that joined later (`TileRegistry.joined`). */
+export const JOINED_MARK = "+";
+
+/**
+ * What is written for a choice: its tiles, then a mark for each tile that joined later — so that a choice written
+ * since the tile existed is never read as one that did not know it (`parseStoredTiles`).
+ */
+export function storedChoice<K extends string>(tiles: readonly K[], reg: Pick<TileRegistry<K>, "joined">): string[] {
+  return [...tiles, ...Object.keys(reg.joined ?? {}).map((k) => `${JOINED_MARK}${k}`)];
 }
 
 /**

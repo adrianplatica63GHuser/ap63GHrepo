@@ -126,13 +126,38 @@ describe("„Conexiuni”: small tag chips, the „×” only on hover or focus 
     }
   });
 
-  it("Vezi și: each row's „×” shows only while its row is hovered or focused", async () => {
+  // 41.96 rewritten in place — was „Vezi și: each row's „×” shows only while its row is hovered" (in „Conexiuni"). It is
+  // „Alte referințe" now (part "references"), and the „×" is on the kind's rectangle, as 41.95's groups and stamps; the
+  // rectangle starts with the kind's icon, in its colour.
+  it("Alte referințe: the „×” on the kind's rectangle, over its corner; the icon first; the name beside it", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <EntityMetadataTab apiPath="/api/meta" queryKey="meta-chips-refs" backHref="/x" backEntityName="X" part="references" />
+      </QueryClientProvider>,
+    );
+    const remove = await screen.findByRole("button", { name: "crossRef.remove" });
+    const chip = remove.closest<HTMLElement>("[data-code-chip]")!;
+    expect(chip.getAttribute("data-reference-kind")).toBe("property");
+    expect(chip.className).toMatch(/(^| )group( |$)/);
+    for (const c of [...REVEAL, "absolute"]) expect(wrapperOf(remove).classList).toContain(c);
+    const rect = chip.firstElementChild as HTMLElement;
+    expect(rect.firstElementChild!.tagName.toLowerCase()).toBe("svg");
+    expect(rect.firstElementChild!.getAttribute("data-kind-icon")).toBe("property");
+    expect(rect.textContent).toBe("crossRef.typeProp");
+    const row = remove.closest("li")!;
+    expect(row.className).not.toMatch(/(^| )group( |$)/);
+    const name = row.querySelector<HTMLElement>("[data-reference-name]")!;
+    expect(name.className).toMatch(/(^| )min-w-0( |$)/);
+    expect(name.parentElement).toBe(chip.parentElement);
+    // No „Vezi și" in „Etichete și grupuri" any more.
+    expect(document.querySelectorAll("[data-cross-refs-section]")).toHaveLength(1);
+  });
+
+  it("Etichete și grupuri has no „Vezi și” (41.96)", async () => {
     renderTile();
-    for (const name of ["crossRef.remove"]) {
-      const remove = await screen.findByRole("button", { name });
-      const row = remove.closest("li")!;
-      expect(row.className).toMatch(/(^| )group( |$)/);
-      for (const c of REVEAL) expect(wrapperOf(remove).classList).toContain(c);
-    }
+    await screen.findByRole("button", { name: "groups.remove GRP-001" });
+    expect(document.querySelector("[data-cross-refs-section]")).toBeNull();
+    expect(screen.queryByRole("button", { name: "crossRef.remove" })).toBeNull();
   });
 });

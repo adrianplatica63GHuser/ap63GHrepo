@@ -15,6 +15,8 @@ export const NP_TILES = [
   "related",
   "classification",
   "connections",
+  // Slice 41.96: „Alte referințe" — „Vezi și" as a tile of its own, the third of the rose group.
+  "otherReferences",
   // Slice #39.12: the person's „Arbore de moștenire" (B) and its action panel (C), light blue, ticked by default.
   "inheritanceTree",
   // Slice #37.89: a placeholder, fixed at the right like „Hartă" and „Pagini".
@@ -39,17 +41,19 @@ export const NP_TILE_REGISTRY: TileRegistry<NpTile> = {
   groups: {
     record: ["identity", "idCard", "contact", "addresses"],
     related: ["related"],
-    meta: ["classification", "connections"],
+    meta: ["classification", "connections", "otherReferences"],
     family: ["inheritanceTree"],
     fixed: ["interactions"],
   },
   // #37.63: META INFO is two tiles; #37.67: the three lists are „Corelate".
   renamed: {
-    metadata: ["classification", "connections"],
+    metadata: ["classification", "connections", "otherReferences"],
     associations: "related",
     properties: "related",
     documents: "related",
   },
+  // Slice 41.96: a choice stored before „Alte referințe" that showed „Etichete și grupuri" (its „Vezi și") shows both.
+  joined: { otherReferences: "connections" },
 };
 
 /**
@@ -63,7 +67,7 @@ export const NP_TILE_OF_TAB: Readonly<Record<string, NpTile | readonly NpTile[] 
   related: "related",
   properties: "related",
   document: "related",
-  metadata: ["classification", "connections"],
+  metadata: ["classification", "connections", "otherReferences"],
 };
 
 const IDENTITY = new Set([

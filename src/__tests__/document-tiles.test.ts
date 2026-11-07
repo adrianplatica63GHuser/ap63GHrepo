@@ -56,7 +56,7 @@ describe("the registry is built from the type on screen", () => {
     expect(reg.all).toEqual([
       "general",
       "tab:Instrument", "tab:Cadastru", "tab:Stare juridică", "tab:Conformitate",
-      "related", "classification", "connections",
+      "related", "classification", "connections", "otherReferences", // 41.96
       "pages",
     ]);
     // Nothing stored shows what Detalii showed: the general data, the first notebook page, the page image.
@@ -65,7 +65,7 @@ describe("the registry is built from the type on screen", () => {
 
   it("a type with no notebook: one tile for its own fields", () => {
     const reg = documentTileRegistry(PLAN);
-    expect(reg.all).toEqual(["general", FIELDS_TILE, "related", "classification", "connections", "pages"]);
+    expect(reg.all).toEqual(["general", FIELDS_TILE, "related", "classification", "connections", "otherReferences", "pages"]); // 41.96
     expect(reg.defaults).toEqual(["general", "pages", FIELDS_TILE]);
     expect(tileOfTabIndex([], 0)).toBe(FIELDS_TILE);
   });
@@ -92,12 +92,12 @@ describe("the registry is built from the type on screen", () => {
   it("the form's tiles are hidden, never unmounted; the lists may unmount", () => {
     const reg = documentTileRegistry(MOSTENITOR);
     expect(reg.form).toEqual(["general", "pages", FIELDS_TILE]); // #39.48: „Părți" is a list tile, as on the sale contract
-    for (const list of ["related", "classification", "connections"]) expect(reg.form).not.toContain(list);
+    for (const list of ["related", "classification", "connections", "otherReferences"]) expect(reg.form).not.toContain(list);
   });
 
   it("keeps every old `?tab=` working: each tab but Detalii names its tile", () => {
     // #37.65: the association screens' „Înapoi" — ?tab=persons, properties or related — all land on „Corelate".
-    expect(DOC_TILE_OF_TAB).toEqual({ related: "related", persons: "related", properties: "related", metadata: ["classification", "connections"] });
+    expect(DOC_TILE_OF_TAB).toEqual({ related: "related", persons: "related", properties: "related", metadata: ["classification", "connections", "otherReferences"] }); // 41.96
   });
 
   it("a notebook page's tile, clamped the way the notebook clamps its active page", () => {

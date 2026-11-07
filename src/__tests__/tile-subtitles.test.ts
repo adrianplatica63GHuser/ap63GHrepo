@@ -84,10 +84,18 @@ describe("the renames and subtitles are the request's table (Adrian.Request.txt)
     ["naturalPerson", "classification", "Clasificare", "Importanță, relevanță, proveniență"],
     ["judicialPerson", "classification", "Clasificare", "Importanță, relevanță, proveniență"],
     ["document", "classification", "Clasificare", "Importanță, relevanță, proveniență"],
-    ["property", "connections", "Etichete și grupuri", "Etichete, grupuri, ștampile, vezi și"],
-    ["naturalPerson", "connections", "Etichete și grupuri", "Etichete, grupuri, ștampile, vezi și"],
-    ["judicialPerson", "connections", "Etichete și grupuri", "Etichete, grupuri, ștampile, vezi și"],
-    ["document", "connections", "Etichete și grupuri", "Etichete, grupuri, ștampile, vezi și"],
+    // 41.96: „vezi și" left the subtitle — it is „Alte referințe" now, a tile of its own.
+    ["property", "connections", "Etichete și grupuri", "Etichete, grupuri, ștampile"],
+    ["property", "otherReferences", "Alte referințe", "Persoanele, proprietățile și actele la care trimite"],
+    // 41.96: „vezi și" left the subtitle — it is „Alte referințe" now, a tile of its own.
+    ["naturalPerson", "connections", "Etichete și grupuri", "Etichete, grupuri, ștampile"],
+    ["naturalPerson", "otherReferences", "Alte referințe", "Persoanele, proprietățile și actele la care trimite"],
+    // 41.96: „vezi și" left the subtitle — it is „Alte referințe" now, a tile of its own.
+    ["judicialPerson", "connections", "Etichete și grupuri", "Etichete, grupuri, ștampile"],
+    ["judicialPerson", "otherReferences", "Alte referințe", "Persoanele, proprietățile și actele la care trimite"],
+    // 41.96: „vezi și" left the subtitle — it is „Alte referințe" now, a tile of its own.
+    ["document", "connections", "Etichete și grupuri", "Etichete, grupuri, ștampile"],
+    ["document", "otherReferences", "Alte referințe", "Persoanele, proprietățile și actele la care trimite"],
     ["property", "cadastral", "Identificare cadastrală", "Tarla, parcelă, CF, nr. cadastral, suprafețe"],
     ["property", "corners", "Puncte de contur", "Colțurile parcelei, în ordine"], // 41.64: it read „Colțurile parcelei (Stereo 70), în ordine"
     // Slice 40.85: the tile lists the person's identity documents (was „Act de identitate", „Carte de identitate sau pașaport").

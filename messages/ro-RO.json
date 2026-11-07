@@ -502,14 +502,16 @@
       "documents": "Acte",
       "related": "Legături",
       "classification": "Clasificare",
-      "connections": "Etichete și grupuri"
+      "connections": "Etichete și grupuri",
+      "otherReferences": "Alte referințe"
     },
     "tileSubtitles": {
       "cadastral": "Tarla, parcelă, CF, nr. cadastral, suprafețe",
       "address": "Adresa poștală a proprietății",
       "related": "Persoane, proprietăți și acte legate de această proprietate",
       "classification": "Importanță, relevanță, proveniență",
-      "connections": "Etichete, grupuri, ștampile, vezi și",
+      "connections": "Etichete, grupuri, ștampile",
+      "otherReferences": "Persoanele, proprietățile și actele la care trimite",
       "corners": "Colțurile parcelei, în ordine"
     },
     "tabs": {
@@ -1376,6 +1378,7 @@
       "related": "Legături",
       "classification": "Clasificare",
       "connections": "Etichete și grupuri",
+      "otherReferences": "Alte referințe",
       "inheritanceTree": "Arbore de moștenire",
       "interactions": "Interacțiuni"
     },
@@ -1386,7 +1389,8 @@
       "addresses": "Domiciliu și corespondență",
       "related": "Persoane, proprietăți și acte legate de această persoană",
       "classification": "Importanță, relevanță, proveniență",
-      "connections": "Etichete, grupuri, ștampile, vezi și",
+      "connections": "Etichete, grupuri, ștampile",
+      "otherReferences": "Persoanele, proprietățile și actele la care trimite",
       "inheritanceTree": "Familia persoanei: străbunici, părinți, frați, soț sau soție, copii, strănepoți",
       "interactions": "Istoricul interacțiunilor cu această persoană"
     },
@@ -1527,6 +1531,7 @@
       "related": "Legături",
       "classification": "Clasificare",
       "connections": "Etichete și grupuri",
+      "otherReferences": "Alte referințe",
       "interactions": "Interacțiuni"
     },
     "tileSubtitles": {
@@ -1535,7 +1540,8 @@
       "addresses": "Sediu social și corespondență",
       "related": "Persoane, proprietăți și acte legate de această persoană juridică",
       "classification": "Importanță, relevanță, proveniență",
-      "connections": "Etichete, grupuri, ștampile, vezi și",
+      "connections": "Etichete, grupuri, ștampile",
+      "otherReferences": "Persoanele, proprietățile și actele la care trimite",
       "interactions": "Istoricul interacțiunilor cu această firmă"
     },
     "tabs": {
@@ -2062,6 +2068,7 @@
       "related": "Legături",
       "classification": "Clasificare",
       "connections": "Etichete și grupuri",
+      "otherReferences": "Alte referințe",
       "parties": "Părți",
       "identity": "Actul oficial"
     },
@@ -2071,7 +2078,8 @@
       "pages": "Imaginile paginilor actului",
       "related": "Persoane, proprietăți și acte legate de acest act",
       "classification": "Importanță, relevanță, proveniență",
-      "connections": "Etichete, grupuri, ștampile, vezi și",
+      "connections": "Etichete, grupuri, ștampile",
+      "otherReferences": "Persoanele, proprietățile și actele la care trimite",
       "parties": "Părțile actului, cu rolul și cota lor",
       "identity": "{kind}: ce scrie pe act, în ordinea de pe act"
     },

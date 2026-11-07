@@ -239,9 +239,10 @@ test.describe("TC-GRP-04 (41.45) — deschis dintr-o fișă: doar identitatea; �
       await page.goto(`/admin/stamps/${stampId}`);
       await expect(page.getByRole("region", { name: "Elementele ștampilei", exact: true })).toBeVisible({ timeout: 30_000 });
 
-      // Step 4 — „Vezi și": the other person, on the natural persons' screen.
+      // Step 4 — „Vezi și": the other person, on the natural persons' screen. 41.96: „Vezi și" is „Alte referințe", a
+      // tile of its own (it was read in `connections`).
       await page.goto(`/natural-persons/${people[0]}?tab=metadata`);
-      const peer = connections.locator(`a[href*="/natural-persons/${people[1]}"]`);
+      const peer = page.locator('[data-tile="otherReferences"]').locator(`a[href*="/natural-persons/${people[1]}"]`);
       await expect(peer).toBeVisible({ timeout: 30_000 });
       await peer.click({ timeout: 30_000 });
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${people[1]}`), { timeout: 30_000 });

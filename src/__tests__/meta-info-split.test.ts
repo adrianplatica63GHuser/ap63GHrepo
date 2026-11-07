@@ -4,7 +4,7 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseStoredTiles, shownTiles, tilesOfTab } from "@/lib/ui/tiles";
+import { JOINED_MARK, parseStoredTiles, shownTiles, storedChoice, tilesOfTab } from "@/lib/ui/tiles";
 import { NP_TILES, NP_TILE_OF_TAB, NP_TILE_REGISTRY } from "@/app/natural-persons/_components/person-tiles";
 import { JP_TILES, JP_TILE_OF_TAB, JP_TILE_REGISTRY } from "@/app/judicial-persons/_components/person-tiles";
 import { PROP_TILES, PROP_TILE_OF_TAB, PROP_TILE_REGISTRY } from "@/app/properties/_components/property-tiles";
@@ -15,7 +15,9 @@ import en from "../../messages/en-GB.json";
 const ROOT = join(__dirname, "..", "..");
 const read = (...p: string[]) => readFileSync(join(ROOT, ...p), "utf8");
 const META = read("src", "components", "entity-metadata-tab.tsx");
-const BOTH = ["classification", "connections"];
+// Slice 41.96: the rose group is three — „Alte referințe" („Vezi și") left „Etichete și grupuri" for a tile of its own.
+// Was `["classification", "connections"]`; the name BOTH is kept for the halves META INFO stood for.
+const BOTH = ["classification", "connections", "otherReferences"];
 const DOC_REG = documentTileRegistry({ typeKey: "ADEVERINTA", tabs: [], pages: true });
 
 describe("META INFO is two tiles on the four screens (Slice #37.63)", () => {
@@ -23,7 +25,7 @@ describe("META INFO is two tiles on the four screens (Slice #37.63)", () => {
     // #37.88: side by side in the yellow group — last but the fixed right-hand column.
     for (const all of [NP_TILES, JP_TILES, PROP_TILES, DOCUMENT_LIST_TILES, DOC_REG.all] as readonly (readonly string[])[]) {
       const at = all.indexOf("classification");
-      expect(all.slice(at, at + 2)).toEqual(BOTH);
+      expect(all.slice(at, at + 3)).toEqual(BOTH);
       expect(all).not.toContain("metadata");
     }
   });
@@ -37,6 +39,22 @@ describe("META INFO is two tiles on the four screens (Slice #37.63)", () => {
     }
     // Alone, it is still a choice — not an empty one that would fall back to the defaults.
     expect(parseStoredTiles(JSON.stringify(["metadata"]), PROP_TILE_REGISTRY)).toEqual(BOTH);
+  });
+
+  // Slice 41.96 (Ask first 2): a choice stored before „Alte referințe" that holds „Etichete și grupuri" opens with it
+  // ticked too, so nobody loses a „Vezi și" they had on screen; a choice written since carries the mark, so unticking it
+  // sticks; the defaults are unchanged.
+  it("41.96: a choice that knew no „Alte referințe” and showed „Etichete și grupuri” shows it; one that knew it keeps its choice", () => {
+    for (const reg of [NP_TILE_REGISTRY, JP_TILE_REGISTRY, PROP_TILE_REGISTRY, DOC_REG] as const) {
+      const r = reg as typeof DOC_REG;
+      expect(r.joined).toEqual({ otherReferences: "connections" });
+      expect(parseStoredTiles(JSON.stringify(["related", "connections"]), r)).toEqual(["related", "connections", "otherReferences"]);
+      expect(parseStoredTiles(JSON.stringify(["related"]), r)).toEqual(["related"]);
+      const written = storedChoice(["related", "connections"], r);
+      expect(written).toEqual(["related", "connections", `${JOINED_MARK}otherReferences`]);
+      expect(parseStoredTiles(JSON.stringify(written), r)).toEqual(["related", "connections"]);
+      expect(r.defaults).not.toContain("otherReferences");
+    }
   });
 
   it("?tab=metadata adds both for the visit; another tab still adds its one tile", () => {
@@ -72,11 +90,13 @@ describe("META INFO is two tiles on the four screens (Slice #37.63)", () => {
       // 41.40 inverted in place (it was `<ListTile tile="connections" … part="connections">` without readEdit): a gray
       // form tile now — calm at rest, its pen opens it.
       expect(page).toMatch(/<ListTile tile="connections"[^>]*\breadEdit\b[^>]*>[\s\S]*?part="connections"/);
+      // 41.96: „Alte referințe", a gray tile too, its part "references".
+      expect(page).toMatch(/<ListTile tile="otherReferences"[^>]*\breadEdit\b[^>]*>[\s\S]*?part="references"/);
       expect(page).not.toMatch(/tile="metadata"/);
-      // One query key for both halves, so the record's metadata is fetched once.
+      // One query key for the three, so the record's metadata is fetched once.
       const keys = [...page.matchAll(/queryKey=\{(`[^`]+`)\}/g)].map((m) => m[1]);
-      expect(keys).toHaveLength(2);
-      expect(keys[0]).toBe(keys[1]);
+      expect(keys).toHaveLength(3);
+      expect(new Set(keys).size).toBe(1);
     }
   });
 });

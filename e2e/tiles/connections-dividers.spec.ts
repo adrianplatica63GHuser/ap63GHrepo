@@ -14,12 +14,13 @@ import { E2E_MARKER, createNaturalPerson, createSaleContract, removeLeftovers, r
 import { showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-17`;
-const GROUPS = ["Etichete / Cuvinte cheie", "Grupuri", "Ștampile", "Vezi și"];
+// 41.96: „Vezi și" left for „Alte referințe", a tile of its own — three groups, two lines (it was four and three).
+const GROUPS = ["Etichete / Cuvinte cheie", "Grupuri", "Ștampile"];
 
 async function check(page: Page, url: string) {
   await page.goto(url);
   const conn = await showTile(page, "Etichete și grupuri");
-  await expect(conn.locator("[data-connections-groups] > [data-divider]")).toHaveCount(3, { timeout: 30_000 });
+  await expect(conn.locator("[data-connections-groups] > [data-divider]")).toHaveCount(2, { timeout: 30_000 });
   // 41.10: „Clasificare" draws a line only under its version controls, which a new record does not have — so the
   // look to match is the shared divider's own (src/lib/ui/divider.tsx): 1 px solid, the rim colour. Was read off
   // „Clasificări"'s first line.
@@ -49,7 +50,7 @@ async function check(page: Page, url: string) {
         }),
     };
   }, ref);
-  expect(read.seq).toEqual([GROUPS[0], "line", GROUPS[1], "line", GROUPS[2], "line", GROUPS[3]]);
+  expect(read.seq).toEqual([GROUPS[0], "line", GROUPS[1], "line", GROUPS[2]]);
   for (const l of read.lines) expect(l).toEqual({ inside: true, even: true, same: true });
 }
 

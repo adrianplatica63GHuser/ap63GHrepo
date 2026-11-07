@@ -35,6 +35,7 @@ import { TILES_ALL_LEFT, TILES_ALL_UP, TILE_POSITIONS_RESET, tilePositionsKey } 
 import {
   parseStoredTiles,
   shownTiles,
+  storedChoice,
   tileStorageKey,
   toggleTile,
   type TileRegistry,
@@ -124,9 +125,9 @@ export function useTileChoice<K extends string>(
       }
       setStored(next);
       setVisit([]);
-      write(storageKey, next);
+      write(storageKey, storedChoice(next, reg)); // 41.96: with the joined tiles' marks
     },
-    [shown, reg.all, storageKey, onlySet],
+    [shown, reg, storageKey, onlySet],
   );
 
   const showAll = useCallback(() => {
@@ -138,8 +139,8 @@ export function useTileChoice<K extends string>(
     const next = reg.all.filter((k) => !disabled.includes(k) || stored.includes(k));
     setStored(next);
     setVisit([]);
-    write(storageKey, next);
-  }, [reg.all, storageKey, disabled, stored, onlySet]);
+    write(storageKey, storedChoice(next, reg));
+  }, [reg, storageKey, disabled, stored, onlySet]);
 
   const reset = useCallback(() => {
     if (onlySet) {
@@ -153,13 +154,13 @@ export function useTileChoice<K extends string>(
       // #38.04: the enabled tiles back to the defaults, the disabled ones as stored.
       const next = reg.all.filter((k) => (disabled.includes(k) ? stored.includes(k) : defaults.includes(k)));
       setStored(next);
-      write(storageKey, next);
+      write(storageKey, storedChoice(next, reg));
     }
     setVisit([]);
     // Slice #37.76 (its Ask first): „Implicit" returns the screen to how it first was — #37.75's places.
     write(tilePositionsKey(reg.entity), null);
     window.dispatchEvent(new CustomEvent(TILE_POSITIONS_RESET, { detail: reg.entity }));
-  }, [reg.all, reg.entity, defaults, storageKey, disabled, stored, onlySet]);
+  }, [reg, defaults, storageKey, disabled, stored, onlySet]);
 
   const reveal = useCallback((key: K) => {
     setVisit((v) => (v.includes(key) ? v : [...v, key]));

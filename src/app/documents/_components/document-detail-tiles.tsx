@@ -158,6 +158,7 @@ export function DocumentDetailTiles({
       related:      t("tiles.related"),
       classification: t("tiles.classification"),
       connections:    t("tiles.connections"),
+      otherReferences: t("tiles.otherReferences"),
     };
     // A notebook tab's tile is named as its tab is: the type's own words.
     for (const label of layout.tabs) out[`tab:${label}`] = label;
@@ -277,6 +278,20 @@ export function DocumentDetailTiles({
                   backHref={`/documents/${encodeURIComponent(documentId)}`}
                   backEntityName={documentName}
                   part="connections"
+                />
+              </ListTile>
+            </div>
+          )}
+          {/* Slice 41.96: „Alte referințe" — „Vezi și" as a tile of its own, beside „Etichete și grupuri". */}
+          {choice.isShown("otherReferences") && (
+            <div className="max-w-full" style={{ order: order("otherReferences") }}>
+              <ListTile tile="otherReferences" title={labels.otherReferences} subtitle={t("tileSubtitles.otherReferences")} units={LIST_UNITS.document.otherReferences} surface={groupSurface(tileGroupOf(reg, "otherReferences"), reg.entity)} readEdit>
+                <EntityMetadataTab
+                  apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
+                  queryKey={`entity-references-document-${documentId}`}
+                  backHref={`/documents/${encodeURIComponent(documentId)}`}
+                  backEntityName={documentName}
+                  part="references"
                 />
               </ListTile>
             </div>

@@ -92,7 +92,8 @@ describe("the Natural Person's tiles", () => {
     // #37.67: „Corelate"; #37.89: „Interacțiuni", fixed at the right.
     // #38.30: „Interacțiuni" is no longer ticked by default (#37.89 had ticked it) — a placeholder until it is built.
     // #39.12: + „inheritanceTree", in its own group before the right-hand column.
-    expect([...NP_TILES]).toEqual(["identity", "idCard", "contact", "addresses", "related", "classification", "connections", "inheritanceTree", "interactions"]);
+    // 41.96: + „otherReferences" („Alte referințe"), the third of the rose group.
+    expect([...NP_TILES]).toEqual(["identity", "idCard", "contact", "addresses", "related", "classification", "connections", "otherReferences", "inheritanceTree", "interactions"]);
     // #38.30 took „Interacțiuni" off; it is back since the module exists (Adrian, 2026-10-11).
     // #39.12: „Arbore de moștenire" ticked by default too.
     expect([...NP_TILE_REGISTRY.defaults]).toEqual(["identity", "idCard", "contact", "addresses", "inheritanceTree", "interactions"]);
@@ -101,7 +102,7 @@ describe("the Natural Person's tiles", () => {
   });
 
   it("keep every old `?tab=` working: each tab but Detalii names its tile", () => {
-    expect(NP_TILE_OF_TAB).toEqual({ related: "related", properties: "related", document: "related", metadata: ["classification", "connections"] }); // #37.67
+    expect(NP_TILE_OF_TAB).toEqual({ related: "related", properties: "related", document: "related", metadata: ["classification", "connections", "otherReferences"] }); // #37.67; 41.96: + „Alte referințe"
     expect(NP_TILE_OF_TAB.details).toBeUndefined();
   });
 
@@ -137,7 +138,7 @@ describe("the Natural Person's tiles", () => {
   });
 
   it("list tiles may unmount, and the page has no tab row", () => {
-    for (const tile of ["related", "classification", "connections"]) {
+    for (const tile of ["related", "classification", "connections", "otherReferences"]) { // 41.96: + „Alte referințe"
       expect(PAGE).toMatch(new RegExp(`isShown\\("${tile}"\\) && \\(\\s*<ListTile tile="${tile}"`));
     }
     expect(PAGE).not.toMatch(/role="tab/);
@@ -183,7 +184,7 @@ describe("the Judicial Person's tiles (Slice #37.18)", () => {
 
   it("are the seven the header names, and nothing stored shows exactly the old Detalii tab", () => {
     // #37.67: „Corelate"; #37.89: „Interacțiuni", fixed at the right, ticked by default.
-    expect([...JP_TILES]).toEqual(["identity", "contactPersons", "addresses", "related", "classification", "connections", "interactions"]);
+    expect([...JP_TILES]).toEqual(["identity", "contactPersons", "addresses", "related", "classification", "connections", "otherReferences", "interactions"]); // 41.96
     expect([...JP_TILE_REGISTRY.defaults]).toEqual(["identity", "contactPersons", "addresses", "interactions"]);
     expect(JP_TILE_REGISTRY.placement?.right).toEqual(["interactions"]);
     expect(JP_TILE_REGISTRY.form).toBe(JP_FORM_TILES);
@@ -195,7 +196,7 @@ describe("the Judicial Person's tiles (Slice #37.18)", () => {
   });
 
   it("keep every old `?tab=` working: each tab but Detalii names its tile", () => {
-    expect(JP_TILE_OF_TAB).toEqual({ related: "related", properties: "related", document: "related", metadata: ["classification", "connections"] }); // #37.67
+    expect(JP_TILE_OF_TAB).toEqual({ related: "related", properties: "related", document: "related", metadata: ["classification", "connections", "otherReferences"] }); // #37.67; 41.96: + „Alte referințe"
     expect(JP_TILE_OF_TAB.details).toBeUndefined();
   });
 
@@ -221,7 +222,7 @@ describe("the Judicial Person's tiles (Slice #37.18)", () => {
   });
 
   it("list tiles may unmount, and the page has no tab row", () => {
-    for (const tile of ["related", "classification", "connections"]) {
+    for (const tile of ["related", "classification", "connections", "otherReferences"]) { // 41.96: + „Alte referințe"
       expect(PAGE).toMatch(new RegExp(`isShown\\("${tile}"\\) && \\(\\s*<ListTile tile="${tile}"`));
     }
     expect(PAGE).not.toMatch(/role="tab/);
@@ -247,7 +248,7 @@ describe("the Property's tiles (Slice #37.19)", () => {
   it("are the nine the header names, and nothing stored shows exactly the old Detalii tab", () => {
     expect([...PROP_TILES]).toEqual([
       // #37.66: „Corelate"; #37.88: in the groups' order — the record, „Corelate", the two yellow, the fixed column.
-      "cadastral", "address", "related", "classification", "connections", "map", "corners", "streetView",
+      "cadastral", "address", "related", "classification", "connections", "otherReferences", "map", "corners", "streetView", // 41.96: + „Alte referințe"
     ]);
     // Detalii showed the four panels; Street View was a button, off on open.
     expect([...PROP_TILE_REGISTRY.defaults]).toEqual(["cadastral", "corners", "address", "map"]);
@@ -262,7 +263,7 @@ describe("the Property's tiles (Slice #37.19)", () => {
 
   it("keep every old `?tab=` working: each tab but Detalii names its tile", () => {
     // #37.66: the association screens' way back — ?tab=related, persons or document — lands on „Corelate".
-    expect(PROP_TILE_OF_TAB).toEqual({ related: "related", persons: "related", document: "related", metadata: ["classification", "connections"] });
+    expect(PROP_TILE_OF_TAB).toEqual({ related: "related", persons: "related", document: "related", metadata: ["classification", "connections", "otherReferences"] }); // 41.96
     expect(PROP_TILE_OF_TAB.details).toBeUndefined();
   });
 
@@ -301,7 +302,7 @@ describe("the Property's tiles (Slice #37.19)", () => {
   });
 
   it("list tiles may unmount, and the page has no tab row", () => {
-    for (const tile of ["related", "classification", "connections"]) {
+    for (const tile of ["related", "classification", "connections", "otherReferences"]) { // 41.96: + „Alte referințe"
       expect(PAGE).toMatch(new RegExp(`isShown\\("${tile}"\\) && \\(\\s*<ListTile tile="${tile}"`));
     }
     expect(PAGE).not.toMatch(/role="tab/);
@@ -314,7 +315,8 @@ describe("the Property's tiles (Slice #37.19)", () => {
     expect(PROP_TILES.map((k) => ro.property.tiles[k])).toEqual([
       // #37.66: three tiles became „Corelate"; #37.88: the groups' order.
       // #38.30: „Identificare cadastrală", „Legături", „Clasificare", „Etichete și grupuri".
-      "Identificare cadastrală", "Adresă", "Legături", "Clasificare", "Etichete și grupuri", "Hartă", "Puncte de contur", "Street View",
+      // 41.96: + „Alte referințe".
+      "Identificare cadastrală", "Adresă", "Legături", "Clasificare", "Etichete și grupuri", "Alte referințe", "Hartă", "Puncte de contur", "Street View",
     ]);
   });
 });

@@ -108,6 +108,7 @@ export function JudicialPersonDetailTiles({
       related:        t("tiles.related"),
       classification: t("tiles.classification"),
       connections:    t("tiles.connections"),
+      otherReferences: t("tiles.otherReferences"),
       interactions:   t("tiles.interactions"),
     }),
     [t],
@@ -172,6 +173,18 @@ export function JudicialPersonDetailTiles({
                 backHref={`/judicial-persons/${encodeURIComponent(personId)}`}
                 backEntityName={personName}
                 part="connections"
+              />
+            </ListTile>
+          )}
+          {/* Slice 41.96: „Alte referințe" — „Vezi și" as a tile of its own, beside „Etichete și grupuri". */}
+          {choice.isShown("otherReferences") && (
+            <ListTile tile="otherReferences" title={labels.otherReferences} subtitle={t("tileSubtitles.otherReferences")} units={LIST_UNITS.judicialPerson.otherReferences} surface={groupSurface(tileGroupOf(JP_TILE_REGISTRY, "otherReferences"), JP_TILE_REGISTRY.entity)} readEdit>
+              <EntityMetadataTab
+                apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
+                queryKey={`entity-references-person-${personId}`}
+                backHref={`/judicial-persons/${encodeURIComponent(personId)}`}
+                backEntityName={personName}
+                part="references"
               />
             </ListTile>
           )}

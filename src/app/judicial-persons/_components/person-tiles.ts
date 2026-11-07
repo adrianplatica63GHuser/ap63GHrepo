@@ -19,6 +19,8 @@ export const JP_TILES = [
   "related",
   "classification",
   "connections",
+  // Slice 41.96: „Alte referințe" — „Vezi și" as a tile of its own, the third of the rose group.
+  "otherReferences",
   // Slice #37.89: a placeholder, fixed at the right like „Hartă" and „Pagini".
   "interactions",
 ] as const;
@@ -37,17 +39,19 @@ export const JP_TILE_REGISTRY: TileRegistry<JpTile> = {
   groups: {
     record: ["identity", "contactPersons", "addresses"],
     related: ["related"],
-    meta: ["classification", "connections"],
+    meta: ["classification", "connections", "otherReferences"],
     family: [], // Slice #39.12: only a natural person has a family
     fixed: ["interactions"],
   },
   // #37.63: META INFO is two tiles; #37.67: the three lists are „Corelate".
   renamed: {
-    metadata: ["classification", "connections"],
+    metadata: ["classification", "connections", "otherReferences"],
     associations: "related",
     properties: "related",
     documents: "related",
   },
+  // Slice 41.96: a choice stored before „Alte referințe" that showed „Etichete și grupuri" (its „Vezi și") shows both.
+  joined: { otherReferences: "connections" },
 };
 
 /**
@@ -61,7 +65,7 @@ export const JP_TILE_OF_TAB: Readonly<Record<string, JpTile | readonly JpTile[] 
   related: "related",
   properties: "related",
   document: "related",
-  metadata: ["classification", "connections"],
+  metadata: ["classification", "connections", "otherReferences"],
 };
 
 /**

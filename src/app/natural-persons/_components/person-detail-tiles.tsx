@@ -115,6 +115,7 @@ export function PersonDetailTiles({
       related:      t("tiles.related"),
       classification: t("tiles.classification"),
       connections:    t("tiles.connections"),
+      otherReferences: t("tiles.otherReferences"),
       inheritanceTree: t("tiles.inheritanceTree"),
       interactions:   t("tiles.interactions"),
     }),
@@ -182,6 +183,18 @@ export function PersonDetailTiles({
                 backHref={`/natural-persons/${encodeURIComponent(personId)}`}
                 backEntityName={personName}
                 part="connections"
+              />
+            </ListTile>
+          )}
+          {/* Slice 41.96: „Alte referințe" — „Vezi și" as a tile of its own, beside „Etichete și grupuri". */}
+          {choice.isShown("otherReferences") && (
+            <ListTile tile="otherReferences" title={labels.otherReferences} subtitle={t("tileSubtitles.otherReferences")} units={NP_LIST_UNITS.otherReferences} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "otherReferences"), NP_TILE_REGISTRY.entity)} readEdit>
+              <EntityMetadataTab
+                apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
+                queryKey={`entity-references-person-${personId}`}
+                backHref={`/natural-persons/${encodeURIComponent(personId)}`}
+                backEntityName={personName}
+                part="references"
               />
             </ListTile>
           )}

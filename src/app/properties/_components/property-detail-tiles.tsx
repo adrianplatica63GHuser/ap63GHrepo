@@ -124,6 +124,7 @@ export function PropertyDetailTiles({
       related:      t("tiles.related"),
       classification: t("tiles.classification"),
       connections:    t("tiles.connections"),
+      otherReferences: t("tiles.otherReferences"),
     }),
     [t],
   );
@@ -196,6 +197,18 @@ export function PropertyDetailTiles({
                 backHref={`/properties/${encodeURIComponent(propertyId)}`}
                 backEntityName={propertyName}
                 part="connections"
+              />
+            </ListTile>
+          )}
+          {/* Slice 41.96: „Alte referințe" — „Vezi și" as a tile of its own, beside „Etichete și grupuri". */}
+          {choice.isShown("otherReferences") && (
+            <ListTile tile="otherReferences" title={labels.otherReferences} subtitle={t("tileSubtitles.otherReferences")} units={LIST_UNITS.property.otherReferences} surface={groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "otherReferences"), PROP_TILE_REGISTRY.entity)} readEdit>
+              <EntityMetadataTab
+                apiPath={`/api/properties/${encodeURIComponent(propertyId)}/entity-references`}
+                queryKey={`entity-references-property-${propertyId}`}
+                backHref={`/properties/${encodeURIComponent(propertyId)}`}
+                backEntityName={propertyName}
+                part="references"
               />
             </ListTile>
           )}

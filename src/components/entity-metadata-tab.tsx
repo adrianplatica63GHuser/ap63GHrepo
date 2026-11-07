@@ -22,6 +22,7 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { SCALE, boxRem, rem, screenBox } from "@/lib/ui/field-widths";
 import { daysSince, oldestStamp, updatedToday as isUpdatedToday } from "@/lib/metadata/updated-days";
 import { HintBubble } from "@/lib/ui/hint-bubble";
+import { ENTITY_ICON, type EntityKind } from "@/lib/ui/entity-icon";
 import { TextTooltip } from "@/lib/ui/text-tooltip";
 import { pickerOptionText, usePickerDismiss } from "@/lib/ui/picker-dismiss";
 import { Divider } from "@/lib/ui/divider";
@@ -87,8 +88,11 @@ type Props = {
    * versions and the Save button) and „Conexiuni" (Etichete, Grupuri, Ștampile,
    * Vezi și). Both read the record's metadata through the same query key, so it
    * is fetched once. Omitted, both parts are drawn, one under the other.
+   *
+   * Slice 41.96: "references" — „Alte referințe", „Vezi și" as a tile of its own (CrossRefsSection alone). Omitted, „Vezi
+   * și" stays the last group of „Conexiuni", as before.
    */
-  part?: "classification" | "connections";
+  part?: "classification" | "connections" | "references";
 };
 
 // ---------------------------------------------------------------------------
@@ -971,12 +975,24 @@ function peerTypeBadge(peerType: string, t: (k: string) => string): string {
   return t("crossRef.typePerson");
 }
 
+/** Slice 41.96: the kind whose icon a reference shows — a person's own kind (41.45's `peerPersonKind`) tells the two apart. */
+export function peerEntityKind(peerType: string, personKind?: PersonKind | null): EntityKind {
+  if (peerType === "PROPERTY") return "property";
+  if (peerType === "DOCUMENT") return "document";
+  return personKind === "JUDICIAL" ? "judicial" : "natural";
+}
+
+/** Slice 41.96: a reference's kind in 41.95's grey rectangle — its icon, then its word, not in the code's mono face. */
+export const KIND_RECT =
+  "inline-flex items-center gap-1 rounded border border-card-rim bg-card px-1.5 py-0.5 text-xs text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400";
+
 function CrossRefsSection({
   principalObjectId,
   mainQueryKey,
   isOnLatest,
   t,
   withBack,
+  inTile = false,
 }: {
   principalObjectId: string;
   mainQueryKey:      string;
@@ -984,6 +1000,10 @@ function CrossRefsSection({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   t:                 (key: string, opts?: any) => string;
   withBack:          (href: string) => string;
+  /**
+   * Slice 41.96: drawn as „Alte referințe", whose title names it — no „Vezi și" heading, and its note is the tile's „i".
+   */
+  inTile?:           boolean;
 }) {
   const nameOr      = useNameOr(); // #37.57: a peer by its name, or words — never its system ID
   const queryClient = useQueryClient();
@@ -1050,25 +1070,31 @@ function CrossRefsSection({
   }
 
   return (
-    <section className="flex flex-col gap-1">
+    <section className="flex flex-col gap-1" data-cross-refs-section="">
+      {(!inTile || isOnLatest) && (
       <div className="flex items-center justify-between">
-        <ItemTitle
-          id={noteId}
-          title={t("crossRef.title")}
-          note={t("crossRef.note")}
-          about={t("about", { title: t("crossRef.title") })}
-        />
-        {isOnLatest && (
-          // #37.44 (A039): Link while closed, ChevronUp while open („▲" before).
-          <AddToggleButton
-            open={showAdd}
-            icon={LinkIcon}
-            labelAdd={t("crossRef.add")}
-            labelHide={t("hideAdd")}
-            onClick={() => { setShowAdd((v) => !v); setAddError(null); }}
+        {!inTile && (
+          <ItemTitle
+            id={noteId}
+            title={t("crossRef.title")}
+            note={t("crossRef.note")}
+            about={t("about", { title: t("crossRef.title") })}
           />
         )}
+        {isOnLatest && (
+          // #37.44 (A039): Link while closed, ChevronUp while open („▲" before).
+          <span className="ml-auto">
+            <AddToggleButton
+              open={showAdd}
+              icon={LinkIcon}
+              labelAdd={t("crossRef.add")}
+              labelHide={t("hideAdd")}
+              onClick={() => { setShowAdd((v) => !v); setAddError(null); }}
+            />
+          </span>
+        )}
       </div>
+      )}
 
       {/* Add form (inline, no modal) */}
       {showAdd && isOnLatest && (
@@ -1119,54 +1145,55 @@ function CrossRefsSection({
         <p className="text-sm text-fade dark:text-zinc-400">{t("crossRef.empty")}</p>
       ) : (
         <ul className="flex flex-col gap-3">
-          {crossRefs.map((ref) => (
-            <li key={ref.id} className="group flex items-start gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  {/* Slice #37.57: no system-ID badge — the peer by its type and name. */}
-                  <span className="inline-block text-xs text-fade dark:text-zinc-500 border border-slate-200 dark:border-zinc-700 rounded px-1.5 py-0.5">
-                    {peerTypeBadge(ref.peerType, t)}
-                  </span>
-                  {/* Name / link */}
+          {crossRefs.map((ref) => {
+            // Slice 41.96 (Ask first 3) — Adrian: „the remove button will disappear from its current position on the right
+            // side of the object name and will become a bubble - that shows at mouse hover over the type of principal
+            // object … the icon of the principal object will be added at the front of the principal object type". The
+            // kind's rectangle: its icon in its own colour (ENTITY_ICON), then its word, the „×" on its corner (the
+            // owner's, on the latest version), as 41.95's groups and stamps. The name beside it, wrapping beside the
+            // rectangle and never under it.
+            const kind = peerEntityKind(ref.peerType, ref.peerPersonKind);
+            const KindIcon = ENTITY_ICON[kind];
+            const name = nameOr(ref.peerName, unnamedKindOf(ref.peerType));
+            return (
+            <li key={ref.id} className="flex flex-col gap-0.5" data-reference-row="">
+              <div className="flex items-baseline gap-2">
+                {/* Slice #37.57: no system-ID badge — the peer by its type and name. */}
+                <CodeChip
+                  className={KIND_RECT}
+                  data-reference-kind={kind}
+                  remove={ref.isOwner && isOnLatest ? { label: t("crossRef.remove"), onClick: () => void handleRemove(ref.id), disabled: removing === ref.id } : undefined}
+                >
+                  <KindIcon aria-hidden="true" size={12} className="shrink-0" />
+                  {peerTypeBadge(ref.peerType, t)}
+                </CodeChip>
+                <span className="min-w-0 flex-1 break-words text-sm text-ink dark:text-zinc-100" data-reference-name="">
                   {ref.peerEntityId ? (
                     <Link
                       href={withBack(peerHref(ref.peerType, ref.peerEntityId, ref.peerPersonKind))}
-                      className="text-sm text-ink dark:text-zinc-100 underline-offset-2 hover:underline"
+                      className="underline-offset-2 hover:underline"
                     >
-                      {nameOr(ref.peerName, unnamedKindOf(ref.peerType))}
+                      {name}
                     </Link>
                   ) : (
-                    <span className="text-sm text-ink dark:text-zinc-100">
-                      {nameOr(ref.peerName, unnamedKindOf(ref.peerType))}
-                    </span>
+                    name
                   )}
                   {/* "referenced by" indicator */}
                   {!ref.isOwner && (
-                    <span className="text-xs text-fade dark:text-zinc-500 italic">
+                    <span className="ml-1.5 text-xs text-fade dark:text-zinc-500 italic">
                       ({t("crossRef.referencedBy")})
                     </span>
                   )}
-                </div>
-                {ref.note && (
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-400 italic pl-0.5">
-                    {ref.note}
-                  </p>
-                )}
+                </span>
               </div>
-              {/* Delete — only the owner may remove */}
-              {ref.isOwner && isOnLatest && (
-                <IconButton
-                  icon={X}
-                  label={t("crossRef.remove")}
-                  variant="bare-danger"
-                  size="xs"
-                  className={`shrink-0 ${REMOVE_REVEAL}`}
-                  onClick={() => handleRemove(ref.id)}
-                  disabled={removing === ref.id}
-                />
+              {ref.note && (
+                <p className="text-xs text-slate-500 dark:text-zinc-400 italic pl-0.5">
+                  {ref.note}
+                </p>
               )}
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </section>
@@ -1286,8 +1313,11 @@ function CalculationSourceLink({
 // ---------------------------------------------------------------------------
 
 export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName, calculationSourcePath, part }: Props) {
-  const showClassification = part !== "connections";
-  const showConnections    = part !== "classification";
+  // Slice 41.96: three parts — „Clasificare", „Etichete și grupuri", „Alte referințe"; none, the first two (with „Vezi și"
+  // as the last group of „Conexiuni").
+  const showClassification = !part || part === "classification";
+  const showConnections    = !part || part === "connections";
+  const showReferences     = part === "references";
   const t = useTranslations("shared.entityMetadata");
   const queryClient = useQueryClient();
   // Slice #38.10: the server's own limit — a property's, or a person's and a document's.
@@ -1754,7 +1784,8 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
         </section>
     ) });
     // ── 7. Trimiteri / See Also
-    if (data.principalObjectId) connectionGroups.push({ key: "crossRefs", node: (
+    // Slice 41.96: in a tile, „Vezi și" is „Alte referințe" (part "references"), no longer this tile's last group.
+    if (data.principalObjectId && !part) connectionGroups.push({ key: "crossRefs", node: (
         <CrossRefsSection
           principalObjectId={data.principalObjectId}
           mainQueryKey={queryKey}
@@ -2026,6 +2057,45 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
         {chrome && connEditing && (
           <div className="flex justify-end pt-1" data-tile-edit-bar="connections">
             <IconButton icon={Check} label={t("done")} showLabel variant="secondary" size="sm" onClick={() => setConnEditing(false)} data-tile-done="connections" />
+          </div>
+        )}
+        </>)}
+
+        {/* Slice 41.96 — Adrian: „The Entire See also section of the Tags and Groups will be removed from the tags and
+            group style and will become its own tile … The name of this new tile will be “Other references”". „Alte
+            referințe": „Vezi și" alone, its note the tile's „i" (as „Clasificare"'s), and the calm and edit „Etichete și
+            grupuri" has (Ask first 4) — the pen at rest; add and remove in edit; „Gata" and Esc end it. */}
+        {showReferences && data?.principalObjectId && (<>
+        {chrome && (
+          <TileHint>
+            <HintBubble id={`${aboutId}-references`} text={t("crossRef.note")} triggerLabel={about(chrome.title)} align="start">
+              {null}
+            </HintBubble>
+          </TileHint>
+        )}
+        {chrome && isOnLatest && !connEditing && (
+          <TileAction>
+            <TileEditButton tile="otherReferences" title={chrome.title} onEdit={() => setConnEditing(true)} />
+          </TileAction>
+        )}
+        <div
+          className="flex flex-col gap-2"
+          data-references=""
+          data-references-calm={chrome && !connEditing ? "" : undefined}
+          onKeyDown={onTileKeyDown(connEditing, () => setConnEditing(false))}
+        >
+          <CrossRefsSection
+            principalObjectId={data.principalObjectId}
+            mainQueryKey={queryKey}
+            isOnLatest={canChange}
+            t={(key, opts) => t(key as Parameters<typeof t>[0], opts)}
+            withBack={withBack}
+            inTile={!!chrome}
+          />
+        </div>
+        {chrome && connEditing && (
+          <div className="flex justify-end pt-1" data-tile-edit-bar="otherReferences">
+            <IconButton icon={Check} label={t("done")} showLabel variant="secondary" size="sm" onClick={() => setConnEditing(false)} data-tile-done="otherReferences" />
           </div>
         )}
         </>)}

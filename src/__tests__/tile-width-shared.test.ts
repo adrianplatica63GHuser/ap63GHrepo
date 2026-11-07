@@ -25,6 +25,7 @@ describe("which tiles share a width (Ask first 1, 3)", () => {
       address: "address",
       classification: "classification",
       connections: "connections",
+      otherReferences: "otherReferences", // 41.96: „Alte referințe", on the four
     });
     // A natural person's two address tiles, a firm's and a property's: one width.
     expect([sharedWidthOf("addresses"), sharedWidthOf("address")]).toEqual(["address", "address"]);

@@ -42,6 +42,7 @@ describe.each(REGISTRIES)("%s", (_name, reg) => {
     expect(tileGroupOf(reg, "related")).toBe("related");
     expect(tileGroupOf(reg, "classification")).toBe("meta");
     expect(tileGroupOf(reg, "connections")).toBe("meta");
+    expect(tileGroupOf(reg, "otherReferences")).toBe("meta"); // 41.96
   });
 });
 
@@ -50,7 +51,7 @@ describe("the groups as the header lists them", () => {
     expect(PROP_TILE_REGISTRY.groups).toEqual({
       record: ["cadastral", "address"],
       related: ["related"],
-      meta: ["classification", "connections"],
+      meta: ["classification", "connections", "otherReferences"], // 41.96
       family: [], // #39.12: a natural person's only
       fixed: ["map", "corners", "streetView"],
     });
@@ -59,7 +60,7 @@ describe("the groups as the header lists them", () => {
     expect(documentTileRegistry(MOSTENITOR).groups).toEqual({
       record: ["general", "fields", "parties"],
       related: ["related"],
-      meta: ["classification", "connections"],
+      meta: ["classification", "connections", "otherReferences"], // 41.96
       family: [], // #39.12
       fixed: ["pages"],
     });

@@ -1228,16 +1228,17 @@ export const CLASSIFICATION_UNITS = 2;
 
 // Slice #37.67: a person's Persoane (4), Proprietăți (5) and Acte (5) are one tile, „Corelate" —
 // the Document's `RELATED_UNITS`, 4 (rule 17), on both person screens.
-const PERSON_LIST_UNITS = { related: RELATED_UNITS, classification: CLASSIFICATION_UNITS, connections: 3 } as const;
+// Slice 41.96: „Alte referințe" as wide as „Etichete și grupuri", whose last group it was.
+const PERSON_LIST_UNITS = { related: RELATED_UNITS, classification: CLASSIFICATION_UNITS, connections: 3, otherReferences: 3 } as const;
 export const LIST_UNITS = {
   naturalPerson: PERSON_LIST_UNITS,
   judicialPerson: PERSON_LIST_UNITS,
   // Slice #37.66: „Proprietăți corelate" (5), Persoane (4) and Acte (4) are one tile, „Corelate" —
   // the Document's `RELATED_UNITS`, 4 (rule 17).
-  property: { related: RELATED_UNITS, classification: CLASSIFICATION_UNITS, connections: 3 },
+  property: { related: RELATED_UNITS, classification: CLASSIFICATION_UNITS, connections: 3, otherReferences: 3 },
   // Slice #37.65: Persoane, Proprietăți and „Acte corelate" (3 units each since #37.64) are one
   // tile, „Corelate" — `RELATED_UNITS`, 4.
-  document: { related: RELATED_UNITS, classification: CLASSIFICATION_UNITS, connections: 3 },
+  document: { related: RELATED_UNITS, classification: CLASSIFICATION_UNITS, connections: 3, otherReferences: 3 },
 } as const;
 
 /** The share panel (#37.64): the three boxes at L, under one another, inside its padding. */

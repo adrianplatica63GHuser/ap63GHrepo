@@ -37,13 +37,14 @@ export function kindOfEntity(entity: string): TileDefaultKind | null {
 }
 
 /** The tiles every document type has — what the document row in „Contul meu" can tick. */
-export const DOCUMENT_COMMON_TILES = ["general", "fields", "related", "classification", "connections", "pages"] as const;
+// Slice 41.96: with „Alte referințe" after „Etichete și grupuri".
+export const DOCUMENT_COMMON_TILES = ["general", "fields", "related", "classification", "connections", "otherReferences", "pages"] as const;
 
 /** What „Implicit" shows on most document types, in the document row's words: the act, its own tiles, the pages. */
 export const DOCUMENT_BUILT_IN_DEFAULTS = ["general", "fields", "pages"] as const;
 
 /** A document type's own tiles — what „fields" stands for on it. */
-const DOCUMENT_COMMON_NOT_OWN = new Set<string>(["general", "related", "classification", "connections", "pages"]);
+const DOCUMENT_COMMON_NOT_OWN = new Set<string>(["general", "related", "classification", "connections", "otherReferences", "pages"]);
 
 /**
  * What a saved set means on this registry: the tiles to show, in registry

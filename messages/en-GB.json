@@ -502,14 +502,16 @@
       "documents": "Documents",
       "related": "Links",
       "classification": "Classification",
-      "connections": "Tags and groups"
+      "connections": "Tags and groups",
+      "otherReferences": "Other references"
     },
     "tileSubtitles": {
       "cadastral": "Tarla, parcel, land book, cadastral no., areas",
       "address": "The property's postal address",
       "related": "People, properties and documents linked to this property",
       "classification": "Importance, relevance, provenance",
-      "connections": "Tags, groups, stamps, see also",
+      "connections": "Tags, groups, stamps",
+      "otherReferences": "The persons, properties and documents it refers to",
       "corners": "The parcel's corners, in order"
     },
     "tabs": {
@@ -1376,6 +1378,7 @@
       "related": "Links",
       "classification": "Classification",
       "connections": "Tags and groups",
+      "otherReferences": "Other references",
       "inheritanceTree": "Inheritance tree",
       "interactions": "Interactions"
     },
@@ -1386,7 +1389,8 @@
       "addresses": "Home and correspondence",
       "related": "People, properties and documents linked to this person",
       "classification": "Importance, relevance, provenance",
-      "connections": "Tags, groups, stamps, see also",
+      "connections": "Tags, groups, stamps",
+      "otherReferences": "The persons, properties and documents it refers to",
       "inheritanceTree": "The person's family: great-grandparents, parents, siblings, spouse, children, great-grandchildren",
       "interactions": "History of interactions with this person"
     },
@@ -1527,6 +1531,7 @@
       "related": "Links",
       "classification": "Classification",
       "connections": "Tags and groups",
+      "otherReferences": "Other references",
       "interactions": "Interactions"
     },
     "tileSubtitles": {
@@ -1535,7 +1540,8 @@
       "addresses": "Registered office and correspondence",
       "related": "People, properties and documents linked to this juridical person",
       "classification": "Importance, relevance, provenance",
-      "connections": "Tags, groups, stamps, see also",
+      "connections": "Tags, groups, stamps",
+      "otherReferences": "The persons, properties and documents it refers to",
       "interactions": "History of interactions with this firm"
     },
     "tabs": {
@@ -2062,6 +2068,7 @@
       "related": "Links",
       "classification": "Classification",
       "connections": "Tags and groups",
+      "otherReferences": "Other references",
       "parties": "Parties",
       "identity": "Official document"
     },
@@ -2071,7 +2078,8 @@
       "pages": "Scans of the document's pages",
       "related": "People, properties and documents linked to this document",
       "classification": "Importance, relevance, provenance",
-      "connections": "Tags, groups, stamps, see also",
+      "connections": "Tags, groups, stamps",
+      "otherReferences": "The persons, properties and documents it refers to",
       "parties": "The document's parties, with their role and share",
       "identity": "{kind}: what the document says, in its own order"
     },
