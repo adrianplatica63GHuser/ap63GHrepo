@@ -4,7 +4,7 @@ import { useNameOr } from "@/components/record/use-name-or";
 import { groupFromRecordHref, peerHref, stampFromRecordHref, type PersonKind } from "@/lib/metadata/peer-href";
 import { unnamedKindOf } from "@/lib/ui/unnamed";
 import { Fragment, useCallback, useEffect, useId, useState, useRef } from "react";
-import { Calculator, Check, Link as LinkIcon, Plus, X } from "lucide-react";
+import { Calculator, Link as LinkIcon, Plus, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { AddToggleButton } from "@/components/metadata-buttons";
 import { ClassificationConfirm, ClassificationReviewLine } from "@/components/classification-review";
@@ -27,6 +27,10 @@ import { TextTooltip } from "@/lib/ui/text-tooltip";
 import { pickerOptionText, usePickerDismiss } from "@/lib/ui/picker-dismiss";
 import { Divider } from "@/lib/ui/divider";
 import { MAX_GROUPS_PER_ITEM, MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/validation";
+import {
+  NOTHING_HELD, dropHeldRef, heldGroupCount, heldList, heldTags, holdGroupAdd, holdGroupRemove, holdRefAdd, holdRefRemove,
+  holdStampAdd, holdStampRemove, holdTagAdd, holdTagRemove, isHeld, kindOfCode, sendHeld, type Held,
+} from "@/lib/metadata/held-changes";
 import { ReadValue, TileEditBar, TileEditButton, onTileKeyDown } from "@/components/tiles/read-edit-tile";
 import { EmptyTileLine, focusFirstField } from "@/components/tiles/empty-tile";
 import { TileAction, TileHint, useTileChrome } from "@/components/tiles/list-tile";
@@ -428,6 +432,22 @@ function ClassificationItem({
 }
 
 // ---------------------------------------------------------------------------
+// Held until „Salvează"                                           (Slice 41.97)
+// ---------------------------------------------------------------------------
+
+/** A section's way to change what its tile holds (`held-changes.ts`) — the tile's state, not a write. */
+type OnHold = (change: (h: Held) => Held) => void;
+
+/** Slice 41.97: the mark on an item added in this edit, not yet saved — „nou". */
+function NewMark({ label }: { label: string }) {
+  return (
+    <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide text-cta dark:text-zinc-300" data-held-new="">
+      {label}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // TagsSection — text input + chip display
 // ---------------------------------------------------------------------------
 
@@ -440,10 +460,12 @@ function TagsSection({
   labelPlaceholder,
   labelBox,
   labelAdd,
-  labelAdding,
   labelRemove,
   labelEmpty,
+  labelNew,
   editing = true,
+  held,
+  onHold,
 }: {
   principalObjectId: string;
   queryKey:          string;
@@ -456,11 +478,14 @@ function TagsSection({
   /** 41.27: the tag box's accessible name, „Etichetă nouă". */
   labelBox:          string;
   labelAdd:          string;
-  labelAdding:       string;
   labelRemove:       string;
   labelEmpty:        string;
+  /** Slice 41.97: „nou", on a tag added in this edit. */
+  labelNew:          string;
+  /** Slice 41.97: what the tile holds until „Salvează", and the way to change it. */
+  held:              Held;
+  onHold:            OnHold;
 }) {
-  const queryClient = useQueryClient();
   const tagsKey     = `${queryKey}-tags`;
   const apiBase     = `/api/metadata/${principalObjectId}/tags`;
   const datalistId  = `tag-suggestions-${principalObjectId}`;
@@ -492,53 +517,26 @@ function TagsSection({
   const allTags = allTagsData?.tags ?? [];
 
   const [input,    setInput]    = useState("");
-  const [adding,   setAdding]   = useState(false);
-  const [removing, setRemoving] = useState<string | null>(null);
 
-  async function handleAdd() {
-    // Normalise to lowercase before sending — mirrors server-side normalisation.
-    const tag = input.trim().toLowerCase();
-    if (!tag) return;
-    setAdding(true);
-    try {
-      const res = await fetch(apiBase, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ tag }),
-      });
-      if (res.ok) {
-        setInput("");
-        await queryClient.invalidateQueries({ queryKey: [tagsKey] });
-        // Invalidate the global corpus so autocomplete stays fresh.
-        await queryClient.invalidateQueries({ queryKey: ["all-tags-autocomplete"] });
-      }
-    } finally {
-      setAdding(false);
-    }
+  // Slice 41.97 (Ask first 1, 3): an add or a remove is held — the tile shows it, „Salvează" writes it. A tag typed twice
+  // is one; adding back a tag removed in this edit cancels both (held-changes.ts). It was a POST or a DELETE at once.
+  function handleAdd() {
+    if (!input.trim()) return;
+    onHold((h) => holdTagAdd(h, input, tags));
+    setInput("");
   }
 
-  async function handleRemove(tag: string) {
-    setRemoving(tag);
-    try {
-      const res = await fetch(apiBase, {
-        method:  "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ tag }),
-      });
-      if (res.ok) {
-        await queryClient.invalidateQueries({ queryKey: [tagsKey] });
-      }
-    } finally {
-      setRemoving(null);
-    }
+  function handleRemove(tag: string) {
+    onHold((h) => holdTagRemove(h, tag));
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") { e.preventDefault(); void handleAdd(); }
+    if (e.key === "Enter") { e.preventDefault(); handleAdd(); }
   }
 
+  const shown = heldTags(tags, held);
   // Filter out tags already applied so autocomplete doesn't suggest duplicates.
-  const tagSet = new Set(tags);
+  const tagSet = new Set(shown.map((x) => x.tag));
   const noteId = `${useId()}-note`;
   const suggestions = allTags.filter((t) => !tagSet.has(t.tag));
 
@@ -563,7 +561,6 @@ function TagsSection({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          disabled={adding}
           placeholder={labelPlaceholder}
           // 41.27 — Adrian: „Why I cannot make this tile to be two units; It gives me a message about <metatag>!" The box
           // takes what is left beside „Adaugă" (at least M, 136 px), so the tile fits 2 units and the box grows on 3;
@@ -578,25 +575,24 @@ function TagsSection({
         <IconButton
           icon={Plus}
           label={labelAdd}
-          busy={adding}
-          busyLabel={labelAdding}
           variant="primary"
           size="md"
           onClick={handleAdd}
-          disabled={adding || !input.trim()}
+          disabled={!input.trim()}
         />
       </div>
       </>)}
 
       {/* Chip display */}
-      {tags.length === 0 ? (
+      {shown.length === 0 ? (
         <p className="text-sm text-fade dark:text-zinc-400">{labelEmpty}</p>
       ) : (
         // Slice #37.69: small chips, closer together, the „×" over the corner on hover.
         <div className="flex flex-wrap gap-1.5 pt-1" data-tag-chips="">
-          {tags.map((tag) => (
-            <span key={tag} className={TAG_CHIP} data-tag-chip="">
+          {shown.map(({ tag, added }) => (
+            <span key={tag} className={TAG_CHIP} data-tag-chip="" data-held={added ? "add" : undefined}>
               {tag}
+              {added && <NewMark label={labelNew} />}
               {editing && (
                 <IconButton
                   icon={X}
@@ -605,7 +601,6 @@ function TagsSection({
                   size="xs"
                   className={`${CHIP_REMOVE_PLACE} ${REMOVE_REVEAL}`}
                   onClick={() => handleRemove(tag)}
-                  disabled={removing === tag}
                 />
               )}
             </span>
@@ -636,6 +631,9 @@ function InlineGroupsSection({
   labelLimit,
   labelLimitReached,
   labelNoneAvailable,
+  labelNew,
+  held,
+  onHold,
 }: {
   principalObjectId: string;
   currentGroups:     GroupTag[];
@@ -661,14 +659,15 @@ function InlineGroupsSection({
   labelLimitReached: string;
   /** The picker's placeholder when no group is left to join under the cap. */
   labelNoneAvailable: string;
+  /** Slice 41.97: „nou", on a group added in this edit; what the tile holds, and the way to change it. */
+  labelNew:          string;
+  held:              Held;
+  onHold:            OnHold;
 }) {
-  const queryClient  = useQueryClient();
   const availKey     = `${mainQueryKey}-avail-groups`;
   const groupsApiBase = `/api/metadata/${principalObjectId}/groups`;
 
   const [showAdd,   setShowAdd]   = useState(false);
-  const [adding,    setAdding]    = useState(false);
-  const [removing,  setRemoving]  = useState<string | null>(null);
   const selectRef   = useRef<HTMLSelectElement>(null);
   // 41.39: the picker closes on a press outside this section and on Esc, the focus back on its „+".
   const sectionRef  = useRef<HTMLElement>(null);
@@ -688,42 +687,30 @@ function InlineGroupsSection({
     refetchOnWindowFocus: false,
   });
 
-  const available = availData?.groups ?? [];
+  // Slice 41.97 (Ask first 1, 3): held until „Salvează". The list shows the record's groups less those removed, then
+  // those added („nou"); the picker offers what is not shown — a group removed in this edit too, so choosing it again
+  // cancels both; and the cap counts what will stand after the save.
+  const currentIds = currentGroups.map((g) => g.id);
+  const shownGroups = heldList<{ id: string; code: string; description: string | null }>(currentGroups, held.groups);
+  const shownIds = new Set(shownGroups.map((g) => g.id));
+  const available = [
+    ...(availData?.groups ?? []),
+    ...currentGroups.filter((g) => held.groups.remove.includes(g.id)),
+  ].filter((g, i, all) => !shownIds.has(g.id) && all.findIndex((x) => x.id === g.id) === i);
   // Slice #38.10: at the cap the „+" is disabled and a line says why; a picker
   // open when the cap is reached closes (it is drawn only under the cap).
-  const atCap = currentGroups.length >= cap;
+  const atCap = heldGroupCount(currentIds, held) >= cap;
   const pickerOpen = showAdd && !atCap;
 
-  async function handleAdd(groupId: string) {
-    if (!groupId) return;
-    setAdding(true);
-    try {
-      const res = await fetch(groupsApiBase, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ groupId }),
-      });
-      if (res.ok) {
-        setShowAdd(false);
-        await queryClient.invalidateQueries({ queryKey: [mainQueryKey] });
-        await queryClient.invalidateQueries({ queryKey: [availKey] });
-      }
-    } finally {
-      setAdding(false);
-    }
+  function handleAdd(groupId: string) {
+    const g = available.find((x) => x.id === groupId);
+    if (!g) return;
+    onHold((h) => holdGroupAdd(h, { id: g.id, code: g.code, description: g.description }, currentIds));
+    setShowAdd(false);
   }
 
-  async function handleRemove(groupId: string) {
-    setRemoving(groupId);
-    try {
-      const res = await fetch(`${groupsApiBase}/${groupId}`, { method: "DELETE" });
-      if (res.ok) {
-        await queryClient.invalidateQueries({ queryKey: [mainQueryKey] });
-        await queryClient.invalidateQueries({ queryKey: [availKey] });
-      }
-    } finally {
-      setRemoving(null);
-    }
+  function handleRemove(groupId: string) {
+    onHold((h) => holdGroupRemove(h, groupId));
   }
 
   return (
@@ -750,8 +737,8 @@ function InlineGroupsSection({
           <select
             ref={selectRef}
             defaultValue=""
-            disabled={adding || availLoading}
-            onChange={(e) => { void handleAdd(e.target.value); }}
+            disabled={availLoading}
+            onChange={(e) => handleAdd(e.target.value)}
             // 41.39: what is left of its row (`flex-1 min-w-0`, as the tag box since 41.27) — never wider than the tile.
             className="min-w-0 flex-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
             data-groups-picker=""
@@ -769,22 +756,23 @@ function InlineGroupsSection({
         </div>
       )}
 
-      {!currentGroups.length ? (
+      {!shownGroups.length ? (
         <p className="text-sm text-fade dark:text-zinc-400">{labelEmpty}</p>
       ) : (
         <ul className="flex flex-col gap-2">
-          {currentGroups.map((g) => (
+          {shownGroups.map((g) => (
             // Slice 41.95 (Ask first 2, 3): the code alone in its rectangle — no member count, no tooltip (Adrian:
             // „should not display the numbers of items in the group") — its „×" on the rectangle's corner, and the
             // description, the link, to the tile's inner edge, cut after three lines.
-            <li key={g.code} className="flex items-baseline gap-2" data-group-row="">
+            <li key={g.code} className="flex items-baseline gap-2" data-group-row="" data-held={g.added ? "add" : undefined}>
               <CodeChip
                 data-group-code={g.code}
-                remove={isOnLatest ? { label: `${labelRemove} ${g.code}`, onClick: () => void handleRemove(g.id), disabled: removing === g.id } : undefined}
+                remove={isOnLatest ? { label: `${labelRemove} ${g.code}`, onClick: () => handleRemove(g.id) } : undefined}
               >
                 {g.code}
               </CodeChip>
               <RowDescription href={groupFromRecordHref(g.id, withBack)} text={g.description} lines={3} />
+              {g.added && <NewMark label={labelNew} />}
             </li>
           ))}
         </ul>
@@ -816,6 +804,9 @@ function InlineStampsSection({
   labelAddPlaceholder,
   labelRemove,
   withBack,
+  labelNew,
+  held,
+  onHold,
 }: {
   principalObjectId: string;
   currentStamps:     StampTag[];
@@ -829,8 +820,11 @@ function InlineStampsSection({
   labelAddPlaceholder: string;
   labelRemove:       string;
   withBack:          (href: string) => string;
+  /** Slice 41.97: „nou", on a stamp applied in this edit; what the tile holds, and the way to change it. */
+  labelNew:          string;
+  held:              Held;
+  onHold:            OnHold;
 }) {
-  const queryClient   = useQueryClient();
   const availKey      = `${mainQueryKey}-avail-stamps`;
   const stampsApiBase = `/api/metadata/${principalObjectId}/stamps`;
 
@@ -840,8 +834,6 @@ function InlineStampsSection({
   const closePicker = useCallback(() => setShowAdd(false), []);
   const pickerToggle = useCallback(() => sectionRef.current?.querySelector<HTMLElement>("button"), []);
   usePickerDismiss(showAdd, closePicker, sectionRef, pickerToggle);
-  const [adding,   setAdding]   = useState(false);
-  const [removing, setRemoving] = useState<string | null>(null);
 
   const { data: availData, isLoading: availLoading } = useQuery<{ stamps: AvailableStamp[] }>({
     queryKey:             [availKey],
@@ -855,38 +847,24 @@ function InlineStampsSection({
     refetchOnWindowFocus: false,
   });
 
-  const available = availData?.stamps ?? [];
+  // Slice 41.97: held until „Salvează", as the groups are (no cap).
+  const currentIds = currentStamps.map((x) => x.id);
+  const shownStamps = heldList<{ id: string; code: string; shortDescription: string | null }>(currentStamps, held.stamps);
+  const shownIds = new Set(shownStamps.map((x) => x.id));
+  const available = [
+    ...(availData?.stamps ?? []),
+    ...currentStamps.filter((x) => held.stamps.remove.includes(x.id)),
+  ].filter((x, i, all) => !shownIds.has(x.id) && all.findIndex((y) => y.id === x.id) === i);
 
-  async function handleAdd(stampId: string) {
-    if (!stampId) return;
-    setAdding(true);
-    try {
-      const res = await fetch(stampsApiBase, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ stampId }),
-      });
-      if (res.ok) {
-        setShowAdd(false);
-        await queryClient.invalidateQueries({ queryKey: [mainQueryKey] });
-        await queryClient.invalidateQueries({ queryKey: [availKey] });
-      }
-    } finally {
-      setAdding(false);
-    }
+  function handleAdd(stampId: string) {
+    const st = available.find((x) => x.id === stampId);
+    if (!st) return;
+    onHold((h) => holdStampAdd(h, { id: st.id, code: st.code, shortDescription: st.shortDescription }, currentIds));
+    setShowAdd(false);
   }
 
-  async function handleRemove(stampId: string) {
-    setRemoving(stampId);
-    try {
-      const res = await fetch(`${stampsApiBase}/${stampId}`, { method: "DELETE" });
-      if (res.ok) {
-        await queryClient.invalidateQueries({ queryKey: [mainQueryKey] });
-        await queryClient.invalidateQueries({ queryKey: [availKey] });
-      }
-    } finally {
-      setRemoving(null);
-    }
+  function handleRemove(stampId: string) {
+    onHold((h) => holdStampRemove(h, stampId));
   }
 
   return (
@@ -910,8 +888,8 @@ function InlineStampsSection({
         <div className="flex items-center gap-2">
           <select
             defaultValue=""
-            disabled={adding || availLoading}
-            onChange={(e) => { void handleAdd(e.target.value); }}
+            disabled={availLoading}
+            onChange={(e) => handleAdd(e.target.value)}
             className="min-w-0 flex-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
             data-stamps-picker=""
           >
@@ -927,20 +905,21 @@ function InlineStampsSection({
         </div>
       )}
 
-      {!currentStamps.length ? (
+      {!shownStamps.length ? (
         <p className="text-sm text-fade dark:text-zinc-400">{labelEmpty}</p>
       ) : (
         <ul className="flex flex-col gap-2">
-          {currentStamps.map((s) => (
+          {shownStamps.map((s) => (
             // Slice 41.95: as a group's row — the „×" on the code's rectangle, the description cut after two lines.
-            <li key={s.code} className="flex items-baseline gap-2" data-stamp-row="">
+            <li key={s.code} className="flex items-baseline gap-2" data-stamp-row="" data-held={s.added ? "add" : undefined}>
               <CodeChip
                 data-stamp-code={s.code}
-                remove={isOnLatest ? { label: `${labelRemove} ${s.code}`, onClick: () => void handleRemove(s.id), disabled: removing === s.id } : undefined}
+                remove={isOnLatest ? { label: `${labelRemove} ${s.code}`, onClick: () => handleRemove(s.id) } : undefined}
               >
                 {s.code}
               </CodeChip>
               <RowDescription href={stampFromRecordHref(s.id, withBack)} text={s.shortDescription} lines={2} />
+              {s.added && <NewMark label={labelNew} />}
             </li>
           ))}
         </ul>
@@ -993,6 +972,8 @@ function CrossRefsSection({
   t,
   withBack,
   inTile = false,
+  held,
+  onHold,
 }: {
   principalObjectId: string;
   mainQueryKey:      string;
@@ -1004,9 +985,11 @@ function CrossRefsSection({
    * Slice 41.96: drawn as „Alte referințe", whose title names it — no „Vezi și" heading, and its note is the tile's „i".
    */
   inTile?:           boolean;
+  /** Slice 41.97: what the tile holds until „Salvează", and the way to change it. */
+  held:              Held;
+  onHold:            OnHold;
 }) {
   const nameOr      = useNameOr(); // #37.57: a peer by its name, or words — never its system ID
-  const queryClient = useQueryClient();
   const crossRefKey = `${mainQueryKey}-cross-refs`;
   const noteId      = `${useId()}-note`;
   const apiBase     = `/api/metadata/${principalObjectId}/cross-refs`;
@@ -1028,46 +1011,22 @@ function CrossRefsSection({
   const [showAdd,   setShowAdd]   = useState(false);
   const [codeInput, setCodeInput] = useState("");
   const [noteInput, setNoteInput] = useState("");
-  const [adding,    setAdding]    = useState(false);
-  const [addError,  setAddError]  = useState<string | null>(null);
-  const [removing,  setRemoving]  = useState<string | null>(null);
 
-  async function handleAdd() {
-    const code = codeInput.trim().toUpperCase();
-    if (!code) return;
-    setAdding(true);
-    setAddError(null);
-    try {
-      const res = await fetch(apiBase, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ targetCode: code, note: noteInput.trim() || undefined }),
-      });
-      const json = await res.json() as { ok?: boolean; error?: string };
-      if (!res.ok || !json.ok) {
-        setAddError(json.error ?? "Unknown error");
-      } else {
-        setCodeInput("");
-        setNoteInput("");
-        setShowAdd(false);
-        await queryClient.invalidateQueries({ queryKey: [crossRefKey] });
-      }
-    } finally {
-      setAdding(false);
-    }
+  // Slice 41.97 (Ask first 1): „Leagă" holds the reference — the server checks the code when „Salvează" writes it, and
+  // says so under the bar if it is wrong; a removal is held too. It was a POST or a DELETE at once.
+  function handleAdd() {
+    if (!codeInput.trim()) return;
+    onHold((h) => holdRefAdd(h, codeInput, noteInput, crossRefs.map((r) => r.peerCode)));
+    setCodeInput("");
+    setNoteInput("");
+    setShowAdd(false);
   }
 
-  async function handleRemove(crossRefId: string) {
-    setRemoving(crossRefId);
-    try {
-      const res = await fetch(`${apiBase}/${crossRefId}`, { method: "DELETE" });
-      if (res.ok) {
-        await queryClient.invalidateQueries({ queryKey: [crossRefKey] });
-      }
-    } finally {
-      setRemoving(null);
-    }
+  function handleRemove(crossRefId: string) {
+    onHold((h) => holdRefRemove(h, crossRefId));
   }
+
+  const shownRefs = crossRefs.filter((r) => !held.refs.remove.includes(r.id));
 
   return (
     <section className="flex flex-col gap-1" data-cross-refs-section="">
@@ -1089,7 +1048,7 @@ function CrossRefsSection({
               icon={LinkIcon}
               labelAdd={t("crossRef.add")}
               labelHide={t("hideAdd")}
-              onClick={() => { setShowAdd((v) => !v); setAddError(null); }}
+              onClick={() => setShowAdd((v) => !v)}
             />
           </span>
         )}
@@ -1104,18 +1063,16 @@ function CrossRefsSection({
               type="text"
               value={codeInput}
               onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleAdd(); } }}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAdd(); } }}
               placeholder={t("crossRef.codePlaceholder")}
-              disabled={adding}
               className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 w-36 font-mono uppercase"
             />
             <input
               type="text"
               value={noteInput}
               onChange={(e) => setNoteInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleAdd(); } }}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAdd(); } }}
               placeholder={t("crossRef.notePlaceholder")}
-              disabled={adding}
               maxLength={500}
               {...screenBox("metaCrossRefNote")}
               className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500"
@@ -1123,17 +1080,12 @@ function CrossRefsSection({
             <IconButton
               icon={LinkIcon}
               label={t("crossRef.addConfirm")}
-              busy={adding}
-              busyLabel={t("crossRef.adding")}
               variant="primary"
               size="md"
               onClick={handleAdd}
-              disabled={adding || !codeInput.trim()}
+              disabled={!codeInput.trim()}
             />
           </div>
-          {addError && (
-            <p className="text-xs text-red-600 dark:text-red-400">{addError}</p>
-          )}
           <p className="text-xs text-fade dark:text-zinc-500">{t("crossRef.codeHint")}</p>
         </div>
       )}
@@ -1141,11 +1093,11 @@ function CrossRefsSection({
       {/* Cross-ref list */}
       {isLoading ? (
         <p className="text-sm text-fade dark:text-zinc-400">…</p>
-      ) : crossRefs.length === 0 ? (
+      ) : shownRefs.length === 0 && held.refs.add.length === 0 ? (
         <p className="text-sm text-fade dark:text-zinc-400">{t("crossRef.empty")}</p>
       ) : (
         <ul className="flex flex-col gap-3">
-          {crossRefs.map((ref) => {
+          {shownRefs.map((ref) => {
             // Slice 41.96 (Ask first 3) — Adrian: „the remove button will disappear from its current position on the right
             // side of the object name and will become a bubble - that shows at mouse hover over the type of principal
             // object … the icon of the principal object will be added at the front of the principal object type". The
@@ -1162,7 +1114,7 @@ function CrossRefsSection({
                 <CodeChip
                   className={KIND_RECT}
                   data-reference-kind={kind}
-                  remove={ref.isOwner && isOnLatest ? { label: t("crossRef.remove"), onClick: () => void handleRemove(ref.id), disabled: removing === ref.id } : undefined}
+                  remove={ref.isOwner && isOnLatest ? { label: t("crossRef.remove"), onClick: () => handleRemove(ref.id) } : undefined}
                 >
                   <KindIcon aria-hidden="true" size={12} className="shrink-0" />
                   {peerTypeBadge(ref.peerType, t)}
@@ -1192,6 +1144,31 @@ function CrossRefsSection({
                 </p>
               )}
             </li>
+            );
+          })}
+          {/* Slice 41.97: a reference held by its code — its kind read off the code, the code for its name, „nou"; its „×"
+              takes it back. The server names it once „Salvează" has written it. */}
+          {held.refs.add.map((r) => {
+            const kind = kindOfCode(r.code);
+            const KindIcon = ENTITY_ICON[kind];
+            return (
+              <li key={`held-${r.code}`} className="flex flex-col gap-0.5" data-reference-row="" data-held="add">
+                <div className="flex items-baseline gap-2">
+                  <CodeChip
+                    className={KIND_RECT}
+                    data-reference-kind={kind}
+                    remove={isOnLatest ? { label: t("crossRef.remove"), onClick: () => onHold((h) => dropHeldRef(h, r.code)) } : undefined}
+                  >
+                    <KindIcon aria-hidden="true" size={12} className="shrink-0" />
+                    {peerTypeBadge(kind === "property" ? "PROPERTY" : kind === "document" ? "DOCUMENT" : "PERSON", t)}
+                  </CodeChip>
+                  <span className="min-w-0 flex-1 break-words font-mono text-sm text-ink dark:text-zinc-100" data-reference-name="">
+                    {r.code}
+                    <NewMark label={t("held.new")} />
+                  </span>
+                </div>
+                {r.note && <p className="text-xs text-slate-500 dark:text-zinc-400 italic pl-0.5">{r.note}</p>}
+              </li>
             );
           })}
         </ul>
@@ -1555,6 +1532,54 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
   // is one „Gata" (and Esc). Without a tile around it (both sections drawn on one page) it stays editable as before.
   const [connEditing, setConnEditing] = useState(false);
   const canChange = isOnLatest && (connEditing || !chrome);
+  // Slice 41.97 — Adrian: „Remove the “Done” buttons … just use the Save and Cancel buttons at the bottom In the same way
+  // the “Classification” tile is using". In „Editează" every add and remove is held here (held-changes.ts); „Salvează"
+  // writes them, removes first, one at a time, and re-reads once; „Renunță" and Esc drop them. Each tile its own edit.
+  const [held, setHeld] = useState<Held>(NOTHING_HELD);
+  const [savingHeld, setSavingHeld] = useState(false);
+  const [heldError, setHeldError] = useState<string | null>(null);
+  const onHold = useCallback<OnHold>((change) => {
+    setHeld(change);
+    setHeldError(null);
+  }, []);
+  function cancelHeld() {
+    setHeld(NOTHING_HELD);
+    setHeldError(null);
+    setConnEditing(false);
+  }
+  async function saveHeld() {
+    const po = data?.principalObjectId;
+    if (!po) return;
+    setSavingHeld(true);
+    setHeldError(null);
+    try {
+      const { left, error } = await sendHeld(po, held, async (w) => {
+        try {
+          const res = await fetch(w.url, {
+            method: w.method,
+            headers: w.body ? { "Content-Type": "application/json" } : undefined,
+            body: w.body ? JSON.stringify(w.body) : undefined,
+          });
+          const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+          return { ok: res.ok && json.ok !== false, error: json.error };
+        } catch (e) {
+          return { ok: false, error: e instanceof Error ? e.message : undefined };
+        }
+      });
+      // Ask first 2: what went through stays written; the rest stays held, the edit open, the error under the bar.
+      setHeld(left);
+      await queryClient.invalidateQueries({
+        predicate: (q) => {
+          const k = q.queryKey[0];
+          return typeof k === "string" && (k.startsWith(queryKey) || k === "all-tags-autocomplete");
+        },
+      });
+      if (error === null) setConnEditing(false);
+      else setHeldError(error ? `${t("held.saveError")} (${error})` : t("held.saveError"));
+    } finally {
+      setSavingHeld(false);
+    }
+  }
   useEffect(() => {
     setChromeFolded?.(folded);
   }, [setChromeFolded, folded]);
@@ -1731,10 +1756,12 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           labelPlaceholder={t("tags.placeholder")}
           labelBox={t("tags.box")}
           labelAdd={t("tags.add")}
-          labelAdding={t("tags.adding")}
           labelRemove={t("tags.remove")}
           labelEmpty={t("tags.empty")}
+          labelNew={t("held.new")}
           editing={canChange}
+          held={held}
+          onHold={onHold}
         />
     ) });
     // ── 5. Grupuri / Groups
@@ -1755,6 +1782,9 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           labelLimit={t("groups.limit", { max: groupCap })}
           labelLimitReached={t("groups.limitReached", { max: groupCap })}
           labelNoneAvailable={t("groups.noneAvailable")}
+          labelNew={t("held.new")}
+          held={held}
+          onHold={onHold}
         />
     ) : (
         <section className="flex flex-col gap-1">
@@ -1776,6 +1806,9 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           labelAddPlaceholder={t("stamps.addPlaceholder")}
           labelRemove={t("stamps.remove")}
           withBack={withBack}
+          labelNew={t("held.new")}
+          held={held}
+          onHold={onHold}
         />
     ) : (
         <section className="flex flex-col gap-1">
@@ -1792,6 +1825,8 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           isOnLatest={canChange}
           t={(key, opts) => t(key as Parameters<typeof t>[0], opts)}
           withBack={withBack}
+          held={held}
+          onHold={onHold}
         />
     ) });
   }
@@ -2035,7 +2070,8 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             older version „Etichete" is not drawn, and „Grupuri" comes first with
             no line above it). The groups stand 0.5rem from each line, so two
             groups are the 1rem they were apart plus the line. */}
-        {/* 41.40: the pen in the tile's corner at rest; in edit, Esc or „Gata" puts it back at rest. */}
+        {/* 41.40: the pen in the tile's corner at rest. 41.97: in edit, „Salvează" writes what is held and „Renunță" or Esc
+            drops it — „Gata" is gone. */}
         {chrome && isOnLatest && !connEditing && (
           <TileAction>
             <TileEditButton tile="connections" title={chrome.title} onEdit={() => setConnEditing(true)} />
@@ -2045,7 +2081,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           className="flex flex-col gap-2"
           data-connections-groups=""
           data-connections-calm={chrome && !connEditing ? "" : undefined}
-          onKeyDown={onTileKeyDown(connEditing, () => setConnEditing(false))}
+          onKeyDown={onTileKeyDown(connEditing, cancelHeld)}
         >
           {connectionGroups.map((group, i) => (
             <Fragment key={group.key}>
@@ -2054,17 +2090,17 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             </Fragment>
           ))}
         </div>
-        {chrome && connEditing && (
-          <div className="flex justify-end pt-1" data-tile-edit-bar="connections">
-            <IconButton icon={Check} label={t("done")} showLabel variant="secondary" size="sm" onClick={() => setConnEditing(false)} data-tile-done="connections" />
-          </div>
+        {/* Slice 41.97: „Clasificare"'s bar — „Salvează" enabled once something is held, „Renunță"; a failed write's error
+            above them. Without a tile around it the sections are always open, so the bar is always there. */}
+        {isOnLatest && (connEditing || !chrome) && (
+          <TileEditBar tile="connections" onSave={() => void saveHeld()} onCancel={cancelHeld} saving={savingHeld} canSave={isHeld(held)} error={heldError} />
         )}
         </>)}
 
         {/* Slice 41.96 — Adrian: „The Entire See also section of the Tags and Groups will be removed from the tags and
             group style and will become its own tile … The name of this new tile will be “Other references”". „Alte
             referințe": „Vezi și" alone, its note the tile's „i" (as „Clasificare"'s), and the calm and edit „Etichete și
-            grupuri" has (Ask first 4) — the pen at rest; add and remove in edit; „Gata" and Esc end it. */}
+            grupuri" has (Ask first 4) — the pen at rest; add and remove in edit. 41.97: held, „Salvează" / „Renunță". */}
         {showReferences && data?.principalObjectId && (<>
         {chrome && (
           <TileHint>
@@ -2082,7 +2118,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           className="flex flex-col gap-2"
           data-references=""
           data-references-calm={chrome && !connEditing ? "" : undefined}
-          onKeyDown={onTileKeyDown(connEditing, () => setConnEditing(false))}
+          onKeyDown={onTileKeyDown(connEditing, cancelHeld)}
         >
           <CrossRefsSection
             principalObjectId={data.principalObjectId}
@@ -2091,12 +2127,12 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             t={(key, opts) => t(key as Parameters<typeof t>[0], opts)}
             withBack={withBack}
             inTile={!!chrome}
+            held={held}
+            onHold={onHold}
           />
         </div>
-        {chrome && connEditing && (
-          <div className="flex justify-end pt-1" data-tile-edit-bar="otherReferences">
-            <IconButton icon={Check} label={t("done")} showLabel variant="secondary" size="sm" onClick={() => setConnEditing(false)} data-tile-done="otherReferences" />
-          </div>
+        {isOnLatest && (connEditing || !chrome) && (
+          <TileEditBar tile="otherReferences" onSave={() => void saveHeld()} onCancel={cancelHeld} saving={savingHeld} canSave={isHeld(held)} error={heldError} />
         )}
         </>)}
       </div>

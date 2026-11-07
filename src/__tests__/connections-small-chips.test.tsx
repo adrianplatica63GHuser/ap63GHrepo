@@ -97,9 +97,14 @@ describe("„Conexiuni”: small tag chips, the „×” only on hover or focus 
     expect(remove).toBeEnabled();
   });
 
-  it("clicking the „×” still removes that tag", async () => {
+  // 41.97 rewritten in place — was „clicking the „×” still removes that tag" (a DELETE at once). The removal is held:
+  // the chip goes, nothing is sent, and „Salvează" sends the DELETE.
+  it("clicking the „×” removes that tag from the tile; „Salvează” writes it", async () => {
     renderTile();
     fireEvent.click(await screen.findByRole("button", { name: "tags.remove moștenire" }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "tags.remove moștenire" })).toBeNull());
+    expect(calls.some((c) => c.method === "DELETE")).toBe(false);
+    fireEvent.click(screen.getAllByRole("button", { name: "save" })[0]);
     await waitFor(() => expect(calls.some((c) => c.method === "DELETE")).toBe(true));
     const del = calls.find((c) => c.method === "DELETE")!;
     expect(del.url).toBe("/api/metadata/po-1/tags");

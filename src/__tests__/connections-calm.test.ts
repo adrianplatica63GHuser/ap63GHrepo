@@ -4,8 +4,8 @@
  * for the “see also”; we only have the items … until the edit button is pressed".
  *
  * Etichete și grupuri is a readEdit tile on all four screens. At rest no add or remove control is rendered at all (the
- * sections' controls are drawn only when they may change — `canChange`); its pen opens it; adding and removing still
- * save at once, so the bar is one „Gata" (and Esc).
+ * sections' controls are drawn only when they may change — `canChange`); its pen opens it. Since 41.97 adding and
+ * removing are held until „Salvează" (held-changes.ts); „Renunță" and Esc drop them — „Gata" is gone.
  */
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -29,11 +29,18 @@ describe("41.40 — Etichete și grupuri calm at rest", () => {
     expect(META).toMatch(/\{editing && \(\s*<IconButton\s*icon=\{X\}\s*label=\{`\$\{labelRemove\} \$\{tag\}`\}/);
   });
 
-  it("the pen at rest, „Gata” in edit, Esc closes it", () => {
+  // 41.97 rewritten in place — was „the pen at rest, „Gata” in edit, Esc closes it" (`data-tile-done`, the key
+  // shared.entityMetadata.done „Gata" / „Done"). Adrian: „Remove the “Done” buttons … just use the Save and Cancel buttons
+  // at the bottom In the same way the “Classification” tile is using". The bar is TileEditBar; Esc is „Renunță".
+  it("the pen at rest; in edit „Salvează” and „Renunță” (TileEditBar), Esc is „Renunță”; no „Gata”", () => {
     expect(META).toContain('<TileEditButton tile="connections" title={chrome.title} onEdit={() => setConnEditing(true)} />');
-    expect(META).toContain('data-tile-edit-bar="connections"');
-    expect(META).toContain("onKeyDown={onTileKeyDown(connEditing, () => setConnEditing(false))}");
-    expect([ro.shared.entityMetadata.done, en.shared.entityMetadata.done]).toEqual(["Gata", "Done"]);
+    expect(META).toContain('<TileEditBar tile="connections" onSave={() => void saveHeld()} onCancel={cancelHeld}');
+    expect(META).toContain('<TileEditBar tile="otherReferences" onSave={() => void saveHeld()} onCancel={cancelHeld}');
+    expect(META).toContain("onKeyDown={onTileKeyDown(connEditing, cancelHeld)}");
+    expect(META).not.toMatch(/data-tile-done|t\("done"\)/);
+    expect((ro.shared.entityMetadata as Record<string, unknown>).done).toBeUndefined();
+    expect((en.shared.entityMetadata as Record<string, unknown>).done).toBeUndefined();
+    expect([ro.shared.entityMetadata.held.new, en.shared.entityMetadata.held.new]).toEqual(["nou", "new"]);
   });
 
   it("on all four record screens", () => {

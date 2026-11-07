@@ -1035,7 +1035,10 @@
       "sectionClassification": "Clasificare",
       "sectionConnections": "Etichete și grupuri",
       "hideAdd": "Ascunde",
-      "done": "Gata",
+      "held": {
+        "new": "nou",
+        "saveError": "Nu s-au putut salva toate modificările; cele rămase sunt încă aici — „Salvează” încearcă din nou."
+      },
       "about": "Despre „{title}”"
     },
     "errorBoundary": {

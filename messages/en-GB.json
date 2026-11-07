@@ -1035,7 +1035,10 @@
       "sectionClassification": "Classification",
       "sectionConnections": "Tags and groups",
       "hideAdd": "Hide",
-      "done": "Done",
+      "held": {
+        "new": "new",
+        "saveError": "Not every change could be saved; those left are still here — „Save” tries again."
+      },
       "about": "About “{title}”"
     },
     "errorBoundary": {

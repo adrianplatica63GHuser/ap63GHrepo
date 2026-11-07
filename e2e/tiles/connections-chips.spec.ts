@@ -18,7 +18,7 @@
 import { test, expect, type Locator } from "../helpers/test";
 import { editConnections } from "../helpers/tiles";
 import {
-  E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord,
+  E2E_MARKER, createNaturalPerson, removeGroupLeftovers, removeLeftovers, removeRecord,
 } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}TILES-10`;
@@ -96,10 +96,14 @@ test.describe("TC-TILES-10 — etichete mici, „×” doar la mouse sau la foca
       await expect.poll(() => opacity(removes[1])).toBe(1);
       expect(await boxes(chips)).toBe(atRest);
 
-      // Step 4 — the click removes „moștenire"; the other two stay.
+      // Step 4 — the click removes „moștenire"; the other two stay. 41.97: held until „Salvează", which writes it.
       await chips.nth(1).hover();
       await removes[1].click();
       await expect(chips).toHaveText([TAGS[0], TAGS[2]], { timeout: 15_000 });
+      await con.locator('[data-tile-save="connections"]').click();
+      await expect(con.locator('[data-tile-edit-bar="connections"]')).toHaveCount(0, { timeout: 15_000 });
+      await page.reload();
+      await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true }).locator("[data-tag-chip]")).toHaveText([TAGS[0], TAGS[2]], { timeout: 30_000 });
     } finally {
       await removeRecord(page.request, "person", person);
     }
@@ -160,8 +164,9 @@ test.describe("TC-TILES-10 (41.39) — alegerea grupului se închide, dala se î
       await expect.poll(async () => Number(await edge.getAttribute("aria-valuenow"))).toBe(before - 1);
       await page.keyboard.press("Home");
       await expect.poll(async () => Number(await edge.getAttribute("aria-valuenow"))).toBe(before);
-      // 41.40: „Gata" puts the tile back at rest — no „+" any more.
-      await con.locator('[data-tile-done="connections"]').click();
+      // 41.40: „Gata" put the tile back at rest — no „+" any more. 41.97: „Renunță" does it now; „Gata" is gone.
+      await expect(con.locator("[data-tile-done]")).toHaveCount(0);
+      await con.locator('[data-tile-cancel="connections"]').click();
       await expect(con.locator('[data-tile-edit-bar="connections"]')).toHaveCount(0);
       await expect(con.getByRole("button", { name: /^\+ / })).toHaveCount(0);
     } finally {
@@ -246,6 +251,108 @@ test.describe("TC-TILES-10 (41.95) — grupuri și ștampile: codul singur, „�
       if (groupId) await page.request.delete(`/api/groups/${encodeURIComponent(groupId)}`);
       if (stampId) await page.request.delete(`/api/stamps/${encodeURIComponent(stampId)}`);
       await removeRecord(page.request, "person", person);
+    }
+  });
+});
+
+// Slice 41.97 — Adrian: „Remove the “Done” buttons from the “Tags and groups” and the new “Other references” tile; just
+// use the Save and Cancel buttons at the bottom In the same way the “Classification” tile is using". On invented records:
+// a person with a stamp, a group to join, a second person to refer to.
+test.describe("TC-TILES-10 (41.97) — „Salvează” / „Renunță” în loc de „Gata”", () => {
+  test("„Renunță” nu scrie nimic; „Salvează” scrie eticheta, grupul și scoaterea ștampilei; la fel „Alte referințe”; Esc", async ({ page }) => {
+    test.slow();
+    const M = `${MARK}-SALV`;
+    const TAG = `${M.toLowerCase()}-eticheta`;
+    await removeLeftovers(page.request, M);
+    await page.setViewportSize({ width: 1366, height: 900 });
+    const person = await createNaturalPerson(page.request, { lastName: M, firstName: "Ion" });
+    const other = await createNaturalPerson(page.request, { lastName: `${M} Doi`, firstName: "Maria" });
+    let groupId: string | undefined;
+    let stampId: string | undefined;
+    try {
+      const po = ((await (await page.request.get(`/api/people/${person}/entity-references`)).json()) as { principalObjectId: string }).principalObjectId;
+      const g = await page.request.post("/api/groups", { data: { targetType: "PHYSICAL_PERSON", description: `${M} Grup` } });
+      expect(g.status()).toBe(201);
+      groupId = ((await g.json()) as { id: string }).id;
+      const s = await page.request.post("/api/stamps", { data: { shortDescription: `${M} Ștampilă`, notes: "" } });
+      expect(s.status()).toBe(201);
+      stampId = ((await s.json()) as { id: string }).id;
+      expect((await page.request.post(`/api/metadata/${po}/stamps`, { data: { stampId } })).ok()).toBeTruthy();
+      const otherCode = ((await (await page.request.get(`/api/people/${other}`)).json()) as { person: { code: string } }).person.code;
+      const url = `/natural-persons/${person}?tab=metadata`;
+      const region = () => page.getByRole("region", { name: "Etichete și grupuri", exact: true });
+
+      async function hold() {
+        const con = await editConnections(page);
+        // No „Gata"; no X while in edit (41.91); „Salvează" disabled until something is held.
+        await expect(con.locator("[data-tile-done]")).toHaveCount(0);
+        await expect(con.locator("[data-tile-close]")).toHaveCount(0);
+        await expect(con.locator('[data-tile-save="connections"]')).toBeDisabled();
+        await con.locator("[data-tag-input]").fill(TAG);
+        await con.locator("[data-tag-input]").press("Enter");
+        await expect(con.locator('[data-tag-chip][data-held="add"]')).toContainText(TAG);
+        await con.getByRole("button", { name: "+ Adaugă în grup", exact: true }).click();
+        await con.locator("[data-groups-picker]").selectOption(groupId!);
+        await expect(con.locator('[data-group-row][data-held="add"]')).toHaveCount(1);
+        await expect(con.locator('[data-tile-save="connections"]')).toBeEnabled();
+        return con;
+      }
+
+      // Step 1 — a tag and a group held, „Renunță": nothing written.
+      await page.goto(url);
+      let con = await hold();
+      await con.locator('[data-tile-cancel="connections"]').click();
+      await expect(con.locator('[data-tile-edit-bar="connections"]')).toHaveCount(0);
+      let refs = (await (await page.request.get(`/api/people/${person}/entity-references`)).json()) as { groups: unknown[]; stamps: unknown[] };
+      expect(refs.groups).toHaveLength(0);
+      await page.reload();
+      await expect(region().locator("[data-tag-chip]")).toHaveCount(0, { timeout: 30_000 });
+      await expect(region().locator("[data-group-row]")).toHaveCount(0);
+
+      // Step 2 — the same again, the stamp removed, „Salvează": after a reload the tag and the group are there, the stamp gone.
+      con = await hold();
+      const stampRow = con.locator("[data-stamp-row]").first();
+      await stampRow.locator("[data-code-chip]").hover();
+      await stampRow.getByRole("button", { name: /^Elimină ștampila / }).click();
+      await expect(con.locator("[data-stamp-row]")).toHaveCount(0);
+      await con.locator('[data-tile-save="connections"]').click();
+      await expect(con.locator('[data-tile-edit-bar="connections"]')).toHaveCount(0, { timeout: 30_000 });
+      await page.reload();
+      await expect(region().locator("[data-tag-chip]")).toHaveText([TAG], { timeout: 30_000 });
+      await expect(region().locator("[data-group-row]")).toHaveCount(1);
+      await expect(region().locator("[data-stamp-row]")).toHaveCount(0);
+      refs = (await (await page.request.get(`/api/people/${person}/entity-references`)).json()) as { groups: unknown[]; stamps: unknown[] };
+      expect(refs.groups).toHaveLength(1);
+      expect(refs.stamps).toHaveLength(0);
+
+      // Step 3 — Esc is „Renunță": a second tag held, Esc, nothing of it left.
+      con = await editConnections(page);
+      await con.locator("[data-tag-input]").fill(`${TAG}-doi`);
+      await con.locator("[data-tag-input]").press("Enter");
+      await expect(con.locator('[data-tag-chip][data-held="add"]')).toHaveCount(1);
+      await con.locator("[data-tag-input]").press("Escape");
+      await expect(con.locator('[data-tile-edit-bar="connections"]')).toHaveCount(0);
+      await expect(region().locator("[data-tag-chip]")).toHaveText([TAG]);
+
+      // Step 4 — „Alte referințe": a reference held, „Salvează"; after a reload it is there, by name.
+      const other4 = page.getByRole("region", { name: "Alte referințe", exact: true });
+      await other4.locator('[data-tile-edit="otherReferences"]').click();
+      await expect(other4.locator("[data-tile-done]")).toHaveCount(0);
+      await other4.getByRole("button", { name: "+ Adaugă trimitere", exact: true }).click();
+      await other4.getByPlaceholder("Codul entității").fill(otherCode);
+      await other4.getByRole("button", { name: "Leagă", exact: true }).click();
+      await expect(other4.locator('[data-reference-row][data-held="add"]')).toContainText(otherCode);
+      await other4.locator('[data-tile-save="otherReferences"]').click();
+      await expect(other4.locator('[data-tile-edit-bar="otherReferences"]')).toHaveCount(0, { timeout: 30_000 });
+      await page.reload();
+      await expect(page.getByRole("region", { name: "Alte referințe", exact: true }).locator("[data-reference-row]")).toContainText(`${M} Doi`, { timeout: 30_000 });
+    } finally {
+      // The persons first: a group with a member cannot be deleted.
+      await removeRecord(page.request, "person", person);
+      await removeRecord(page.request, "person", other);
+      if (groupId) await page.request.delete(`/api/groups/${encodeURIComponent(groupId)}`);
+      await removeGroupLeftovers(page.request, M);
+      if (stampId) await page.request.delete(`/api/stamps/${encodeURIComponent(stampId)}`);
     }
   });
 });

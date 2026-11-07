@@ -69,6 +69,9 @@ test.describe("TC-GRP-03 — grupul fără număr de membri", () => {
       await at.row.locator("[data-code-chip]").hover();
       await at.row.getByRole("button", { name: /^Elimină din grup / }).click();
       await expect(at.row).toHaveCount(0, { timeout: 30_000 });
+      // 41.97: held until „Salvează".
+      await page.locator('[data-tile-save="connections"]').click();
+      await expect(page.locator('[data-tile-edit-bar="connections"]')).toHaveCount(0, { timeout: 30_000 });
 
       // Step 3 — A: still the code alone.
       at = await groupRow(page, a);
@@ -80,6 +83,9 @@ test.describe("TC-GRP-03 — grupul fără număr de membri", () => {
       await at.groups.getByRole("button", { name: "+ Adaugă în grup", exact: true }).click();
       await at.groups.locator("select").selectOption(groupId);
       await expect(at.chip).toHaveText(/^GRP-\d+$/, { timeout: 30_000 });
+      // 41.97: held until „Salvează" — then the position below is the server's.
+      await page.locator('[data-tile-save="connections"]').click();
+      await expect(page.locator('[data-tile-edit-bar="connections"]')).toHaveCount(0, { timeout: 30_000 });
       const refs = (await (await page.request.get(`/api/properties/${c}/entity-references`)).json()) as { groups: { id: string; position: number }[] };
       expect(refs.groups.find((x) => x.id === groupId)?.position).toBe(4);
       at = await groupRow(page, a);

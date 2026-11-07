@@ -88,11 +88,13 @@ test.describe("TC-TAG-01 — Etichetă aplicată unei proprietăți și găsită
       await expect(page.getByText("Etichete / Cuvinte cheie").first()).toBeVisible();
       await expect(page.getByText("Nicio etichetă adăugată încă")).toBeVisible();
 
-      // Step 3 — type the tag, „Adaugă": a chip, lower-case, saved at once.
+      // Step 3 — type the tag, „Adaugă": a chip, lower-case. 41.97: held until „Salvează" (it was „saved at once").
       await page.getByPlaceholder("Introduceți o etichetă…").fill(TYPED);
       await page.getByRole("button", { name: "Adaugă", exact: true }).click();
       const remove = page.getByRole("button", { name: `Elimină eticheta ${STORED}` });
       await expect(remove).toBeVisible({ timeout: 15_000 });
+      await page.locator('[data-tile-save="connections"]').click();
+      await expect(page.locator('[data-tile-edit-bar="connections"]')).toHaveCount(0, { timeout: 15_000 });
       await openMetaInfo(page, propertyId); // „still there after a reload"
       await expect(page.getByRole("button", { name: `Elimină eticheta ${STORED}` })).toBeVisible({ timeout: 15_000 });
 
@@ -116,6 +118,8 @@ test.describe("TC-TAG-01 — Etichetă aplicată unei proprietăți și găsită
       await openMetaInfo(page, propertyId);
       await page.getByRole("button", { name: `Elimină eticheta ${STORED}` }).click();
       await expect(page.getByText("Nicio etichetă adăugată încă")).toBeVisible({ timeout: 15_000 });
+      await page.locator('[data-tile-save="connections"]').click(); // 41.97
+      await expect(page.locator('[data-tile-edit-bar="connections"]')).toHaveCount(0, { timeout: 15_000 });
 
       // Step 7 — „Etichete": N again, and the tag nowhere on the page.
       await page.goto("/admin/tags");
