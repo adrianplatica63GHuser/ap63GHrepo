@@ -20,7 +20,8 @@ describe("41.40 — Etichete și grupuri calm at rest", () => {
     expect(META).toContain("const canChange = isOnLatest && (connEditing || !chrome);");
     expect(META).toContain("editing={canChange}");
     // Groups, stamps and „Vezi și" draw their „+", „×" and „Leagă" only where `isOnLatest` — given `canChange` now.
-    expect(META.match(/isOnLatest=\{canChange\}/g) ?? []).toHaveLength(3);
+    // 41.96: four — „Alte referințe" draws CrossRefsSection a second time, with the same rule (it was three).
+    expect(META.match(/isOnLatest=\{canChange\}/g) ?? []).toHaveLength(4);
   });
 
   it("the tag box, „Adaugă” and each „×” are not rendered at rest", () => {

@@ -155,7 +155,7 @@ describe("the Natural Person's tiles", () => {
       // Slice #37.67: Persoane, Proprietăți and Acte are one tile, „Corelate".
       // #38.30: „Act de identitate", „Legături", „Clasificare", „Etichete și grupuri".
       // 40.85: „Acte de identitate" — the person's identity documents.
-      "Identitate", "Acte de identitate", "Contact", "Adrese", "Legături", "Clasificare", "Etichete și grupuri", "Arbore de moștenire", "Interacțiuni", // #37.89; #39.12
+      "Identitate", "Acte de identitate", "Contact", "Adrese", "Legături", "Clasificare", "Etichete și grupuri", "Alte referințe", "Arbore de moștenire", "Interacțiuni", // #37.89; #39.12; 41.96
     ]);
     expect(ro.shared.tiles.all).toBe("Toate");
     expect(ro.shared.tiles.defaults).toBe("Implicit");
@@ -236,7 +236,7 @@ describe("the Judicial Person's tiles (Slice #37.18)", () => {
     expect(JP_TILES.map((k) => ro.judicialPerson.tiles[k])).toEqual([
       // #37.67; #37.89: the first tile is „Identitate", as on the Natural Person, and „Interacțiuni" at the right.
       // #38.30: „Date de înregistrare", „Reprezentanți și contact", „Legături", „Clasificare", „Etichete și grupuri".
-      "Date de înregistrare", "Reprezentanți și contact", "Adrese", "Legături", "Clasificare", "Etichete și grupuri", "Interacțiuni",
+      "Date de înregistrare", "Reprezentanți și contact", "Adrese", "Legături", "Clasificare", "Etichete și grupuri", "Alte referințe", "Interacțiuni", // 41.96
     ]);
   });
 });

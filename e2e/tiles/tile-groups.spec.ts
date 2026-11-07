@@ -191,26 +191,26 @@ test.describe("TC-TILES-18 — bifele în patru grupuri colorate", () => {
         await expectForm(page, `/properties/${prop}`, [
           ["record", ["Identificare cadastrală", "Adresă"]],
           ["related", ["Legături"]],
-          ["meta", ["Clasificare", "Etichete și grupuri"]],
+          ["meta", ["Clasificare", "Etichete și grupuri", "Alte referințe"]], // 41.96
           ["fixed", ["Hartă", "Puncte de contur", "Street View"]],
         ], width);
         await expectForm(page, `/natural-persons/${np}`, [
           ["record", ["Identitate", "Acte de identitate", "Contact", "Adrese"]],
           ["related", ["Legături"]],
-          ["meta", ["Clasificare", "Etichete și grupuri"]],
+          ["meta", ["Clasificare", "Etichete și grupuri", "Alte referințe"]], // 41.96
           ["family", ["Arbore de moștenire"]], // #39.12
           ["fixed", ["Interacțiuni"]], // #37.89
         ], width);
         await expectForm(page, `/judicial-persons/${jp}`, [
           ["record", ["Date de înregistrare", "Reprezentanți și contact", "Adrese"]], // #37.89: „Identitate"; #38.30: „Date de înregistrare"
           ["related", ["Legături"]],
-          ["meta", ["Clasificare", "Etichete și grupuri"]],
+          ["meta", ["Clasificare", "Etichete și grupuri", "Alte referințe"]], // 41.96
           ["fixed", ["Interacțiuni"]], // #37.89
         ], width);
         await expectForm(page, `/documents/${doc}`, [
           ["record", ["Identificarea actului", "Preț și plată", "Obiectul vânzării", "Carte funciară", "Declarații și garanții", "Taxe și cheltuieli", "Părți"]], // #38.33
           ["related", ["Legături"]],
-          ["meta", ["Clasificare", "Etichete și grupuri"]],
+          ["meta", ["Clasificare", "Etichete și grupuri", "Alte referințe"]], // 41.96
           ["fixed", ["Pagini"]],
         ], width);
       }

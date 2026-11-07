@@ -307,7 +307,7 @@ const ALLOW: Record<string, Allowed[]> = {
     // Slice 41.95: a group's and a stamp's code left its link (the „×" is on the code's rectangle now, and a button
     // cannot be inside a link) — the two `<span className="font-mono text-xs rounded border border…` entries went; the
     // description is the link, through TextTooltip.
-    ["A113", "{nameOr(ref.peerName, unnamedKindOf(ref.peerType))}"], // #37.57
+    ["A113", "{name}"], // #37.57: the peer's name is the link; 41.96 named it `name` (it was `{nameOr(ref.peerName, …)}`)
     ["A110", "{labelCancel}"],
     ["A110", "{labelOk}"],
   ],
