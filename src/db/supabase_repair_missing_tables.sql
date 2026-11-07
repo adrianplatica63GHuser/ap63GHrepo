@@ -941,7 +941,9 @@ INSERT INTO time_frame_setting (key, value, unit, label_en, label_ro, descriptio
   ('map_expand_zoom_out', 3000, 'milliseconds', 'Expanded map — zooming out', 'Hartă extinsă — depărtarea', 'How long the expanded map then takes to zoom out, until the property is a tenth of its height', 'Cât durează apoi depărtarea hărții extinse, până când proprietatea are o zecime din înălțimea ei'),
   -- migration_128 (Slice 41.76): „Caută pe hartă"'s flight — its length in milliseconds, its arc in hundredths.
   ('map_search_flight', 4000, 'milliseconds', 'Map search — flight time', 'Căutare pe hartă — durata zborului', 'How long the big map takes to fly to a place found with „Search the map”', 'Cât durează zborul hărții mari până la locul găsit cu „Caută pe hartă”'),
-  ('map_search_arc',     100, 'hundredths',   'Map search — the parabola''s coefficient a', 'Căutare pe hartă — coeficientul a al parabolei', 'How high the flight rises, as a share of the height from which both places show: 0 glides straight', 'Cât de sus urcă zborul, față de înălțimea de la care se văd ambele locuri: 0 alunecă drept')
+  ('map_search_arc',     100, 'hundredths',   'Map search — the parabola''s coefficient a', 'Căutare pe hartă — coeficientul a al parabolei', 'How high the flight rises, as a share of the height from which both places show: 0 glides straight', 'Cât de sus urcă zborul, față de înălțimea de la care se văd ambele locuri: 0 alunecă drept'),
+  -- migration_129 (Slice 41.98): how long a choice in „Cum lucrezi cu …" stands on the note box, in milliseconds.
+  ('workflow_choice_highlight', 3000, 'milliseconds', 'Highlight of a choice in „How you work with …”', 'Evidențierea alegerii în „Cum lucrezi cu …”', 'How long a choice pressed in „How you work with groups” (or stamps), and the steps it shows, stand on the note''s beige box; 0 turns it off', 'Cât timp o alegere apăsată în „Cum lucrezi cu grupurile” (sau ștampilele), și pașii pe care îi arată, stau pe fondul bej al unei note; 0 o oprește')
 ON CONFLICT (key) DO NOTHING;
 
 
